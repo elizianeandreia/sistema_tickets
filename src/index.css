@@ -17,15 +17,21 @@ body {
   padding: 1rem;
 }
 
+
 h1 {
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #222;
+  font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  font-size: 2rem;
+  font-size: 3rem;
+  letter-spacing: 0.1em;
+  color: #3b4252;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 2.5rem;
+  user-select: none;
 }
 
-/* Formulário */
+
+
 .form-ticket {
   display: flex;
   flex-direction: column;
@@ -87,7 +93,7 @@ h1 {
   border: 1px solid #bbb;
 }
 
-/* Lista de tickets */
+
 .lista-tickets {
   display: flex;
   flex-direction: column;
@@ -100,7 +106,7 @@ h1 {
   text-align: center;
 }
 
-/* Ticket individual */
+
 .ticket {
   background-color: #fff;
   border-radius: 8px;
@@ -124,7 +130,7 @@ h1 {
   color: #555;
 }
 
-/* Etiqueta de urgência */
+
 .urgency {
   font-weight: 700;
   padding: 0.15rem 0.7rem;
@@ -147,7 +153,7 @@ h1 {
   background-color: #f44336;
 }
 
-/* Botão excluir */
+
 .delete-btn {
   position: absolute;
   top: 12px;
@@ -165,7 +171,7 @@ h1 {
   color: #f44336;
 }
 
-/* Responsivo simples */
+
 @media (max-width: 480px) {
   .form-ticket input,
   .form-ticket textarea,
