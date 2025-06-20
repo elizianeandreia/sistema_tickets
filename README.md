@@ -1,12 +1,25 @@
-# React + Vite
+🎫 <b>Sistema de Tickets - Suporte e Treinamentos<b> <hr>
+Um sistema simples, moderno e responsivo para gerenciamento de tickets de suporte e treinamentos.
+Permite criar, visualizar, filtrar e excluir chamados com prioridade (baixa, média, alta), armazenando os dados localmente no navegador.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+⚙️ Funcionalidades:<br>
+📝 Criar tickets com nome, email, descrição e prioridade de urgência
 
-Currently, two official plugins are available:
+📋 Listar todos os tickets com visualização clara e moderna
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+🗑️ Excluir tickets individualmente
 
-## Expanding the ESLint configuration
+💾 Armazenamento dos tickets no localStorage do navegador, garantindo persistência entre sessões
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+📱 Layout responsivo, adaptado para desktop e dispositivos móveis
+
+🌞 Modo claro com visual tecnológico e cores neutras
+
+🛠️ Tecnologias Utilizadas
+⚛️ React (com hooks)
+
+🎨 CSS moderno e responsivo
+
+💾 LocalStorage para persistência de dados
+
+🚀 Vite como bundler e ambiente de desenvolvimento
