@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './App.css';
+import './assets/index.css';
 
 export default function App() {
   const [tickets, setTickets] = useState(() => {
