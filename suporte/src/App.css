@@ -5,9 +5,9 @@
 }
 
 :root {
-  --bg-1: #eef4ff;
-  --bg-2: #f8fbff;
-  --bg-3: #e8f0fb;
+  --bg-1: #0e0f0f;
+  --bg-2: #1a1d20;
+  --bg-3: #0e0f11;
   --card: rgba(255, 255, 255, 0.82);
   --card-solid: #ffffff;
   --text: #0f172a;
@@ -68,8 +68,9 @@ body::before {
   inset: 0;
   border-radius: 32px;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(37,99,235,0.12), rgba(79,70,229,0.10));
+  background: linear-gradient(135deg, rgba(59, 58, 58, 0.9), rgba(37,99,235,0.12), rgba(79,70,229,0.10));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
