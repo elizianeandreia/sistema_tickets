@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './App.css';
 
 export default function App() {
   const [tickets, setTickets] = useState(() => {
@@ -79,7 +80,7 @@ export default function App() {
               <p>{descricao}</p>
             </div>
             <div className={`ticket-priority ${urgencia}`}>
-              {urgencia.toUpperCase()}
+              {urgencia === 'medio' ? 'MÉDIO' : urgencia.toUpperCase()}
             </div>
             <button className="delete-btn" onClick={() => handleDelete(id)}>Excluir</button>
           </li>
