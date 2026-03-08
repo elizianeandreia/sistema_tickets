@@ -73,7 +73,7 @@ export default function App() {
       </form>
       <ul>
         {tickets.map(({ id, nome, email, descricao, urgencia }) => (
-          <li key={id} className="ticket">
+         <li key={id} className={`ticket ${urgencia}`}>
             <div className="ticket-info">
               <strong>{nome}</strong>
               <small>{email}</small>
