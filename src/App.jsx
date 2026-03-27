@@ -41,7 +41,20 @@ export default function App() {
 
   return (
     <div className="container">
+      <div className="brand-header">
+        <img
+          src="./imagem/logo2026.png"
+          alt="Logo LTHS Tecnologia"
+          className="brand-logo"
+        />
+        <div className="brand-text">
+          <span className="brand-name">LTHS Tecnologia</span>
+          <span className="brand-subtitle">Sistema interno de tickets</span>
+        </div>
+      </div>
+
       <h1>Sistema de Tickets</h1>
+
       <form onSubmit={handleAddTicket}>
         <input
           type="text"
@@ -50,6 +63,7 @@ export default function App() {
           onChange={e => setNome(e.target.value)}
           required
         />
+
         <input
           type="email"
           placeholder="Email"
@@ -57,6 +71,7 @@ export default function App() {
           onChange={e => setEmail(e.target.value)}
           required
         />
+
         <textarea
           placeholder="Descrição do problema"
           value={descricao}
@@ -64,28 +79,41 @@ export default function App() {
           required
           rows={3}
         />
+
         <select value={urgencia} onChange={e => setUrgencia(e.target.value)}>
           <option value="baixo">Baixo</option>
           <option value="medio">Médio</option>
           <option value="alto">Alto</option>
         </select>
+
         <button type="submit">Criar Ticket</button>
       </form>
+
       <ul>
         {tickets.map(({ id, nome, email, descricao, urgencia }) => (
-         <li key={id} className={`ticket ${urgencia}`}>
+          <li key={id} className={`ticket ${urgencia}`}>
             <div className="ticket-info">
               <strong>{nome}</strong>
               <small>{email}</small>
               <p>{descricao}</p>
             </div>
+
             <div className={`ticket-priority ${urgencia}`}>
               {urgencia === 'medio' ? 'MÉDIO' : urgencia.toUpperCase()}
             </div>
-            <button className="delete-btn" onClick={() => handleDelete(id)}>Excluir</button>
+
+            <button
+              type="button"
+              className="delete-btn"
+              onClick={() => handleDelete(id)}
+            >
+              Excluir
+            </button>
           </li>
         ))}
       </ul>
+
+      <div className="brand-footer">© LTHS Tecnologia - Todos os direitos reservados</div>
     </div>
   );
 }
