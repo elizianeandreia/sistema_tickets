@@ -140,14 +140,22 @@ form textarea {
 form select {
   appearance: none;
   cursor: pointer;
+  color: #f8fafc;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.20);
   background-image:
-    linear-gradient(45deg, transparent 50%, #080c11 50%),
-    linear-gradient(135deg, #08090a 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, #cbd5e1 50%),
+    linear-gradient(135deg, #cbd5e1 50%, transparent 50%);
   background-position:
     calc(100% - 20px) calc(50% - 3px),
     calc(100% - 14px) calc(50% - 3px);
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
+}
+
+form select option {
+  background: #0f172a;
+  color: #f8fafc;
 }
 
 button[type="submit"] {
@@ -271,40 +279,43 @@ ul {
 
 .ticket-priority.baixo {
   color: #bbf7d0;
-  background: rgba(34, 197, 94, 0.14);
-  border-color: rgba(34, 197, 94, 0.22);
+  background: rgba(12, 180, 74, 0.767);
+  border-color: rgba(5, 240, 91, 0.22);
 }
 
 .ticket-priority.medio {
-  color: #fde68a;
-  background: rgba(245, 158, 11, 0.14);
-  border-color: rgba(245, 158, 11, 0.24);
+  color: #fff7d6;
+  background: linear-gradient(135deg, #e7e432, #c5c20a);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 12px 24px rgba(245, 158, 11, 0.28);
 }
 
 .ticket-priority.alto {
   color: #fecaca;
-  background: rgba(239, 68, 68, 0.14);
+  background: rgba(240, 104, 104, 0.925);
   border-color: rgba(239, 68, 68, 0.24);
 }
 
 .delete-btn {
-  flex-shrink: 0;
-  padding: 0.78rem 1rem;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #ffffff;
+  padding: 0.78rem 1.15rem;
   border-radius: 14px;
-  border: 1px solid rgba(96, 165, 250, 0.26);
-  background: rgba(255, 255, 255, 0.04);
-  color: #bfdbfe;
-  font-size: 0.92rem;
   font-weight: 700;
+  font-size: 0.94rem;
   cursor: pointer;
   transition: all 0.22s ease;
+  flex-shrink: 0;
+  box-shadow: 0 10px 24px rgba(239, 68, 68, 0.22);
 }
 
 .delete-btn:hover {
-  background: rgba(37, 99, 235, 0.18);
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
+  border-color: rgba(248, 113, 113, 0.65);
   color: #ffffff;
-  border-color: rgba(96, 165, 250, 0.42);
   transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(239, 68, 68, 0.30);
 }
 
 ul::-webkit-scrollbar {
