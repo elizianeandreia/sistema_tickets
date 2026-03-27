@@ -5,7 +5,7 @@
 }
 
 :root {
-  --bg-1: #050816;
+  --bg-1: #b1b3bd;
   --bg-2: #0a1022;
   --bg-3: #0f172a;
   --panel: rgba(10, 16, 32, 0.82);
@@ -48,7 +48,7 @@ body::before {
     linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
   background-size: 32px 32px;
-  mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+  mask-image: radial-gradient(circle at center, rgb(223, 223, 223) 45%, transparent 100%);
   pointer-events: none;
 }
 
@@ -62,11 +62,11 @@ body::before {
   margin: 0 auto;
   padding: 40px;
   border-radius: 30px;
-  background: linear-gradient(180deg, rgba(10, 16, 32, 0.9), rgba(15, 23, 42, 0.84));
-  border: 1px solid rgba(96, 165, 250, 0.14);
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: linear-gradient(135deg, rgba(8, 8, 8, 0.95), rgba(0, 0, 0, 0.92));
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   position: relative;
   overflow: hidden;
 }
