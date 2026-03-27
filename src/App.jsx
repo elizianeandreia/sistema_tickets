@@ -40,7 +40,7 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>Sistema de Tickets</h1>
+      <h1>Tickets</h1>
       <form onSubmit={handleAddTicket}>
         <input
           type="text"
