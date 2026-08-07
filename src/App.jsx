@@ -38,6 +38,25 @@ function normalizePriority(value) {
   return priorityAliases[normalizedValue] || 'medio';
 }
 
+function normalizeStatus(value) {
+  const normalizedValue = String(value || '')
+    .trim()
+    .toLocaleLowerCase('pt-BR');
+
+  const resolvedValues = [
+    'resolvido',
+    'resolvida',
+    'resolved',
+    'fechado',
+    'fechada',
+    'closed',
+  ];
+
+  return resolvedValues.includes(normalizedValue)
+    ? 'resolvido'
+    : 'aberto';
+}
+
 function Icon({ name, size = 18 }) {
   const icons = {
     inbox: (
@@ -81,6 +100,13 @@ function Icon({ name, size = 18 }) {
       </>
     ),
     arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    check: <path d="m5 12.5 4.2 4.2L19 7" />,
+    reopen: (
+      <>
+        <path d="M4 7v5h5" />
+        <path d="M5.4 12a7.5 7.5 0 1 0 2.1-5.2L4 10" />
+      </>
+    ),
     help: (
       <>
         <circle cx="12" cy="12" r="8.5" />
@@ -116,6 +142,10 @@ function getStoredTickets() {
       ? parsed.map((ticket) => ({
           ...ticket,
           urgencia: normalizePriority(ticket?.urgencia),
+          status: normalizeStatus(ticket?.status),
+          replies: Array.isArray(ticket?.replies)
+            ? ticket.replies
+            : [],
         }))
       : [];
   } catch {
@@ -137,8 +167,8 @@ function getTicketCode(id) {
   return `#${String(id).slice(-5).padStart(5, '0')}`;
 }
 
-function formatDate(ticket) {
-  const date = new Date(ticket.createdAt || Number(ticket.id));
+function formatDate(item) {
+  const date = new Date(item.createdAt || Number(item.id));
 
   if (Number.isNaN(date.getTime())) {
     return 'Agora';
@@ -163,6 +193,7 @@ export default function App() {
   const [email, setEmail] = useState('');
   const [descricao, setDescricao] = useState('');
   const [urgencia, setUrgencia] = useState('medio');
+  const [replyText, setReplyText] = useState('');
   const [confirmation, setConfirmation] = useState('');
 
   const composePanelRef = useRef(null);
@@ -205,6 +236,9 @@ export default function App() {
   const selectedPriority =
     priorities[selectedTicket?.urgencia] || priorities.medio;
 
+  const selectedStatus = normalizeStatus(selectedTicket?.status);
+  const isResolved = selectedStatus === 'resolvido';
+
   function focusNewTicket() {
     composePanelRef.current?.scrollIntoView({
       behavior: 'smooth',
@@ -230,9 +264,15 @@ export default function App() {
       descricao: descricao.trim(),
       urgencia,
       createdAt: new Date().toISOString(),
+      status: 'aberto',
+      replies: [],
     };
 
-    setTickets((currentTickets) => [ticket, ...currentTickets]);
+    setTickets((currentTickets) => [
+      ticket,
+      ...currentTickets,
+    ]);
+
     setSelectedTicketId(ticket.id);
     setFilter('todos');
     setSearch('');
@@ -247,7 +287,9 @@ export default function App() {
   }
 
   function handleDelete(id) {
-    const remaining = tickets.filter((ticket) => ticket.id !== id);
+    const remaining = tickets.filter(
+      (ticket) => ticket.id !== id,
+    );
 
     setTickets(remaining);
 
@@ -256,13 +298,87 @@ export default function App() {
     }
   }
 
-  const logoPath = `${import.meta.env.BASE_URL}imagem/logo2026.png`;
+  function handleReply(event) {
+    event.preventDefault();
+
+    if (!selectedTicket || !replyText.trim() || isResolved) {
+      return;
+    }
+
+    const reply = {
+      id: Date.now(),
+      author: 'Equipe LTHS',
+      message: replyText.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    setTickets((currentTickets) =>
+      currentTickets.map((ticket) =>
+        ticket.id === selectedTicket.id
+          ? {
+              ...ticket,
+              replies: [...(ticket.replies || []), reply],
+            }
+          : ticket,
+      ),
+    );
+
+    setReplyText('');
+
+    setConfirmation(
+      `Resposta registrada no ticket ${getTicketCode(
+        selectedTicket.id,
+      )}.`,
+    );
+  }
+
+  function handleToggleStatus() {
+    if (!selectedTicket) return;
+
+    const nextStatus = isResolved
+      ? 'aberto'
+      : 'resolvido';
+
+    setTickets((currentTickets) =>
+      currentTickets.map((ticket) =>
+        ticket.id === selectedTicket.id
+          ? {
+              ...ticket,
+              status: nextStatus,
+              resolvedAt:
+                nextStatus === 'resolvido'
+                  ? new Date().toISOString()
+                  : null,
+            }
+          : ticket,
+      ),
+    );
+
+    setConfirmation(
+      nextStatus === 'resolvido'
+        ? `Ticket ${getTicketCode(
+            selectedTicket.id,
+          )} marcado como resolvido.`
+        : `Ticket ${getTicketCode(
+            selectedTicket.id,
+          )} reaberto.`,
+    );
+  }
+
+  const logoPath =
+    `${import.meta.env.BASE_URL}imagem/logo2026.png`;
 
   return (
     <div className="support-app">
-      <aside className="nav-rail" aria-label="Navegação principal">
+      <aside
+        className="nav-rail"
+        aria-label="Navegação principal"
+      >
         <div className="nav-rail__brand">
-          <img src={logoPath} alt="LTHS Tecnologia" />
+          <img
+            src={logoPath}
+            alt="LTHS Tecnologia"
+          />
         </div>
 
         <nav className="nav-rail__nav">
@@ -337,12 +453,17 @@ export default function App() {
             type="search"
             placeholder="Buscar tickets"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
             aria-label="Buscar tickets"
           />
         </label>
 
-        <div className="queue-filters" aria-label="Filtrar tickets">
+        <div
+          className="queue-filters"
+          aria-label="Filtrar tickets"
+        >
           {[
             ['todos', 'Todos'],
             ['alto', 'Alta'],
@@ -351,7 +472,9 @@ export default function App() {
           ].map(([value, label]) => (
             <button
               type="button"
-              className={filter === value ? 'is-selected' : ''}
+              className={
+                filter === value ? 'is-selected' : ''
+              }
               key={value}
               onClick={() => setFilter(value)}
             >
@@ -360,11 +483,18 @@ export default function App() {
           ))}
         </div>
 
-        <div className="queue-list" aria-label="Lista de tickets">
+        <div
+          className="queue-list"
+          aria-label="Lista de tickets"
+        >
           {filteredTickets.length > 0 ? (
             filteredTickets.map((ticket) => {
               const priority =
-                priorities[ticket.urgencia] || priorities.medio;
+                priorities[ticket.urgencia] ||
+                priorities.medio;
+
+              const ticketStatus =
+                normalizeStatus(ticket.status);
 
               const isSelected =
                 selectedTicket?.id === ticket.id;
@@ -375,9 +505,14 @@ export default function App() {
                   className={`queue-ticket ${
                     isSelected ? 'is-selected' : ''
                   }`}
-                  data-priority={ticket.urgencia || 'medio'}
+                  data-priority={
+                    ticket.urgencia || 'medio'
+                  }
+                  data-status={ticketStatus}
                   key={ticket.id}
-                  onClick={() => setSelectedTicketId(ticket.id)}
+                  onClick={() =>
+                    setSelectedTicketId(ticket.id)
+                  }
                 >
                   <span className="queue-ticket__meta">
                     {getTicketCode(ticket.id)}
@@ -389,8 +524,16 @@ export default function App() {
 
                   <p>{ticket.descricao}</p>
 
-                  <span className="queue-ticket__priority">
-                    {priority.label}
+                  <span className="queue-ticket__footer">
+                    <span className="queue-ticket__priority">
+                      {priority.label}
+                    </span>
+
+                    <span className="queue-ticket__status">
+                      {ticketStatus === 'resolvido'
+                        ? 'Resolvido'
+                        : 'Aberto'}
+                    </span>
                   </span>
                 </button>
               );
@@ -427,7 +570,10 @@ export default function App() {
               Ambiente ativo
             </span>
 
-            <button type="button" onClick={focusNewTicket}>
+            <button
+              type="button"
+              onClick={focusNewTicket}
+            >
               <Icon name="plus" size={16} />
               Abrir ticket
             </button>
@@ -435,7 +581,10 @@ export default function App() {
         </header>
 
         {confirmation && (
-          <div className="ticket-notice" role="status">
+          <div
+            className="ticket-notice"
+            role="status"
+          >
             {confirmation}
           </div>
         )}
@@ -444,10 +593,15 @@ export default function App() {
           <section className="ticket-view">
             <header className="ticket-view__header">
               <div>
-                <div className="ticket-state">
+                <div
+                  className="ticket-state"
+                  data-status={selectedStatus}
+                >
                   <span>
                     <i />
-                    Aberto
+                    {isResolved
+                      ? 'Resolvido'
+                      : 'Aberto'}
                   </span>
 
                   <span className="ticket-view__code">
@@ -455,33 +609,71 @@ export default function App() {
                   </span>
                 </div>
 
-                <h2>Solicitação de {selectedTicket.nome}</h2>
+                <h2>
+                  Solicitação de {selectedTicket.nome}
+                </h2>
 
                 <p>
-                  Recebida {formatDate(selectedTicket)} e aguardando
-                  acompanhamento.
+                  {isResolved
+                    ? `Resolvida após o atendimento iniciado em ${formatDate(
+                        selectedTicket,
+                      )}.`
+                    : `Recebida ${formatDate(
+                        selectedTicket,
+                      )} e aguardando acompanhamento.`}
                 </p>
               </div>
 
-              <span
-                className="priority-tag"
-                data-priority={selectedTicket.urgencia || 'medio'}
-              >
-                {selectedPriority.label} prioridade
-              </span>
+              <div className="ticket-view__actions">
+                <span
+                  className="priority-tag"
+                  data-priority={
+                    selectedTicket.urgencia || 'medio'
+                  }
+                >
+                  {selectedPriority.label} prioridade
+                </span>
+
+                <button
+                  type="button"
+                  className="resolve-ticket"
+                  data-status={selectedStatus}
+                  onClick={handleToggleStatus}
+                >
+                  <Icon
+                    name={
+                      isResolved ? 'reopen' : 'check'
+                    }
+                    size={16}
+                  />
+
+                  {isResolved
+                    ? 'Reabrir ticket'
+                    : 'Marcar como resolvido'}
+                </button>
+              </div>
             </header>
 
             <div className="ticket-view__content">
               <section className="ticket-thread">
                 <header>
                   <div>
-                    <span>DETALHES DA SOLICITAÇÃO</span>
-                    <h3>Mensagem recebida</h3>
+                    <span>
+                      DETALHES DA SOLICITAÇÃO
+                    </span>
+
+                    <h3>Histórico do atendimento</h3>
                   </div>
 
-                  <span className="thread-status">
+                  <span
+                    className="thread-status"
+                    data-status={selectedStatus}
+                  >
                     <i />
-                    Novo
+
+                    {isResolved
+                      ? 'Atendimento encerrado'
+                      : 'Em atendimento'}
                   </span>
                 </header>
 
@@ -492,22 +684,114 @@ export default function App() {
 
                   <div>
                     <header>
-                      <strong>{selectedTicket.nome}</strong>
-                      <span>{formatDate(selectedTicket)}</span>
+                      <strong>
+                        {selectedTicket.nome}
+                      </strong>
+
+                      <span>
+                        {formatDate(selectedTicket)}
+                      </span>
                     </header>
 
-                    <p>{selectedTicket.descricao}</p>
+                    <p>
+                      {selectedTicket.descricao}
+                    </p>
                   </div>
                 </article>
+
+                {(selectedTicket.replies || []).map(
+                  (reply) => (
+                    <article
+                      className="support-message"
+                      key={reply.id}
+                    >
+                      <div>
+                        <header>
+                          <strong>
+                            {reply.author ||
+                              'Equipe LTHS'}
+                          </strong>
+
+                          <span>
+                            {formatDate(reply)}
+                          </span>
+                        </header>
+
+                        <p>{reply.message}</p>
+                      </div>
+
+                      <span className="support-message__avatar">
+                        LT
+                      </span>
+                    </article>
+                  ),
+                )}
 
                 <div className="ticket-event">
                   <span />
 
                   <p>
-                    <strong>Ticket criado</strong> · A solicitação foi
-                    adicionada à fila de atendimento.
+                    <strong>Ticket criado</strong> · A
+                    solicitação foi adicionada à fila.
                   </p>
                 </div>
+
+                {isResolved && (
+                  <div className="ticket-event ticket-event--resolved">
+                    <span />
+
+                    <p>
+                      <strong>Ticket resolvido</strong> · O
+                      atendimento foi encerrado pela equipe.
+                    </p>
+                  </div>
+                )}
+
+                <form
+                  className="reply-composer"
+                  onSubmit={handleReply}
+                >
+                  <label htmlFor="ticket-reply">
+                    Responder ao solicitante
+                  </label>
+
+                  <textarea
+                    id="ticket-reply"
+                    value={replyText}
+                    onChange={(event) =>
+                      setReplyText(event.target.value)
+                    }
+                    placeholder={
+                      isResolved
+                        ? 'Reabra o ticket para enviar uma nova resposta.'
+                        : 'Escreva a resposta do atendimento...'
+                    }
+                    rows={4}
+                    disabled={isResolved}
+                  />
+
+                  <div className="reply-composer__footer">
+                    <span>
+                      {isResolved
+                        ? 'O atendimento está encerrado.'
+                        : 'A resposta será registrada no histórico do ticket.'}
+                    </span>
+
+                    <button
+                      type="submit"
+                      disabled={
+                        isResolved ||
+                        !replyText.trim()
+                      }
+                    >
+                      Responder
+                      <Icon
+                        name="arrow"
+                        size={16}
+                      />
+                    </button>
+                  </div>
+                </form>
               </section>
 
               <aside className="ticket-details">
@@ -517,10 +801,15 @@ export default function App() {
                   </span>
 
                   <div className="requester-card">
-                    <span>{getInitials(selectedTicket.nome)}</span>
+                    <span>
+                      {getInitials(selectedTicket.nome)}
+                    </span>
 
                     <div>
-                      <strong>{selectedTicket.nome}</strong>
+                      <strong>
+                        {selectedTicket.nome}
+                      </strong>
+
                       <small>Solicitante</small>
                     </div>
                   </div>
@@ -528,40 +817,80 @@ export default function App() {
                   <dl>
                     <div>
                       <dt>
-                        <Icon name="mail" size={15} />
+                        <Icon
+                          name="mail"
+                          size={15}
+                        />
                         E-mail
                       </dt>
 
-                      <dd>{selectedTicket.email}</dd>
+                      <dd>
+                        {selectedTicket.email}
+                      </dd>
                     </div>
 
                     <div>
                       <dt>
-                        <Icon name="clock" size={15} />
+                        <Icon
+                          name="clock"
+                          size={15}
+                        />
                         Registrado
                       </dt>
 
-                      <dd>{formatDate(selectedTicket)}</dd>
+                      <dd>
+                        {formatDate(selectedTicket)}
+                      </dd>
                     </div>
                   </dl>
                 </section>
 
                 <section
                   className="ticket-details__priority"
-                  data-priority={selectedTicket.urgencia || 'medio'}
+                  data-priority={
+                    selectedTicket.urgencia || 'medio'
+                  }
                 >
                   <span className="ticket-details__label">
                     PRIORIZAÇÃO
                   </span>
 
-                  <strong>{selectedPriority.label}</strong>
-                  <p>{selectedPriority.description}</p>
+                  <strong>
+                    {selectedPriority.label}
+                  </strong>
+
+                  <p>
+                    {selectedPriority.description}
+                  </p>
+                </section>
+
+                <section
+                  className="ticket-details__status"
+                  data-status={selectedStatus}
+                >
+                  <span className="ticket-details__label">
+                    STATUS
+                  </span>
+
+                  <strong>
+                    {isResolved
+                      ? 'Resolvido'
+                      : 'Aberto'}
+                  </strong>
+
+                  <p>
+                    {isResolved
+                      ? 'Atendimento concluído pela equipe.'
+                      : 'Chamado disponível para atendimento.'}
+                  </p>
                 </section>
 
                 <button
                   type="button"
                   className="delete-ticket"
-                  onClick={() => handleDelete(selectedTicket.id)}
+                  onClick={() =>
+                    handleDelete(selectedTicket.id)
+                  }
                 >
                   <Icon name="trash" size={16} />
                   Excluir ticket
@@ -578,11 +907,14 @@ export default function App() {
             <h2>Nenhum ticket selecionado</h2>
 
             <p>
-              Crie um novo chamado ou ajuste os filtros da fila para
-              visualizar uma solicitação.
+              Crie um novo chamado ou ajuste os filtros
+              para visualizar uma solicitação.
             </p>
 
-            <button type="button" onClick={focusNewTicket}>
+            <button
+              type="button"
+              onClick={focusNewTicket}
+            >
               Criar ticket
               <Icon name="arrow" size={16} />
             </button>
@@ -590,7 +922,10 @@ export default function App() {
         )}
       </main>
 
-      <aside className="compose-panel" ref={composePanelRef}>
+      <aside
+        className="compose-panel"
+        ref={composePanelRef}
+      >
         <header className="compose-panel__header">
           <div>
             <span>NOVO TICKET</span>
@@ -603,10 +938,14 @@ export default function App() {
         </header>
 
         <p className="compose-panel__intro">
-          Descreva a demanda para ela entrar na fila de atendimento.
+          Descreva a demanda para ela entrar na fila de
+          atendimento.
         </p>
 
-        <form className="compose-form" onSubmit={handleAddTicket}>
+        <form
+          className="compose-form"
+          onSubmit={handleAddTicket}
+        >
           <label>
             <span>Nome completo</span>
 
@@ -615,7 +954,9 @@ export default function App() {
               type="text"
               placeholder="Como devemos chamar você?"
               value={nome}
-              onChange={(event) => setNome(event.target.value)}
+              onChange={(event) =>
+                setNome(event.target.value)
+              }
               required
             />
           </label>
@@ -627,7 +968,9 @@ export default function App() {
               type="email"
               placeholder="voce@empresa.com"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
               required
             />
           </label>
@@ -638,7 +981,9 @@ export default function App() {
             <textarea
               placeholder="Conte o que aconteceu e inclua as informações importantes para o atendimento."
               value={descricao}
-              onChange={(event) => setDescricao(event.target.value)}
+              onChange={(event) =>
+                setDescricao(event.target.value)
+              }
               rows={6}
               required
             />
@@ -652,7 +997,9 @@ export default function App() {
                 ([value, priority]) => (
                   <label
                     className={
-                      urgencia === value ? 'is-selected' : ''
+                      urgencia === value
+                        ? 'is-selected'
+                        : ''
                     }
                     data-priority={value}
                     key={value}
@@ -663,15 +1010,22 @@ export default function App() {
                       value={value}
                       checked={urgencia === value}
                       onChange={(event) =>
-                        setUrgencia(event.target.value)
+                        setUrgencia(
+                          event.target.value,
+                        )
                       }
                     />
 
                     <span className="priority-picker__dot" />
 
                     <span>
-                      <strong>{priority.label}</strong>
-                      <small>{priority.description}</small>
+                      <strong>
+                        {priority.label}
+                      </strong>
+
+                      <small>
+                        {priority.description}
+                      </small>
                     </span>
                   </label>
                 ),
@@ -679,7 +1033,10 @@ export default function App() {
             </div>
           </fieldset>
 
-          <button type="submit" className="submit-ticket">
+          <button
+            type="submit"
+            className="submit-ticket"
+          >
             Criar ticket
             <Icon name="arrow" size={17} />
           </button>

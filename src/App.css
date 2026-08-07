@@ -1349,3 +1349,267 @@ textarea:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+
+.queue-ticket__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.queue-ticket__status {
+  color: var(--green);
+  font-size: 0.58rem;
+  font-weight: 750;
+}
+
+.queue-ticket[data-status="resolvido"] {
+  opacity: 0.68;
+}
+
+.queue-ticket[data-status="resolvido"] .queue-ticket__status {
+  color: var(--teal);
+}
+
+.queue-ticket[data-status="resolvido"] .queue-ticket__meta i {
+  background: var(--teal);
+}
+
+.ticket-view__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.resolve-ticket {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid rgba(56, 211, 159, 0.34);
+  border-radius: 4px;
+  color: #8ce8c5;
+  background: rgba(56, 211, 159, 0.1);
+  cursor: pointer;
+  font-size: 0.63rem;
+  font-weight: 750;
+}
+
+.resolve-ticket:hover {
+  border-color: rgba(56, 211, 159, 0.62);
+  background: rgba(56, 211, 159, 0.18);
+}
+
+.resolve-ticket[data-status="resolvido"] {
+  border-color: rgba(44, 157, 228, 0.34);
+  color: #9ad8ff;
+  background: rgba(44, 157, 228, 0.1);
+}
+
+.resolve-ticket[data-status="resolvido"]:hover {
+  border-color: rgba(44, 157, 228, 0.62);
+  background: rgba(44, 157, 228, 0.18);
+}
+
+.ticket-state[data-status="resolvido"],
+.thread-status[data-status="resolvido"] {
+  color: var(--teal) !important;
+}
+
+.ticket-state[data-status="resolvido"] i,
+.thread-status[data-status="resolvido"] i {
+  background: var(--teal);
+  box-shadow: 0 0 9px rgba(32, 199, 173, 0.48);
+}
+
+.support-message {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  max-width: 610px;
+  margin-left: auto;
+  padding: 4px 0 22px;
+}
+
+.support-message > div {
+  min-width: 0;
+  text-align: right;
+}
+
+.support-message header {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.support-message header strong {
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.support-message header span {
+  color: var(--muted-dark);
+  font-size: 0.65rem;
+}
+
+.support-message p {
+  margin: 9px 0 0;
+  padding: 13px 14px;
+  border: 1px solid #275276;
+  border-radius: 5px 5px 1px 5px;
+  color: #dcefff;
+  background: #112d43;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.support-message__avatar {
+  display: grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #2b8177;
+  border-radius: 50%;
+  color: #adfff0;
+  background: #103a38;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.ticket-event--resolved {
+  margin-top: 12px;
+  border-top: 0;
+}
+
+.ticket-event--resolved > span {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.reply-composer {
+  display: grid;
+  gap: 9px;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.reply-composer label {
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 720;
+}
+
+.reply-composer textarea {
+  display: block;
+  width: 100%;
+  min-height: 96px;
+  padding: 11px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  outline: 0;
+  color: var(--text);
+  background: var(--input);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.reply-composer textarea:focus {
+  border-color: #348ac0;
+  box-shadow: 0 0 0 3px rgba(44, 157, 228, 0.1);
+}
+
+.reply-composer textarea:disabled {
+  color: var(--muted-dark);
+  background: #0d1319;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.reply-composer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.reply-composer__footer > span {
+  color: var(--muted);
+  font-size: 0.63rem;
+  line-height: 1.4;
+}
+
+.reply-composer__footer button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 11px;
+  border-radius: 4px;
+  color: #effaff;
+  background: #187bc8;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.reply-composer__footer button:hover:not(:disabled) {
+  background: #2392e3;
+}
+
+.reply-composer__footer button:disabled {
+  color: #66798a;
+  background: #1a2630;
+  cursor: not-allowed;
+}
+
+.ticket-details__status strong {
+  display: block;
+  color: var(--green);
+  font-size: 0.87rem;
+}
+
+.ticket-details__status p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.ticket-details__status[data-status="resolvido"] strong {
+  color: var(--teal);
+}
+
+@media (max-width: 570px) {
+  .ticket-view__actions {
+    width: 100%;
+    align-items: stretch;
+    justify-content: flex-start;
+    flex-direction: column;
+  }
+
+  .priority-tag,
+  .resolve-ticket {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .reply-composer__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reply-composer__footer button {
+    width: 100%;
+  }
+}
