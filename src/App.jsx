@@ -16,14 +16,34 @@ const priorities = {
   },
 };
 
+const priorityAliases = {
+  alta: 'alto',
+  alto: 'alto',
+  high: 'alto',
+  media: 'medio',
+  'média': 'medio',
+  medio: 'medio',
+  'médio': 'medio',
+  medium: 'medio',
+  baixa: 'baixo',
+  baixo: 'baixo',
+  low: 'baixo',
+};
+
+function normalizePriority(value) {
+  const normalizedValue = String(value || '')
+    .trim()
+    .toLocaleLowerCase('pt-BR');
+
+  return priorityAliases[normalizedValue] || 'medio';
+}
+
 function Icon({ name, size = 18 }) {
   const icons = {
-    grid: (
+    inbox: (
       <>
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
+        <path d="M4 4h16v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z" />
+        <path d="M4 14h4l2 3h4l2-3h4" />
       </>
     ),
     ticket: (
@@ -48,19 +68,24 @@ function Icon({ name, size = 18 }) {
         <path d="M10 11v5M14 11v5" />
       </>
     ),
-    arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
-    chevron: <path d="m9 18 6-6-6-6" />,
-    inbox: (
+    mail: (
       <>
-        <path d="M4 4h16v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z" />
-        <path d="M4 14h4l2 3h4l2-3h4" />
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="m4 7 8 6 8-6" />
       </>
     ),
-    info: (
+    clock: (
       <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 10v5" />
-        <path d="M12 7v.01" />
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M12 7v5l3.2 2" />
+      </>
+    ),
+    arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    help: (
+      <>
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M9.7 9.5a2.4 2.4 0 1 1 3.9 1.9c-.9.7-1.6 1.2-1.6 2.6" />
+        <path d="M12 17v.01" />
       </>
     ),
   };
@@ -73,7 +98,7 @@ function Icon({ name, size = 18 }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.9"
+      strokeWidth="1.85"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
@@ -86,17 +111,37 @@ function getStoredTickets() {
   try {
     const saved = localStorage.getItem('tickets');
     const parsed = saved ? JSON.parse(saved) : [];
-    return Array.isArray(parsed) ? parsed : [];
+
+    return Array.isArray(parsed)
+      ? parsed.map((ticket) => ({
+          ...ticket,
+          urgencia: normalizePriority(ticket?.urgencia),
+        }))
+      : [];
   } catch {
     return [];
   }
+}
+
+function getInitials(name) {
+  return String(name || 'Usuário')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+}
+
+function getTicketCode(id) {
+  return `#${String(id).slice(-5).padStart(5, '0')}`;
 }
 
 function formatDate(ticket) {
   const date = new Date(ticket.createdAt || Number(ticket.id));
 
   if (Number.isNaN(date.getTime())) {
-    return 'Registrado agora';
+    return 'Agora';
   }
 
   return new Intl.DateTimeFormat('pt-BR', {
@@ -106,78 +151,69 @@ function formatDate(ticket) {
     minute: '2-digit',
   })
     .format(date)
-    .replace(',', ' •');
-}
-
-function getTicketCode(id) {
-  return `#${String(id).slice(-5).padStart(5, '0')}`;
-}
-
-function getInitials(name) {
-  const initials = name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('');
-
-  return initials.toUpperCase() || 'US';
+    .replace(',', ' ·');
 }
 
 export default function App() {
   const [tickets, setTickets] = useState(getStoredTickets);
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const [filter, setFilter] = useState('todos');
+  const [search, setSearch] = useState('');
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [descricao, setDescricao] = useState('');
   const [urgencia, setUrgencia] = useState('medio');
-  const [filter, setFilter] = useState('todos');
-  const [search, setSearch] = useState('');
   const [confirmation, setConfirmation] = useState('');
-  const formPanelRef = useRef(null);
+
+  const composePanelRef = useRef(null);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('tickets', JSON.stringify(tickets));
-    } catch {
-      return undefined;
-    }
-
-    return undefined;
+    localStorage.setItem('tickets', JSON.stringify(tickets));
   }, [tickets]);
 
   useEffect(() => {
-    if (!confirmation) {
-      return undefined;
-    }
+    if (!confirmation) return undefined;
 
-    const timer = window.setTimeout(() => setConfirmation(''), 4500);
+    const timer = window.setTimeout(() => {
+      setConfirmation('');
+    }, 4200);
+
     return () => window.clearTimeout(timer);
   }, [confirmation]);
-
-  const ticketMetrics = useMemo(() => {
-    const highPriority = tickets.filter((ticket) => ticket.urgencia === 'alto').length;
-    const regularPriority = tickets.filter((ticket) => ticket.urgencia !== 'alto').length;
-
-    return {
-      total: tickets.length,
-      highPriority,
-      regularPriority,
-    };
-  }, [tickets]);
 
   const filteredTickets = useMemo(() => {
     const term = search.trim().toLocaleLowerCase('pt-BR');
 
     return tickets.filter((ticket) => {
-      const matchesFilter = filter === 'todos' || ticket.urgencia === filter;
-      const searchableText = `${ticket.nome} ${ticket.email} ${ticket.descricao}`.toLocaleLowerCase('pt-BR');
-      return matchesFilter && (!term || searchableText.includes(term));
+      const matchesPriority =
+        filter === 'todos' || ticket.urgencia === filter;
+
+      const text =
+        `${ticket.nome} ${ticket.email} ${ticket.descricao}`.toLocaleLowerCase(
+          'pt-BR',
+        );
+
+      return matchesPriority && (!term || text.includes(term));
     });
   }, [filter, search, tickets]);
 
+  const selectedTicket =
+    tickets.find((ticket) => ticket.id === selectedTicketId) ||
+    tickets[0] ||
+    null;
+
+  const selectedPriority =
+    priorities[selectedTicket?.urgencia] || priorities.medio;
+
   function focusNewTicket() {
-    formPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.setTimeout(() => document.getElementById('ticket-nome')?.focus(), 350);
+    composePanelRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+
+    window.setTimeout(() => {
+      document.getElementById('ticket-nome')?.focus();
+    }, 220);
   }
 
   function handleAddTicket(event) {
@@ -187,7 +223,7 @@ export default function App() {
       return;
     }
 
-    const newTicket = {
+    const ticket = {
       id: Date.now(),
       nome: nome.trim(),
       email: email.trim(),
@@ -196,309 +232,459 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
 
-    setTickets((currentTickets) => [newTicket, ...currentTickets]);
+    setTickets((currentTickets) => [ticket, ...currentTickets]);
+    setSelectedTicketId(ticket.id);
+    setFilter('todos');
+    setSearch('');
     setNome('');
     setEmail('');
     setDescricao('');
     setUrgencia('medio');
-    setFilter('todos');
-    setSearch('');
-    setConfirmation(`Chamado ${getTicketCode(newTicket.id)} aberto e incluído na fila.`);
+
+    setConfirmation(
+      `Ticket ${getTicketCode(ticket.id)} criado e enviado para a fila.`,
+    );
   }
 
   function handleDelete(id) {
-    setTickets((currentTickets) => currentTickets.filter((ticket) => ticket.id !== id));
-  }
+    const remaining = tickets.filter((ticket) => ticket.id !== id);
 
-  function selectFilter(nextFilter) {
-    setFilter(nextFilter);
-    setSearch('');
+    setTickets(remaining);
+
+    if (selectedTicket?.id === id) {
+      setSelectedTicketId(remaining[0]?.id ?? null);
+    }
   }
 
   const logoPath = `${import.meta.env.BASE_URL}imagem/logo2026.png`;
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar__brand">
-          <img src={logoPath} alt="LTHS Tecnologia" className="sidebar__logo" />
-          <div>
-            <strong>LTHS Tecnologia</strong>
-            <span>Central de suporte</span>
-          </div>
+    <div className="support-app">
+      <aside className="nav-rail" aria-label="Navegação principal">
+        <div className="nav-rail__brand">
+          <img src={logoPath} alt="LTHS Tecnologia" />
         </div>
 
-        <div className="sidebar__workspace">
-          <span className="sidebar__workspace-dot" />
-          Atendimento interno
-        </div>
-
-        <nav className="sidebar__nav" aria-label="Navegação da central de tickets">
-          <p>Central</p>
-          <button type="button" className={filter === 'todos' ? 'is-active' : ''} onClick={() => selectFilter('todos')}>
-            <Icon name="grid" />
-            <span>Visão geral</span>
-          </button>
-          <button type="button" onClick={focusNewTicket}>
-            <Icon name="plus" />
-            <span>Novo chamado</span>
-          </button>
-
-          <p className="sidebar__nav-heading">Fila de atendimento</p>
-          <button type="button" className={filter === 'alto' ? 'is-active' : ''} onClick={() => selectFilter('alto')}>
-            <Icon name="ticket" />
-            <span>Alta prioridade</span>
-            <b>{ticketMetrics.highPriority}</b>
-          </button>
-          <button type="button" className={filter === 'medio' ? 'is-active' : ''} onClick={() => selectFilter('medio')}>
+        <nav className="nav-rail__nav">
+          <button
+            type="button"
+            className="is-active"
+            aria-label="Tickets"
+          >
             <Icon name="inbox" />
-            <span>Prioridade média</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={focusNewTicket}
+            aria-label="Novo ticket"
+          >
+            <Icon name="plus" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilter('alto')}
+            aria-label="Tickets de alta prioridade"
+          >
+            <Icon name="ticket" />
           </button>
         </nav>
 
-        <div className="sidebar__help">
-          <span className="sidebar__help-icon"><Icon name="info" size={16} /></span>
-          <div>
-            <strong>Precisa de ajuda?</strong>
-            <span>Abra um chamado com os detalhes da solicitação.</span>
+        <button
+          type="button"
+          className="nav-rail__help"
+          aria-label="Ajuda"
+        >
+          <Icon name="help" />
+        </button>
+      </aside>
+
+      <aside className="queue-panel">
+        <header className="queue-panel__header">
+          <div className="brand-lockup">
+            <strong>Central de suporte</strong>
+
+            <span>
+              <i />
+              Operação online
+            </span>
           </div>
+
+          <button
+            type="button"
+            className="queue-create"
+            onClick={focusNewTicket}
+          >
+            <Icon name="plus" size={16} />
+            Novo
+          </button>
+        </header>
+
+        <div className="queue-panel__title">
+          <div>
+            <span>CAIXA DE ENTRADA</span>
+            <h1>Chamados</h1>
+          </div>
+
+          <b>{tickets.length}</b>
         </div>
 
-        <div className="sidebar__footer">
-          <span>LTHS Tecnologia</span>
-          <small>Operações digitais</small>
+        <label className="queue-search">
+          <Icon name="search" size={17} />
+
+          <input
+            type="search"
+            placeholder="Buscar tickets"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            aria-label="Buscar tickets"
+          />
+        </label>
+
+        <div className="queue-filters" aria-label="Filtrar tickets">
+          {[
+            ['todos', 'Todos'],
+            ['alto', 'Alta'],
+            ['medio', 'Média'],
+            ['baixo', 'Baixa'],
+          ].map(([value, label]) => (
+            <button
+              type="button"
+              className={filter === value ? 'is-selected' : ''}
+              key={value}
+              onClick={() => setFilter(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="queue-list" aria-label="Lista de tickets">
+          {filteredTickets.length > 0 ? (
+            filteredTickets.map((ticket) => {
+              const priority =
+                priorities[ticket.urgencia] || priorities.medio;
+
+              const isSelected =
+                selectedTicket?.id === ticket.id;
+
+              return (
+                <button
+                  type="button"
+                  className={`queue-ticket ${
+                    isSelected ? 'is-selected' : ''
+                  }`}
+                  data-priority={ticket.urgencia || 'medio'}
+                  key={ticket.id}
+                  onClick={() => setSelectedTicketId(ticket.id)}
+                >
+                  <span className="queue-ticket__meta">
+                    {getTicketCode(ticket.id)}
+                    <i />
+                    {formatDate(ticket)}
+                  </span>
+
+                  <strong>{ticket.nome}</strong>
+
+                  <p>{ticket.descricao}</p>
+
+                  <span className="queue-ticket__priority">
+                    {priority.label}
+                  </span>
+                </button>
+              );
+            })
+          ) : (
+            <div className="queue-empty">
+              <Icon name="inbox" size={22} />
+
+              <strong>Nenhum ticket aqui</strong>
+
+              <span>
+                Ajuste os filtros ou crie um novo chamado.
+              </span>
+            </div>
+          )}
         </div>
       </aside>
 
-      <main className="main-content">
-        <header className="topbar">
-          <div className="topbar__title">
-            <span>Suporte interno</span>
-            <strong>Central de tickets</strong>
+      <main className="ticket-workspace">
+        <header className="workspace-toolbar">
+          <div className="workspace-toolbar__title">
+            <span>Atendimento / Tickets</span>
+
+            <strong>
+              {selectedTicket
+                ? getTicketCode(selectedTicket.id)
+                : 'Sem ticket selecionado'}
+            </strong>
           </div>
-          <div className="topbar__user">
-            <div className="topbar__avatar">LT</div>
-            <div>
-              <strong>Equipe LTHS</strong>
-              <span>Administrador</span>
-            </div>
+
+          <div className="workspace-toolbar__actions">
+            <span>
+              <i />
+              Ambiente ativo
+            </span>
+
+            <button type="button" onClick={focusNewTicket}>
+              <Icon name="plus" size={16} />
+              Abrir ticket
+            </button>
           </div>
         </header>
 
-        <div className="dashboard">
-          <section className="page-heading">
-            <div>
-              <span className="eyebrow">ATENDIMENTO E SUPORTE</span>
-              <h1>Organize cada solicitação em um só lugar.</h1>
-              <p>Registre chamados, priorize demandas e acompanhe a fila de atendimento de forma clara.</p>
+        {confirmation && (
+          <div className="ticket-notice" role="status">
+            {confirmation}
+          </div>
+        )}
+
+        {selectedTicket ? (
+          <section className="ticket-view">
+            <header className="ticket-view__header">
+              <div>
+                <div className="ticket-state">
+                  <span>
+                    <i />
+                    Aberto
+                  </span>
+
+                  <span className="ticket-view__code">
+                    {getTicketCode(selectedTicket.id)}
+                  </span>
+                </div>
+
+                <h2>Solicitação de {selectedTicket.nome}</h2>
+
+                <p>
+                  Recebida {formatDate(selectedTicket)} e aguardando
+                  acompanhamento.
+                </p>
+              </div>
+
+              <span
+                className="priority-tag"
+                data-priority={selectedTicket.urgencia || 'medio'}
+              >
+                {selectedPriority.label} prioridade
+              </span>
+            </header>
+
+            <div className="ticket-view__content">
+              <section className="ticket-thread">
+                <header>
+                  <div>
+                    <span>DETALHES DA SOLICITAÇÃO</span>
+                    <h3>Mensagem recebida</h3>
+                  </div>
+
+                  <span className="thread-status">
+                    <i />
+                    Novo
+                  </span>
+                </header>
+
+                <article className="request-message">
+                  <span className="request-message__avatar">
+                    {getInitials(selectedTicket.nome)}
+                  </span>
+
+                  <div>
+                    <header>
+                      <strong>{selectedTicket.nome}</strong>
+                      <span>{formatDate(selectedTicket)}</span>
+                    </header>
+
+                    <p>{selectedTicket.descricao}</p>
+                  </div>
+                </article>
+
+                <div className="ticket-event">
+                  <span />
+
+                  <p>
+                    <strong>Ticket criado</strong> · A solicitação foi
+                    adicionada à fila de atendimento.
+                  </p>
+                </div>
+              </section>
+
+              <aside className="ticket-details">
+                <section>
+                  <span className="ticket-details__label">
+                    SOLICITANTE
+                  </span>
+
+                  <div className="requester-card">
+                    <span>{getInitials(selectedTicket.nome)}</span>
+
+                    <div>
+                      <strong>{selectedTicket.nome}</strong>
+                      <small>Solicitante</small>
+                    </div>
+                  </div>
+
+                  <dl>
+                    <div>
+                      <dt>
+                        <Icon name="mail" size={15} />
+                        E-mail
+                      </dt>
+
+                      <dd>{selectedTicket.email}</dd>
+                    </div>
+
+                    <div>
+                      <dt>
+                        <Icon name="clock" size={15} />
+                        Registrado
+                      </dt>
+
+                      <dd>{formatDate(selectedTicket)}</dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <section
+                  className="ticket-details__priority"
+                  data-priority={selectedTicket.urgencia || 'medio'}
+                >
+                  <span className="ticket-details__label">
+                    PRIORIZAÇÃO
+                  </span>
+
+                  <strong>{selectedPriority.label}</strong>
+                  <p>{selectedPriority.description}</p>
+                </section>
+
+                <button
+                  type="button"
+                  className="delete-ticket"
+                  onClick={() => handleDelete(selectedTicket.id)}
+                >
+                  <Icon name="trash" size={16} />
+                  Excluir ticket
+                </button>
+              </aside>
             </div>
-            <button type="button" className="primary-action" onClick={focusNewTicket}>
-              <Icon name="plus" size={19} />
-              Abrir chamado
+          </section>
+        ) : (
+          <section className="workspace-empty">
+            <span>
+              <Icon name="ticket" size={28} />
+            </span>
+
+            <h2>Nenhum ticket selecionado</h2>
+
+            <p>
+              Crie um novo chamado ou ajuste os filtros da fila para
+              visualizar uma solicitação.
+            </p>
+
+            <button type="button" onClick={focusNewTicket}>
+              Criar ticket
+              <Icon name="arrow" size={16} />
             </button>
           </section>
-
-          <section className="metrics" aria-label="Resumo dos chamados">
-            <article className="metric-card">
-              <span className="metric-card__icon metric-card__icon--blue"><Icon name="ticket" /></span>
-              <div>
-                <span>Chamados abertos</span>
-                <strong>{ticketMetrics.total}</strong>
-              </div>
-              <small>Fila atual</small>
-            </article>
-            <article className="metric-card">
-              <span className="metric-card__icon metric-card__icon--red"><Icon name="info" /></span>
-              <div>
-                <span>Alta prioridade</span>
-                <strong>{ticketMetrics.highPriority}</strong>
-              </div>
-              <small>Exigem atenção</small>
-            </article>
-            <article className="metric-card">
-              <span className="metric-card__icon metric-card__icon--cyan"><Icon name="inbox" /></span>
-              <div>
-                <span>Demais solicitações</span>
-                <strong>{ticketMetrics.regularPriority}</strong>
-              </div>
-              <small>Em acompanhamento</small>
-            </article>
-          </section>
-
-          {confirmation && (
-            <div className="confirmation" role="status">
-              <span>✓</span>
-              {confirmation}
-            </div>
-          )}
-
-          <section className="workspace">
-            <div className="tickets-panel">
-              <div className="panel-heading">
-                <div>
-                  <span className="eyebrow">FILA ATUAL</span>
-                  <h2>Chamados em atendimento</h2>
-                </div>
-                <span className="ticket-count">{filteredTickets.length} {filteredTickets.length === 1 ? 'chamado' : 'chamados'}</span>
-              </div>
-
-              <div className="ticket-toolbar">
-                <label className="search-field">
-                  <Icon name="search" size={17} />
-                  <input
-                    type="search"
-                    placeholder="Buscar por nome, e-mail ou assunto"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    aria-label="Buscar chamados"
-                  />
-                </label>
-                <div className="filter-group" aria-label="Filtrar chamados por prioridade">
-                  {[
-                    ['todos', 'Todos'],
-                    ['alto', 'Alta'],
-                    ['medio', 'Média'],
-                    ['baixo', 'Baixa'],
-                  ].map(([value, label]) => (
-                    <button
-                      type="button"
-                      key={value}
-                      className={filter === value ? 'is-selected' : ''}
-                      onClick={() => setFilter(value)}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="ticket-list">
-                {filteredTickets.length > 0 ? (
-                  filteredTickets.map((ticket) => {
-                    const priority = priorities[ticket.urgencia] || priorities.medio;
-
-                    return (
-                      <article className="ticket-card" data-priority={ticket.urgencia || 'medio'} key={ticket.id}>
-                        <div className="ticket-card__identity">
-                          <span className="requester-avatar">{getInitials(ticket.nome)}</span>
-                          <div>
-                            <div className="ticket-card__line">
-                              <span className="ticket-code">{getTicketCode(ticket.id)}</span>
-                              <span className="ticket-status"><i />Aberto</span>
-                            </div>
-                            <h3>{ticket.nome}</h3>
-                            <span className="requester-email">{ticket.email}</span>
-                          </div>
-                        </div>
-
-                        <p className="ticket-description">{ticket.descricao}</p>
-
-                        <div className="ticket-card__footer">
-                          <div className="ticket-meta">
-                            <span className="priority-badge">{priority.label}</span>
-                            <span>{formatDate(ticket)}</span>
-                          </div>
-                          <button
-                            type="button"
-                            className="delete-button"
-                            onClick={() => handleDelete(ticket.id)}
-                            aria-label={`Excluir chamado ${getTicketCode(ticket.id)}`}
-                            title="Excluir chamado"
-                          >
-                            <Icon name="trash" size={17} />
-                            <span>Excluir</span>
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })
-                ) : (
-                  <div className="empty-state">
-                    <span><Icon name="inbox" size={24} /></span>
-                    <h3>Nenhum chamado encontrado</h3>
-                    <p>Ajuste sua busca ou abra um novo chamado para iniciar a fila.</p>
-                    <button type="button" onClick={focusNewTicket}>Abrir chamado <Icon name="arrow" size={16} /></button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <aside className="form-panel" ref={formPanelRef}>
-              <div className="panel-heading">
-                <div>
-                  <span className="eyebrow">NOVA SOLICITAÇÃO</span>
-                  <h2>Abrir chamado</h2>
-                </div>
-                <span className="form-panel__badge"><Icon name="ticket" size={16} /></span>
-              </div>
-              <p className="form-panel__intro">Informe os dados abaixo para incluir sua solicitação na fila de suporte.</p>
-
-              <form className="ticket-form" onSubmit={handleAddTicket}>
-                <label className="field">
-                  <span>Nome completo</span>
-                  <input
-                    id="ticket-nome"
-                    type="text"
-                    placeholder="Como devemos chamar você?"
-                    value={nome}
-                    onChange={(event) => setNome(event.target.value)}
-                    required
-                  />
-                </label>
-
-                <label className="field">
-                  <span>E-mail para retorno</span>
-                  <input
-                    type="email"
-                    placeholder="voce@empresa.com"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    required
-                  />
-                </label>
-
-                <label className="field">
-                  <span>Descreva a solicitação</span>
-                  <textarea
-                    placeholder="Explique o que aconteceu e inclua informações que ajudem no atendimento."
-                    value={descricao}
-                    onChange={(event) => setDescricao(event.target.value)}
-                    required
-                    rows={5}
-                  />
-                </label>
-
-                <fieldset className="priority-field">
-                  <legend>Prioridade</legend>
-                  <div className="priority-options">
-                    {Object.entries(priorities).map(([value, priority]) => (
-                      <label className={urgencia === value ? 'is-selected' : ''} key={value}>
-                        <input
-                          type="radio"
-                          name="urgencia"
-                          value={value}
-                          checked={urgencia === value}
-                          onChange={(event) => setUrgencia(event.target.value)}
-                        />
-                        <span className="priority-options__dot" />
-                        <span>
-                          <strong>{priority.label}</strong>
-                          <small>{priority.description}</small>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                <button type="submit" className="submit-ticket">
-                  Criar chamado
-                  <Icon name="arrow" size={18} />
-                </button>
-              </form>
-            </aside>
-          </section>
-        </div>
+        )}
       </main>
+
+      <aside className="compose-panel" ref={composePanelRef}>
+        <header className="compose-panel__header">
+          <div>
+            <span>NOVO TICKET</span>
+            <h2>Abrir solicitação</h2>
+          </div>
+
+          <span>
+            <Icon name="ticket" size={17} />
+          </span>
+        </header>
+
+        <p className="compose-panel__intro">
+          Descreva a demanda para ela entrar na fila de atendimento.
+        </p>
+
+        <form className="compose-form" onSubmit={handleAddTicket}>
+          <label>
+            <span>Nome completo</span>
+
+            <input
+              id="ticket-nome"
+              type="text"
+              placeholder="Como devemos chamar você?"
+              value={nome}
+              onChange={(event) => setNome(event.target.value)}
+              required
+            />
+          </label>
+
+          <label>
+            <span>E-mail para retorno</span>
+
+            <input
+              type="email"
+              placeholder="voce@empresa.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </label>
+
+          <label>
+            <span>Solicitação</span>
+
+            <textarea
+              placeholder="Conte o que aconteceu e inclua as informações importantes para o atendimento."
+              value={descricao}
+              onChange={(event) => setDescricao(event.target.value)}
+              rows={6}
+              required
+            />
+          </label>
+
+          <fieldset>
+            <legend>Prioridade</legend>
+
+            <div className="priority-picker">
+              {Object.entries(priorities).map(
+                ([value, priority]) => (
+                  <label
+                    className={
+                      urgencia === value ? 'is-selected' : ''
+                    }
+                    data-priority={value}
+                    key={value}
+                  >
+                    <input
+                      type="radio"
+                      name="prioridade"
+                      value={value}
+                      checked={urgencia === value}
+                      onChange={(event) =>
+                        setUrgencia(event.target.value)
+                      }
+                    />
+
+                    <span className="priority-picker__dot" />
+
+                    <span>
+                      <strong>{priority.label}</strong>
+                      <small>{priority.description}</small>
+                    </span>
+                  </label>
+                ),
+              )}
+            </div>
+          </fieldset>
+
+          <button type="submit" className="submit-ticket">
+            Criar ticket
+            <Icon name="arrow" size={17} />
+          </button>
+        </form>
+      </aside>
     </div>
   );
 }

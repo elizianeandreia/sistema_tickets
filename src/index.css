@@ -2,12 +2,19 @@ html,
 body,
 #root {
   min-height: 100%;
-  width:100%;
+  width: 100%;
+}
+
+html {
+  color-scheme: dark;
+  background: #080c11;
 }
 
 body {
   margin: 0;
   overflow-x: hidden;
+  color: #e6edf3;
+  background: #080c11;
 }
 
 * {
