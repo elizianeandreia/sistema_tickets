@@ -688,7 +688,7 @@ textarea:focus-visible {
 }
 
 .ticket-card[data-priority="alto"]::before {
-  background: #c9364f;
+  background: var(--red-700);
 }
 
 .ticket-card[data-priority="medio"]::before {
@@ -696,7 +696,7 @@ textarea:focus-visible {
 }
 
 .ticket-card[data-priority="baixo"]::before {
-  background: #138a64;
+  background: var(--green-700);
 }
 
 .ticket-card:hover {
@@ -1242,109 +1242,4 @@ textarea:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
-}
-
-html,
-body,
-#root,
-.app-shell,
-.main-content {
-  background: #06080d !important;
-  color: #e6edf6;
-}
-
-body {
-  background: #06080d !important;
-}
-
-.topbar {
-  background: #090d14 !important;
-  border-bottom-color: #1e2a38;
-}
-
-.dashboard {
-  background: transparent !important;
-}
-
-.metric-card,
-.tickets-panel,
-.form-panel {
-  background: #0c0c0d !important;
-  border-color: #263445;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
-}
-
-.ticket-card,
-.empty-state {
-  background: #0a0f16 !important;
-  border-color: #101821;
-}
-
-.search-field,
-.filter-group,
-.ticket-count,
-.field input,
-.field textarea,
-.priority-options label {
-  background: #3c3f43 !important;
-  border-color: #2a3a4d;
-  color: #e7eef8;
-}
-
-.priority-options label.is-selected,
-.filter-group button.is-selected {
-  background: #10243d !important;
-  border-color: #3e7ed7;
-}
-
-.page-heading h1,
-.panel-heading h2,
-.empty-state h3,
-.ticket-card h3,
-.metric-card strong {
-  color: #f4f8ff !important;
-}
-
-.page-heading p,
-.ticket-description,
-.form-panel__intro,
-.requester-email,
-.ticket-meta,
-.metric-card div span,
-.metric-card small,
-.priority-options small {
-  color: #94a8be !important;
-}
-
-.field > span,
-.priority-field legend,
-.priority-options strong {
-  color: #d9e5f3 !important;
-}
-
-.priority-options label:first-child .priority-options__dot,
-.priority-options label[data-priority="alto"] .priority-options__dot {
-  background: #ff596f !important;
-}
-
-.priority-options label:nth-child(2) .priority-options__dot,
-.priority-options label[data-priority="medio"] .priority-options__dot {
-  background: #f4af2e !important;
-}
-
-.priority-options label:nth-child(3) .priority-options__dot,
-.priority-options label[data-priority="baixo"] .priority-options__dot {
-  background: #31d39a !important;
-}
-
-.ticket-card[data-priority="alto"]::before {
-  background: #ff596f !important;
-}
-
-.ticket-card[data-priority="medio"]::before {
-  background: #f4af2e !important;
-}
-
-.ticket-card[data-priority="baixo"]::before {
-  background: #31d39a !important;
 }
