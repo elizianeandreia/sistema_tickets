@@ -417,13 +417,6 @@ export default function App() {
             <Icon name="plus" />
           </button>
 
-          <button
-            type="button"
-            onClick={() => setFilter('alto')}
-            aria-label="Tickets de alta prioridade"
-          >
-            <Icon name="ticket" />
-          </button>
         </nav>
 
         <button
