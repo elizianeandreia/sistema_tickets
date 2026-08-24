@@ -107,6 +107,14 @@ function Icon({ name, size = 18 }) {
         <path d="M5.4 12a7.5 7.5 0 1 0 2.1-5.2L4 10" />
       </>
     ),
+    sun: (
+      <>
+        <circle cx="12" cy="12" r="3.5" />
+        <path d="M12 2.5v2M12 19.5v2M4.5 12h-2M21.5 12h-2" />
+        <path d="m5.3 5.3 1.4 1.4m10.6 10.6 1.4 1.4m0-13.4-1.4 1.4M6.7 17.3l-1.4 1.4" />
+      </>
+    ),
+    moon: <path d="M20 15.4A8.2 8.2 0 0 1 8.6 4a8.3 8.3 0 1 0 11.4 11.4Z" />,
     help: (
       <>
         <circle cx="12" cy="12" r="8.5" />
@@ -186,6 +194,12 @@ function formatDate(item) {
 
 export default function App() {
   const [tickets, setTickets] = useState(getStoredTickets);
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('support-theme');
+    return savedTheme === 'light' || savedTheme === 'dark'
+      ? savedTheme
+      : 'dark';
+  });
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [filter, setFilter] = useState('todos');
   const [search, setSearch] = useState('');
@@ -201,6 +215,11 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('tickets', JSON.stringify(tickets));
   }, [tickets]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('support-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     if (!confirmation) return undefined;
@@ -369,7 +388,7 @@ export default function App() {
     `${import.meta.env.BASE_URL}imagem/logo2026.png`;
 
   return (
-    <div className="support-app">
+    <div className="support-app" data-theme={theme}>
       <aside
         className="nav-rail"
         aria-label="Navegação principal"
@@ -569,6 +588,31 @@ export default function App() {
               <i />
               Ambiente ativo
             </span>
+
+            <button
+              type="button"
+              className="theme-toggle"
+              aria-label={
+                theme === 'dark'
+                  ? 'Ativar modo claro'
+                  : 'Ativar modo escuro'
+              }
+              title={
+                theme === 'dark'
+                  ? 'Ativar modo claro'
+                  : 'Ativar modo escuro'
+              }
+              onClick={() =>
+                setTheme((currentTheme) =>
+                  currentTheme === 'dark' ? 'light' : 'dark',
+                )
+              }
+            >
+              <Icon
+                name={theme === 'dark' ? 'sun' : 'moon'}
+                size={17}
+              />
+            </button>
 
             <button
               type="button"
@@ -931,10 +975,6 @@ export default function App() {
             <span>NOVO TICKET</span>
             <h2>Abrir solicitação</h2>
           </div>
-
-          <span>
-            <Icon name="ticket" size={17} />
-          </span>
         </header>
 
         <p className="compose-panel__intro">

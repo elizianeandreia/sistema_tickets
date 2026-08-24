@@ -2565,3 +2565,440 @@ body {
     padding-top: 19px;
   }
 }
+
+/* Refinamento visual e temas */
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f6f8;
+  --rail: #17243a;
+  --rail-dark: #111a2b;
+  --panel: #ffffff;
+  --workspace: #f6f8fa;
+  --input: #ffffff;
+  --line: #e2e8ee;
+  --line-strong: #cbd6df;
+  --text: #172333;
+  --text-soft: #34465a;
+  --muted: #66788b;
+  --muted-dark: #8797a8;
+  --teal: #0f8f83;
+  --teal-soft: rgba(15, 143, 131, 0.1);
+  --blue: #176d88;
+  --blue-soft: rgba(23, 109, 136, 0.1);
+  --red: #d5475b;
+  --red-soft: rgba(213, 71, 91, 0.09);
+  --amber: #bc780f;
+  --amber-soft: rgba(188, 120, 15, 0.1);
+  --green: #16865b;
+  --green-soft: rgba(22, 134, 91, 0.1);
+  --ui-action: #176d88;
+  --ui-action-hover: #115a71;
+  --ui-action-text: #ffffff;
+  --ui-action-soft: #eaf3f6;
+  --ui-action-border: #b4d0da;
+  --ui-action-shadow: rgba(23, 109, 136, 0.2);
+  --ui-hover: #f1f5f7;
+  --ui-selected: #eaf2f7;
+  --ui-message: #ffffff;
+  --ui-support-message: #eaf3f8;
+  --ui-disabled: #e5ecf1;
+  --ui-disabled-text: #536a7c;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #09111d;
+  --rail: #0b2a35;
+  --rail-dark: #071d25;
+  --panel: #111b2a;
+  --workspace: #0d1624;
+  --input: #0b1421;
+  --line: #26364a;
+  --line-strong: #354a62;
+  --text: #edf3f8;
+  --text-soft: #c8d5e1;
+  --muted: #91a3b6;
+  --muted-dark: #71869b;
+  --teal: #35c8ad;
+  --teal-soft: rgba(53, 200, 173, 0.12);
+  --blue: #55b6d1;
+  --blue-soft: rgba(85, 182, 209, 0.12);
+  --red: #ff7d8d;
+  --red-soft: rgba(255, 125, 141, 0.12);
+  --amber: #e5b459;
+  --amber-soft: rgba(229, 180, 89, 0.12);
+  --green: #42d69d;
+  --green-soft: rgba(66, 214, 157, 0.12);
+  --ui-action: #1a718c;
+  --ui-action-hover: #2386a3;
+  --ui-action-text: #f8fbfd;
+  --ui-action-soft: rgba(54, 146, 173, 0.13);
+  --ui-action-border: #2d6075;
+  --ui-action-shadow: rgba(5, 20, 31, 0.36);
+  --ui-hover: #172437;
+  --ui-selected: #172b40;
+  --ui-message: #101f2c;
+  --ui-support-message: #153048;
+  --ui-disabled: #1b2a3c;
+  --ui-disabled-text: #a3b5c5;
+}
+
+html[data-theme] body,
+html[data-theme] #root {
+  color: var(--text);
+  background: var(--bg);
+}
+
+.support-app[data-theme] {
+  color: var(--text);
+  background: var(--bg);
+}
+
+.support-app[data-theme] .queue-panel,
+.support-app[data-theme] .queue-panel__header,
+.support-app[data-theme] .workspace-toolbar,
+.support-app[data-theme] .ticket-view__header,
+.support-app[data-theme] .ticket-details,
+.support-app[data-theme] .compose-panel {
+  border-color: var(--line);
+  background: var(--panel);
+}
+
+.support-app[data-theme] .ticket-workspace,
+.support-app[data-theme] .ticket-thread,
+.support-app[data-theme] .workspace-empty {
+  background: var(--workspace);
+}
+
+.support-app[data-theme] .nav-rail {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, var(--rail), var(--rail-dark));
+  box-shadow: 4px 0 18px rgba(4, 12, 20, 0.08);
+}
+
+.support-app[data-theme] .brand-lockup strong,
+.support-app[data-theme] .queue-panel__title h1,
+.support-app[data-theme] .ticket-view h2,
+.support-app[data-theme] .ticket-thread h3,
+.support-app[data-theme] .compose-panel h2,
+.support-app[data-theme] .request-message header strong,
+.support-app[data-theme] .support-message header strong,
+.support-app[data-theme] .reply-composer label,
+.support-app[data-theme] .compose-form > label > span,
+.support-app[data-theme] .compose-form legend {
+  color: var(--text);
+}
+
+.support-app[data-theme] .queue-panel__title > div > span,
+.support-app[data-theme] .ticket-thread > header > div > span,
+.support-app[data-theme] .compose-panel__header > div > span,
+.support-app[data-theme] .ticket-details__label {
+  color: var(--teal);
+}
+
+.support-app[data-theme] .brand-lockup span,
+.support-app[data-theme] .workspace-toolbar__title span,
+.support-app[data-theme] .workspace-toolbar__actions > span,
+.support-app[data-theme] .ticket-view__header p,
+.support-app[data-theme] .compose-panel__intro,
+.support-app[data-theme] .requester-card small,
+.support-app[data-theme] .ticket-details dt,
+.support-app[data-theme] .ticket-details__priority p,
+.support-app[data-theme] .ticket-details__status p,
+.support-app[data-theme] .reply-composer__footer > span {
+  color: var(--muted);
+}
+
+.support-app[data-theme] .workspace-toolbar__title strong,
+.support-app[data-theme] .queue-ticket strong,
+.support-app[data-theme] .requester-card strong,
+.support-app[data-theme] .priority-picker strong {
+  color: var(--text-soft);
+}
+
+.support-app[data-theme] .queue-ticket p,
+.support-app[data-theme] .queue-ticket__meta,
+.support-app[data-theme] .request-message header span,
+.support-app[data-theme] .support-message header span,
+.support-app[data-theme] .priority-picker small {
+  color: var(--muted-dark);
+}
+
+.support-app[data-theme] .queue-panel__title b {
+  min-width: 29px;
+  height: 29px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-action-border);
+  border-radius: 999px;
+  color: var(--ui-action);
+  background: var(--ui-action-soft);
+  box-shadow: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.support-app[data-theme] .queue-search,
+.support-app[data-theme] .compose-form input,
+.support-app[data-theme] .compose-form textarea,
+.support-app[data-theme] .reply-composer textarea {
+  border-color: var(--line-strong);
+  color: var(--text);
+  background: var(--input);
+  box-shadow: none;
+}
+
+.support-app[data-theme] .queue-search input {
+  color: var(--text);
+}
+
+.support-app[data-theme] .queue-search input::placeholder,
+.support-app[data-theme] .compose-form input::placeholder,
+.support-app[data-theme] .compose-form textarea::placeholder,
+.support-app[data-theme] .reply-composer textarea::placeholder {
+  color: var(--muted-dark);
+}
+
+.support-app[data-theme] .queue-search:focus-within,
+.support-app[data-theme] .compose-form input:focus,
+.support-app[data-theme] .compose-form textarea:focus,
+.support-app[data-theme] .reply-composer textarea:focus {
+  border-color: var(--ui-action-border);
+  background: var(--input);
+  box-shadow: 0 0 0 3px var(--blue-soft);
+}
+
+.support-app[data-theme] .queue-filters {
+  border-color: var(--line);
+}
+
+.support-app[data-theme] .queue-filters button {
+  color: var(--muted);
+  background: transparent;
+}
+
+.support-app[data-theme] .queue-filters button:hover {
+  color: var(--text-soft);
+  background: var(--ui-hover);
+}
+
+.support-app[data-theme] .queue-filters button.is-selected {
+  color: var(--ui-action-text);
+  background: var(--ui-action);
+  box-shadow: none;
+}
+
+.support-app[data-theme] .queue-ticket {
+  border-color: transparent;
+  color: var(--text);
+  background: transparent;
+}
+
+.support-app[data-theme] .queue-ticket:hover {
+  border-color: var(--line);
+  background: var(--ui-hover);
+}
+
+.support-app[data-theme] .queue-ticket.is-selected {
+  border-color: var(--ui-action-border);
+  background: var(--ui-selected);
+  box-shadow: 0 6px 18px rgba(6, 20, 32, 0.06);
+}
+
+.support-app[data-theme] .queue-ticket::before {
+  width: 3px;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.support-app[data-theme] .queue-ticket__priority,
+.support-app[data-theme] .priority-tag {
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.support-app[data-theme] .request-message p {
+  border-color: var(--line-strong);
+  color: var(--text-soft);
+  background: var(--ui-message);
+  box-shadow: 0 4px 12px rgba(6, 20, 32, 0.04);
+}
+
+.support-app[data-theme] .support-message p {
+  border-color: var(--ui-action-border);
+  color: var(--text-soft);
+  background: var(--ui-support-message);
+  box-shadow: 0 4px 12px rgba(6, 20, 32, 0.05);
+}
+
+.support-app[data-theme] .ticket-event,
+.support-app[data-theme] .reply-composer,
+.support-app[data-theme] .ticket-details > section {
+  border-color: var(--line);
+}
+
+.support-app[data-theme] .ticket-event > span {
+  border-color: var(--muted-dark);
+  background: var(--panel);
+  box-shadow: none;
+}
+
+.support-app[data-theme] .ticket-event p {
+  color: var(--muted);
+}
+
+.support-app[data-theme] .ticket-event strong {
+  color: var(--text-soft);
+}
+
+.support-app[data-theme] .requester-card > span,
+.support-app[data-theme] .request-message__avatar {
+  border-color: var(--ui-action-border);
+  color: var(--blue);
+  background: var(--ui-action-soft);
+}
+
+.support-app[data-theme] .support-message__avatar {
+  border-color: rgba(53, 200, 173, 0.38);
+  color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.support-app[data-theme] .ticket-details dd {
+  color: var(--blue);
+}
+
+.support-app[data-theme] .priority-picker label {
+  border-color: var(--line-strong);
+  background: var(--input);
+  box-shadow: none;
+}
+
+.support-app[data-theme] .priority-picker label:hover {
+  border-color: var(--ui-action-border);
+  background: var(--ui-hover);
+}
+
+.support-app[data-theme] .priority-picker label.is-selected {
+  border-color: var(--ui-action-border);
+  background: var(--ui-selected);
+  box-shadow: 0 0 0 2px var(--blue-soft);
+}
+
+.support-app[data-theme] .priority-picker__dot {
+  width: 8px;
+  height: 8px;
+  box-shadow: none !important;
+}
+
+.support-app[data-theme] .queue-create {
+  border-color: var(--ui-action-border);
+  color: var(--ui-action);
+  background: var(--ui-action-soft);
+  box-shadow: none;
+}
+
+.support-app[data-theme] .queue-create:hover {
+  border-color: var(--ui-action);
+  color: var(--ui-action);
+  background: var(--ui-selected);
+  box-shadow: none;
+}
+
+.support-app[data-theme] .workspace-toolbar__actions > button:not(.theme-toggle),
+.support-app[data-theme] .workspace-empty button,
+.support-app[data-theme] .submit-ticket,
+.support-app[data-theme] .reply-composer__footer button:not(:disabled) {
+  border: 1px solid transparent;
+  color: var(--ui-action-text);
+  background: var(--ui-action);
+  box-shadow: 0 5px 14px var(--ui-action-shadow);
+}
+
+.support-app[data-theme] .workspace-toolbar__actions > button:not(.theme-toggle):hover,
+.support-app[data-theme] .workspace-empty button:hover,
+.support-app[data-theme] .submit-ticket:hover,
+.support-app[data-theme] .reply-composer__footer button:hover:not(:disabled) {
+  color: var(--ui-action-text);
+  background: var(--ui-action-hover);
+  box-shadow: 0 7px 18px var(--ui-action-shadow);
+  transform: translateY(-1px);
+}
+
+.support-app[data-theme] .workspace-toolbar__actions .theme-toggle {
+  display: inline-grid;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--blue);
+  background: var(--ui-hover);
+  box-shadow: none;
+}
+
+.support-app[data-theme] .workspace-toolbar__actions .theme-toggle:hover {
+  border-color: var(--ui-action-border);
+  color: var(--ui-action);
+  background: var(--ui-action-soft);
+  box-shadow: none;
+  transform: none;
+}
+
+.support-app[data-theme] .reply-composer__footer button:disabled {
+  border: 1px solid var(--line-strong);
+  color: var(--ui-disabled-text);
+  background: var(--ui-disabled);
+  box-shadow: none;
+  opacity: 1;
+}
+
+.support-app[data-theme] .resolve-ticket {
+  border-color: rgba(22, 134, 91, 0.34);
+  color: var(--green);
+  background: var(--green-soft);
+  box-shadow: none;
+}
+
+.support-app[data-theme] .resolve-ticket:hover {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.support-app[data-theme] .resolve-ticket[data-status="resolvido"] {
+  border-color: var(--ui-action-border);
+  color: var(--blue);
+  background: var(--ui-action-soft);
+}
+
+.support-app[data-theme] .delete-ticket {
+  border-color: rgba(213, 71, 91, 0.4);
+  color: var(--red);
+  background: transparent;
+  box-shadow: none;
+}
+
+.support-app[data-theme] .delete-ticket:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-soft);
+}
+
+.support-app[data-theme] .compose-panel__header {
+  justify-content: flex-start;
+}
+
+@media (max-width: 570px) {
+  .support-app[data-theme] .workspace-toolbar__actions {
+    gap: 7px;
+  }
+
+  .support-app[data-theme] .workspace-toolbar__actions .theme-toggle {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
+  }
+}
