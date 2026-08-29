@@ -1,85 +1,53 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+
 import './App.css'
-import './legibilidade.css'
 
-const priorities = {
-  alto: {
-    label: 'Alta',
-    description: 'Impacto imediato',
-    sla: '2h',
-  },
-  medio: {
-    label: 'Média',
-    description: 'Precisa de atenção',
-    sla: '8h',
-  },
-  baixo: {
-    label: 'Baixa',
-    description: 'Pode ser programado',
-    sla: '24h',
-  },
+import {
+  useServiceDesk,
+} from './context/ServiceDeskContext.jsx'
+
+import {
+  formatCompactDate,
+  formatTicketCode,
+  getInitials,
+} from './utils/formatters.js'
+
+import {
+  formatSlaRemaining,
+  getSlaState,
+} from './services/ticketService.js'
+
+const STATUS_LABELS = {
+  new: 'Novo',
+  in_progress: 'Em atendimento',
+  waiting: 'Aguardando',
+  resolved: 'Resolvido',
 }
 
-const priorityAliases = {
-  alta: 'alto',
-  alto: 'alto',
-  high: 'alto',
-  media: 'medio',
-  'média': 'medio',
-  medio: 'medio',
-  'médio': 'medio',
-  medium: 'medio',
-  baixa: 'baixo',
-  baixo: 'baixo',
-  low: 'baixo',
+const PRIORITY_LABELS = {
+  high: 'Alta',
+  medium: 'Média',
+  low: 'Baixa',
 }
 
-const categoryLabels = {
-  acesso: 'Acesso',
-  sistema: 'Sistema',
-  infraestrutura: 'Infraestrutura',
-  financeiro: 'Financeiro',
-  geral: 'Geral',
+const CATEGORY_LABELS = {
+  access: 'Acessos',
+  network: 'Rede',
+  systems: 'Sistemas',
+  devices: 'Dispositivos',
+  general: 'Geral',
 }
 
-function normalizePriority(value) {
-  return (
-    priorityAliases[
-      String(value || '')
-        .trim()
-        .toLocaleLowerCase('pt-BR')
-    ] || 'medio'
-  )
-}
-
-function normalizeStatus(value) {
-  const status = String(value || '')
-    .trim()
-    .toLocaleLowerCase('pt-BR')
-
-  return [
-    'resolvido',
-    'resolvida',
-    'resolved',
-    'fechado',
-    'fechada',
-    'closed',
-  ].includes(status)
-    ? 'resolvido'
-    : 'aberto'
-}
-
-function Icon({ name, size = 18 }) {
+function Icon({
+  name,
+  size = 18,
+}) {
   const icons = {
     inbox: (
       <>
         <path d="M4 4h16v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z" />
         <path d="M4 14h4l2 3h4l2-3h4" />
       </>
-    ),
-
-    plus: (
-      <path d="M12 5v14M5 12h14" />
     ),
 
     search: (
@@ -89,29 +57,16 @@ function Icon({ name, size = 18 }) {
           cy="10.8"
           r="6.3"
         />
-
         <path d="m16 16 4 4" />
       </>
     ),
 
-    trash: (
-      <>
-        <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" />
-      </>
+    plus: (
+      <path d="M12 5v14M5 12h14" />
     ),
 
-    mail: (
-      <>
-        <rect
-          x="3"
-          y="5"
-          width="18"
-          height="14"
-          rx="2"
-        />
-
-        <path d="m4 7 8 6 8-6" />
-      </>
+    check: (
+      <path d="m5 12.5 4.2 4.2L19 7" />
     ),
 
     clock: (
@@ -121,24 +76,36 @@ function Icon({ name, size = 18 }) {
           cy="12"
           r="8.5"
         />
-
         <path d="M12 7v5l3.2 2" />
       </>
     ),
 
-    arrow: (
-      <path d="M5 12h14m-6-6 6 6-6 6" />
-    ),
-
-    check: (
-      <path d="m5 12.5 4.2 4.2L19 7" />
-    ),
-
-    reopen: (
+    user: (
       <>
-        <path d="M4 7v5h5" />
-        <path d="M5.4 12a7.5 7.5 0 1 0 2.1-5.2L4 10" />
+        <circle
+          cx="12"
+          cy="8"
+          r="3.5"
+        />
+        <path d="M5 20c.8-4 3-6 7-6s6.2 2 7 6" />
       </>
+    ),
+
+    users: (
+      <>
+        <circle
+          cx="9"
+          cy="8"
+          r="3"
+        />
+        <path d="M3.5 19c.6-3.5 2.5-5.3 5.5-5.3 3.1 0 5 1.8 5.6 5.3" />
+        <path d="M15 6.2a2.7 2.7 0 0 1 0 5.2" />
+        <path d="M16.2 14c2.3.4 3.7 2.1 4.3 5" />
+      </>
+    ),
+
+    activity: (
+      <path d="M3 12h4l2-6 4 12 2-6h6" />
     ),
 
     sun: (
@@ -148,9 +115,7 @@ function Icon({ name, size = 18 }) {
           cy="12"
           r="3.5"
         />
-
         <path d="M12 2.5v2M12 19.5v2M4.5 12h-2M21.5 12h-2" />
-
         <path d="m5.3 5.3 1.4 1.4m10.6 10.6 1.4 1.4m0-13.4-1.4 1.4M6.7 17.3l-1.4 1.4" />
       </>
     ),
@@ -159,36 +124,8 @@ function Icon({ name, size = 18 }) {
       <path d="M20 15.4A8.2 8.2 0 0 1 8.6 4a8.3 8.3 0 1 0 11.4 11.4Z" />
     ),
 
-    bolt: (
-      <path d="m13.5 2-8 11h6l-1 9 8-12h-6l1-8Z" />
-    ),
-
-    chart: (
-      <>
-        <path d="M4 20V10M10 20V4M16 20v-7M22 20V7" />
-      </>
-    ),
-
-    settings: (
-      <>
-        <circle
-          cx="12"
-          cy="12"
-          r="3"
-        />
-
-        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" />
-      </>
-    ),
-
     chevron: (
       <path d="m9 18 6-6-6-6" />
-    ),
-
-    filter: (
-      <>
-        <path d="M4 6h16M7 12h10M10 18h4" />
-      </>
     ),
   }
 
@@ -200,2753 +137,1234 @@ function Icon({ name, size = 18 }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.75"
+      strokeWidth="1.7"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      {icons[name]}
+      {icons[name] ?? icons.activity}
     </svg>
   )
 }
 
-function getStoredTickets() {
-  try {
-    const saved =
-      localStorage.getItem(
-        'tickets',
-      )
-
-    const parsed =
-      saved
-        ? JSON.parse(saved)
-        : []
-
-    return Array.isArray(parsed)
-      ? parsed.map(
-          ticket => ({
-            ...ticket,
-
-            urgencia:
-              normalizePriority(
-                ticket?.urgencia,
-              ),
-
-            status:
-              normalizeStatus(
-                ticket?.status,
-              ),
-
-            replies:
-              Array.isArray(
-                ticket?.replies,
-              )
-                ? ticket.replies
-                : [],
-
-            categoria:
-              ticket?.categoria ||
-              'geral',
-
-            assunto:
-              ticket?.assunto ||
-              '',
-          }),
-        )
-      : []
-  } catch {
-    return []
-  }
-}
-
-function getInitials(name) {
-  return String(
-    name || 'Usuário',
-  )
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map(
-      part =>
-        part[0],
-    )
-    .join('')
-    .toUpperCase()
-}
-
-function getTicketCode(id) {
-  return `#${String(id)
-    .slice(-5)
-    .padStart(5, '0')}`
-}
-
-function formatDate(
-  item,
-  mode = 'short',
-) {
-  const date =
-    new Date(
-      item?.createdAt ||
-        Number(item?.id),
-    )
-
-  if (
-    Number.isNaN(
-      date.getTime(),
-    )
-  ) {
-    return 'Agora'
-  }
-
-  if (
-    mode === 'full'
-  ) {
-    return new Intl.DateTimeFormat(
-      'pt-BR',
-      {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      },
-    ).format(date)
-  }
-
-  return new Intl.DateTimeFormat(
-    'pt-BR',
-    {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    },
-  )
-    .format(date)
-    .replace(
-      ',',
-      ' ·',
-    )
-}
-
-function getTicketSubject(
-  ticket,
-) {
-  if (
-    ticket
-      ?.assunto
-      ?.trim()
-  ) {
-    return ticket
-      .assunto
-      .trim()
-  }
-
-  const description =
-    String(
-      ticket?.descricao ||
-        '',
-    ).trim()
-
-  if (!description) {
-    return `Solicitação de ${
-      ticket?.nome ||
-      'usuário'
-    }`
-  }
-
-  return (
-    description.length > 58
-      ? `${description
-          .slice(0, 58)
-          .trim()}…`
-      : description
-  )
-}
-
-function getLastActivity(
-  ticket,
-) {
-  const replies =
-    Array.isArray(
-      ticket?.replies,
-    )
-      ? ticket.replies
-      : []
-
-  return (
-    replies[
-      replies.length - 1
-    ] ||
-    ticket
-  )
-}
-
 export default function App() {
-  const [
+  const {
     tickets,
-    setTickets,
-  ] =
-    useState(
-      getStoredTickets,
-    )
-
-  const [
-    theme,
+    team,
+    preferences,
+    openTickets,
+    resolvedTickets,
+    replyToTicket,
+    addNoteToTicket,
+    setTicketWaiting,
+    closeTicket,
+    reopenResolvedTicket,
+    setTicketPriority,
+    setTicketAssignee,
     setTheme,
-  ] =
-    useState(() => {
-      const savedTheme =
-        localStorage.getItem(
-          'support-theme',
-        )
-
-      return (
-        savedTheme ===
-          'light' ||
-        savedTheme ===
-          'dark'
-          ? savedTheme
-          : 'dark'
-      )
-    })
+  } = useServiceDesk()
 
   const [
     selectedTicketId,
     setSelectedTicketId,
-  ] =
-    useState(null)
-
-  const [
-    view,
-    setView,
-  ] =
-    useState(
-      'todos',
-    )
+  ] = useState(
+    () => tickets[0]?.id ?? null
+  )
 
   const [
     search,
     setSearch,
-  ] =
-    useState('')
+  ] = useState('')
+
+  const [
+    statusFilter,
+    setStatusFilter,
+  ] = useState('all')
 
   const [
     replyText,
     setReplyText,
-  ] =
-    useState('')
+  ] = useState('')
 
   const [
-    toast,
-    setToast,
-  ] =
-    useState('')
+    composerMode,
+    setComposerMode,
+  ] = useState('reply')
 
-  const [
-    isComposeOpen,
-    setIsComposeOpen,
-  ] =
-    useState(false)
+  useEffect(() => {
+    document.documentElement.dataset.theme =
+      preferences.theme
+  }, [preferences.theme])
 
-  const [
-    nome,
-    setNome,
-  ] =
-    useState('')
+  useEffect(() => {
+    if (
+      selectedTicketId &&
+      tickets.some(
+        (ticket) =>
+          ticket.id ===
+          selectedTicketId
+      )
+    ) {
+      return
+    }
 
-  const [
-    email,
-    setEmail,
-  ] =
-    useState('')
-
-  const [
-    assunto,
-    setAssunto,
-  ] =
-    useState('')
-
-  const [
-    categoria,
-    setCategoria,
-  ] =
-    useState(
-      'geral',
+    setSelectedTicketId(
+      tickets[0]?.id ?? null
     )
+  }, [
+    tickets,
+    selectedTicketId,
+  ])
 
-  const [
-    descricao,
-    setDescricao,
-  ] =
-    useState('')
-
-  const [
-    urgencia,
-    setUrgencia,
-  ] =
-    useState(
-      'medio',
-    )
-
-  const searchRef =
-    useRef(null)
-
-  const logoPath =
-    `${import.meta.env.BASE_URL}imagem/logo2026.png`
-
-  useEffect(
-    () => {
-      localStorage.setItem(
-        'tickets',
-        JSON.stringify(
-          tickets,
-        ),
-      )
-    },
-    [tickets],
-  )
-
-  useEffect(
-    () => {
-      document
-        .documentElement
-        .dataset
-        .theme =
-          theme
-
-      localStorage.setItem(
-        'support-theme',
-        theme,
-      )
-    },
-    [theme],
-  )
-
-  useEffect(
-    () => {
-      if (!toast) {
-        return undefined
-      }
-
-      const timer =
-        window.setTimeout(
-          () =>
-            setToast(''),
-          3800,
-        )
-
-      return () =>
-        window.clearTimeout(
-          timer,
-        )
-    },
-    [toast],
-  )
-
-  useEffect(
-    () => {
-      function handleKeyboard(
-        event,
-      ) {
-        if (
-          (
-            event.ctrlKey ||
-            event.metaKey
-          ) &&
-          event.key
-            .toLowerCase() ===
-            'k'
-        ) {
-          event.preventDefault()
-
-          searchRef
-            .current
-            ?.focus()
-        }
-
-        if (
-          (
-            event.ctrlKey ||
-            event.metaKey
-          ) &&
-          event.key
-            .toLowerCase() ===
-            'n'
-        ) {
-          event.preventDefault()
-
-          setIsComposeOpen(
-            true,
-          )
-        }
-
-        if (
-          event.key ===
-          'Escape'
-        ) {
-          setIsComposeOpen(
-            false,
-          )
-        }
-      }
-
-      window.addEventListener(
-        'keydown',
-        handleKeyboard,
-      )
-
-      return () =>
-        window.removeEventListener(
-          'keydown',
-          handleKeyboard,
-        )
-    },
-    [],
-  )
-
-  const stats =
+  const selectedTicket =
     useMemo(
-      () => {
-        const open =
-          tickets.filter(
-            ticket =>
-              normalizeStatus(
-                ticket.status,
-              ) ===
-              'aberto',
-          ).length
-
-        const resolved =
-          tickets.filter(
-            ticket =>
-              normalizeStatus(
-                ticket.status,
-              ) ===
-              'resolvido',
-          ).length
-
-        const high =
-          tickets.filter(
-            ticket =>
-              normalizeStatus(
-                ticket.status,
-              ) ===
-                'aberto' &&
-              normalizePriority(
-                ticket.urgencia,
-              ) ===
-                'alto',
-          ).length
-
-        const replies =
-          tickets.reduce(
-            (
-              total,
-              ticket,
-            ) =>
-              total +
-              (
-                ticket
-                  .replies
-                  ?.length ||
-                0
-              ),
-            0,
-          )
-
-        return {
-          total:
-            tickets.length,
-
-          open,
-
-          resolved,
-
-          high,
-
-          replies,
-
-          resolvedRate:
-            tickets.length >
-            0
-              ? Math.round(
-                  (
-                    resolved /
-                    tickets.length
-                  ) *
-                    100,
-                )
-              : 0,
-        }
-      },
-      [tickets],
+      () =>
+        tickets.find(
+          (ticket) =>
+            ticket.id ===
+            selectedTicketId
+        ) ??
+        tickets[0] ??
+        null,
+      [
+        tickets,
+        selectedTicketId,
+      ]
     )
 
   const filteredTickets =
-    useMemo(
-      () => {
-        const term =
-          search
-            .trim()
+    useMemo(() => {
+      const normalizedSearch =
+        search
+          .trim()
+          .toLocaleLowerCase(
+            'pt-BR'
+          )
+
+      return tickets.filter(
+        (ticket) => {
+          const matchesStatus =
+            statusFilter ===
+              'all' ||
+            ticket.status ===
+              statusFilter
+
+          if (!matchesStatus) {
+            return false
+          }
+
+          if (
+            !normalizedSearch
+          ) {
+            return true
+          }
+
+          const searchableText = [
+            ticket.code,
+            ticket.subject,
+            ticket.description,
+            ticket.requester
+              ?.name,
+            ticket.requester
+              ?.email,
+            ticket.requester
+              ?.department,
+            ticket.category,
+          ]
+            .filter(Boolean)
+            .join(' ')
             .toLocaleLowerCase(
-              'pt-BR',
+              'pt-BR'
             )
 
-        return tickets
-          .filter(
-            ticket => {
-              const status =
-                normalizeStatus(
-                  ticket.status,
-                )
-
-              const priority =
-                normalizePriority(
-                  ticket.urgencia,
-                )
-
-              const matchesView =
-                view ===
-                  'todos' ||
-                (
-                  view ===
-                    'abertos' &&
-                  status ===
-                    'aberto'
-                ) ||
-                (
-                  view ===
-                    'resolvidos' &&
-                  status ===
-                    'resolvido'
-                ) ||
-                (
-                  view ===
-                    'alta' &&
-                  status ===
-                    'aberto' &&
-                  priority ===
-                    'alto'
-                )
-
-              const searchableText =
-                [
-                  ticket.nome,
-                  ticket.email,
-                  ticket.descricao,
-                  ticket.assunto,
-
-                  categoryLabels[
-                    ticket
-                      .categoria
-                  ] ||
-                    ticket.categoria,
-
-                  getTicketCode(
-                    ticket.id,
-                  ),
-                ]
-                  .join(' ')
-                  .toLocaleLowerCase(
-                    'pt-BR',
-                  )
-
-              return (
-                matchesView &&
-                (
-                  !term ||
-                  searchableText
-                    .includes(
-                      term,
-                    )
-                )
-              )
-            },
+          return searchableText.includes(
+            normalizedSearch
           )
-          .sort(
-            (
-              a,
-              b,
-            ) => {
-              const aStatus =
-                normalizeStatus(
-                  a.status,
-                )
-
-              const bStatus =
-                normalizeStatus(
-                  b.status,
-                )
-
-              if (
-                aStatus !==
-                bStatus
-              ) {
-                return (
-                  aStatus ===
-                  'aberto'
-                    ? -1
-                    : 1
-                )
-              }
-
-              const weight = {
-                alto: 3,
-                medio: 2,
-                baixo: 1,
-              }
-
-              const priorityDiff =
-                weight[
-                  normalizePriority(
-                    b.urgencia,
-                  )
-                ] -
-                weight[
-                  normalizePriority(
-                    a.urgencia,
-                  )
-                ]
-
-              if (
-                priorityDiff !==
-                0
-              ) {
-                return priorityDiff
-              }
-
-              return (
-                new Date(
-                  getLastActivity(
-                    b,
-                  ).createdAt ||
-                    b.createdAt,
-                ) -
-                new Date(
-                  getLastActivity(
-                    a,
-                  ).createdAt ||
-                    a.createdAt,
-                )
-              )
-            },
-          )
-      },
-      [
-        search,
-        tickets,
-        view,
-      ],
-    )
-
-  const selectedTicket =
-    tickets.find(
-      ticket =>
-        ticket.id ===
-        selectedTicketId,
-    ) ||
-    filteredTickets[0] ||
-    tickets[0] ||
-    null
-
-  const selectedPriority =
-    priorities[
-      normalizePriority(
-        selectedTicket
-          ?.urgencia,
+        }
       )
-    ] ||
-    priorities.medio
+    }, [
+      tickets,
+      search,
+      statusFilter,
+    ])
 
-  const selectedStatus =
-    normalizeStatus(
-      selectedTicket
-        ?.status,
+  const highPriorityTickets =
+    useMemo(
+      () =>
+        openTickets.filter(
+          (ticket) =>
+            ticket.priority ===
+            'high'
+        ),
+      [openTickets]
     )
 
-  const isResolved =
-    selectedStatus ===
-    'resolvido'
-
-  const navigation = [
-    {
-      id: 'todos',
-      label:
-        'Todos os tickets',
-      icon: 'inbox',
-      count:
-        stats.total,
-    },
-
-    {
-      id: 'abertos',
-      label:
-        'Em atendimento',
-      icon: 'clock',
-      count:
-        stats.open,
-    },
-
-    {
-      id: 'alta',
-      label:
-        'Alta prioridade',
-      icon: 'bolt',
-      count:
-        stats.high,
-    },
-
-    {
-      id: 'resolvidos',
-      label:
-        'Resolvidos',
-      icon: 'check',
-      count:
-        stats.resolved,
-    },
-  ]
-
-  function resetCompose() {
-    setNome('')
-    setEmail('')
-    setAssunto('')
-    setCategoria(
-      'geral',
+  const waitingTickets =
+    useMemo(
+      () =>
+        tickets.filter(
+          (ticket) =>
+            ticket.status ===
+            'waiting'
+        ),
+      [tickets]
     )
-    setDescricao('')
-    setUrgencia(
-      'medio',
-    )
-  }
 
-  function handleAddTicket(
-    event,
+  const selectedSla =
+    selectedTicket
+      ? getSlaState(
+          selectedTicket
+        )
+      : null
+
+  const selectedAssignee =
+    selectedTicket
+      ? team.find(
+          (member) =>
+            member.id ===
+            selectedTicket.assigneeId
+        )
+      : null
+
+  function handleSelectTicket(
+    ticketId
   ) {
-    event.preventDefault()
-
-    if (
-      !nome.trim() ||
-      !email.trim() ||
-      !assunto.trim() ||
-      !descricao.trim()
-    ) {
-      return
-    }
-
-    const ticket = {
-      id:
-        Date.now(),
-
-      nome:
-        nome.trim(),
-
-      email:
-        email.trim(),
-
-      assunto:
-        assunto.trim(),
-
-      categoria,
-
-      descricao:
-        descricao.trim(),
-
-      urgencia,
-
-      createdAt:
-        new Date()
-          .toISOString(),
-
-      status:
-        'aberto',
-
-      replies: [],
-    }
-
-    setTickets(
-      current => [
-        ticket,
-        ...current,
-      ],
-    )
-
     setSelectedTicketId(
-      ticket.id,
+      ticketId
     )
 
-    setView(
-      'todos',
-    )
-
-    setSearch('')
-
-    setIsComposeOpen(
-      false,
-    )
-
-    resetCompose()
-
-    setToast(
-      `Ticket ${getTicketCode(
-        ticket.id,
-      )} criado com sucesso.`,
-    )
+    setReplyText('')
   }
 
-  function handleDelete(id) {
-    const ticket =
-      tickets.find(
-        item =>
-          item.id === id,
-      )
-
-    if (!ticket) {
-      return
-    }
-
-    const confirmed =
-      window.confirm(
-        `Excluir definitivamente o ticket ${getTicketCode(
-          id,
-        )}?`,
-      )
-
-    if (!confirmed) {
-      return
-    }
-
-    const remaining =
-      tickets.filter(
-        item =>
-          item.id !== id,
-      )
-
-    setTickets(
-      remaining,
-    )
-
-    if (
-      selectedTicket
-        ?.id === id
-    ) {
-      setSelectedTicketId(
-        remaining[0]
-          ?.id ??
-          null,
-      )
-    }
-
-    setToast(
-      `Ticket ${getTicketCode(
-        id,
-      )} excluído.`,
-    )
-  }
-
-  function handleReply(
-    event,
+  function handleComposerSubmit(
+    event
   ) {
     event.preventDefault()
 
     if (
       !selectedTicket ||
-      !replyText.trim() ||
-      isResolved
+      !replyText.trim()
     ) {
       return
     }
 
-    const reply = {
-      id:
-        Date.now(),
+    if (
+      selectedTicket.status ===
+      'resolved'
+    ) {
+      return
+    }
+
+    const data = {
+      message:
+        replyText.trim(),
 
       author:
         'Equipe LTHS',
 
-      message:
-        replyText.trim(),
-
       createdAt:
-        new Date()
-          .toISOString(),
+        new Date(),
     }
 
-    setTickets(
-      current =>
-        current.map(
-          ticket =>
-            ticket.id ===
-            selectedTicket.id
-              ? {
-                  ...ticket,
-
-                  replies: [
-                    ...(
-                      ticket
-                        .replies ||
-                      []
-                    ),
-
-                    reply,
-                  ],
-                }
-              : ticket,
-        ),
-    )
+    if (
+      composerMode === 'note'
+    ) {
+      addNoteToTicket(
+        selectedTicket.id,
+        data
+      )
+    } else {
+      replyToTicket(
+        selectedTicket.id,
+        data
+      )
+    }
 
     setReplyText('')
-
-    setToast(
-      `Resposta adicionada ao ${getTicketCode(
-        selectedTicket.id,
-      )}.`,
-    )
   }
 
-  function handleToggleStatus() {
+  function handleResolve() {
     if (!selectedTicket) {
       return
     }
 
-    const nextStatus =
-      isResolved
-        ? 'aberto'
-        : 'resolvido'
-
-    setTickets(
-      current =>
-        current.map(
-          ticket =>
-            ticket.id ===
-            selectedTicket.id
-              ? {
-                  ...ticket,
-
-                  status:
-                    nextStatus,
-
-                  resolvedAt:
-                    nextStatus ===
-                    'resolvido'
-                      ? new Date()
-                          .toISOString()
-                      : null,
-                }
-              : ticket,
-        ),
-    )
-
-    setToast(
-      nextStatus ===
-      'resolvido'
-        ? `${getTicketCode(
-            selectedTicket.id,
-          )} marcado como resolvido.`
-        : `${getTicketCode(
-            selectedTicket.id,
-          )} reaberto.`,
+    closeTicket(
+      selectedTicket.id,
+      {
+        author:
+          'Equipe LTHS',
+      }
     )
   }
+
+  function handleReopen() {
+    if (!selectedTicket) {
+      return
+    }
+
+    reopenResolvedTicket(
+      selectedTicket.id,
+      {
+        author:
+          'Equipe LTHS',
+      }
+    )
+  }
+
+  function handleWaiting() {
+    if (!selectedTicket) {
+      return
+    }
+
+    setTicketWaiting(
+      selectedTicket.id,
+      {
+        author:
+          'Equipe LTHS',
+      }
+    )
+  }
+
+  function handlePriorityChange(
+    event
+  ) {
+    if (!selectedTicket) {
+      return
+    }
+
+    setTicketPriority(
+      selectedTicket.id,
+      event.target.value,
+      {
+        author:
+          'Equipe LTHS',
+      }
+    )
+  }
+
+  function handleAssigneeChange(
+    event
+  ) {
+    if (!selectedTicket) {
+      return
+    }
+
+    setTicketAssignee(
+      selectedTicket.id,
+      event.target.value ||
+        null,
+      {
+        author:
+          'Equipe LTHS',
+      }
+    )
+  }
+
+  function toggleTheme() {
+    setTheme(
+      preferences.theme ===
+        'dark'
+        ? 'light'
+        : 'dark'
+    )
+  }
+
+  const logoPath =
+    `${import.meta.env.BASE_URL}imagem/logo2026.png`
 
   return (
     <div
       className="support-app"
-      data-theme={theme}
+      data-theme={
+        preferences.theme
+      }
     >
-
-      <aside className="app-sidebar">
-
-        <div className="sidebar-brand">
-
-          <div className="sidebar-logo">
-
-            <img
-              src={logoPath}
-              alt="LTHS Tecnologia"
-            />
-
-          </div>
-
-          <div>
-
-            <strong>
-              LTHS Desk
-            </strong>
-
-            <span>
-              Service operations
-            </span>
-
-          </div>
-
+      <aside
+        className="nav-rail"
+        aria-label="Navegação principal"
+      >
+        <div className="nav-rail__brand">
+          <img
+            src={logoPath}
+            alt="LTHS Tecnologia"
+          />
         </div>
 
-        <div className="sidebar-section-label">
-          ATENDIMENTO
-        </div>
-
-        <nav
-          className="sidebar-nav"
-          aria-label="Navegação dos tickets"
-        >
-
-          {navigation.map(
-            item => (
-
-              <button
-                type="button"
-                className={
-                  view ===
-                  item.id
-                    ? 'is-active'
-                    : ''
-                }
-                key={item.id}
-                onClick={() =>
-                  setView(
-                    item.id,
-                  )
-                }
-              >
-
-                <span className="sidebar-nav__icon">
-
-                  <Icon
-                    name={
-                      item.icon
-                    }
-                    size={18}
-                  />
-
-                </span>
-
-                <span className="sidebar-nav__label">
-                  {item.label}
-                </span>
-
-                <span className="sidebar-nav__count">
-                  {item.count}
-                </span>
-
-              </button>
-
-            ),
-          )}
-
-        </nav>
-
-        <div className="sidebar-divider" />
-
-        <div className="sidebar-section-label">
-          WORKSPACE
-        </div>
-
-        <nav className="sidebar-nav sidebar-nav--muted">
+        <nav className="nav-rail__nav">
+          <button
+            type="button"
+            className="is-active"
+            aria-label="Tickets"
+          >
+            <Icon name="inbox" />
+          </button>
 
           <button
             type="button"
-            onClick={() =>
-              searchRef
-                .current
-                ?.focus()
-            }
+            aria-label="Equipe"
           >
-
-            <span className="sidebar-nav__icon">
-
-              <Icon
-                name="search"
-                size={18}
-              />
-
-            </span>
-
-            <span className="sidebar-nav__label">
-              Busca rápida
-            </span>
-
-            <span className="keyboard-hint">
-              Ctrl K
-            </span>
-
+            <Icon name="users" />
           </button>
 
-          <button type="button">
-
-            <span className="sidebar-nav__icon">
-
-              <Icon
-                name="chart"
-                size={18}
-              />
-
-            </span>
-
-            <span className="sidebar-nav__label">
-              Relatórios
-            </span>
-
+          <button
+            type="button"
+            aria-label="Indicadores"
+          >
+            <Icon name="activity" />
           </button>
-
-          <button type="button">
-
-            <span className="sidebar-nav__icon">
-
-              <Icon
-                name="settings"
-                size={18}
-              />
-
-            </span>
-
-            <span className="sidebar-nav__label">
-              Configurações
-            </span>
-
-          </button>
-
         </nav>
 
-        <div className="sidebar-footer">
-
-          <div className="sidebar-status">
-
-            <span className="online-dot" />
-
-            <div>
-
-              <small>
-                STATUS DO AMBIENTE
-              </small>
-
-              <strong>
-                Operação online
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div className="sidebar-profile">
-
-            <div className="profile-avatar">
-              LT
-            </div>
-
-            <div>
-
-              <strong>
-                Equipe LTHS
-              </strong>
-
-              <span>
-                Administradora
-              </span>
-
-            </div>
-
-            <Icon
-              name="chevron"
-              size={16}
-            />
-
-          </div>
-
-          <div className="sidebar-developed">
-
-            <span>
-              DESENVOLVIDO POR
-            </span>
-
-            <strong>
-              LTHS Tecnologia
-            </strong>
-
-          </div>
-
-        </div>
-
+        <button
+          type="button"
+          className="nav-rail__help"
+          onClick={
+            toggleTheme
+          }
+          aria-label={
+            preferences.theme ===
+            'dark'
+              ? 'Ativar tema claro'
+              : 'Ativar tema escuro'
+          }
+        >
+          <Icon
+            name={
+              preferences.theme ===
+              'dark'
+                ? 'sun'
+                : 'moon'
+            }
+          />
+        </button>
       </aside>
 
-      <main className="app-main">
-
-        <header className="app-topbar">
-
-          <div className="topbar-title">
-
-            <span>
-              SUPORTE / CENTRAL DE ATENDIMENTO
-            </span>
-
+      <aside className="queue-panel">
+        <header className="queue-panel__header">
+          <div className="brand-lockup">
             <strong>
               Service Desk
             </strong>
 
+            <span>
+              <i />
+              Operação online
+            </span>
           </div>
 
-          <label className="global-search">
-
+          <button
+            type="button"
+            className="queue-create"
+          >
             <Icon
-              name="search"
-              size={18}
+              name="plus"
+              size={16}
             />
 
-            <input
-              ref={searchRef}
-              type="search"
-              placeholder="Buscar por ticket, solicitante ou descrição"
-              value={search}
-              onChange={
-                event =>
-                  setSearch(
-                    event
-                      .target
-                      .value,
-                  )
-              }
-            />
-
-            <kbd>
-              Ctrl K
-            </kbd>
-
-          </label>
-
-          <div className="topbar-actions">
-
-            <div className="environment-status">
-
-              <span className="online-dot" />
-
-              Online
-
-            </div>
-
-            <button
-              type="button"
-              className="icon-action"
-              aria-label={
-                theme ===
-                'dark'
-                  ? 'Ativar modo claro'
-                  : 'Ativar modo escuro'
-              }
-              onClick={() =>
-                setTheme(
-                  current =>
-                    current ===
-                    'dark'
-                      ? 'light'
-                      : 'dark',
-                )
-              }
-            >
-
-              <Icon
-                name={
-                  theme ===
-                  'dark'
-                    ? 'sun'
-                    : 'moon'
-                }
-                size={18}
-              />
-
-            </button>
-
-            <button
-              type="button"
-              className="new-ticket-button"
-              onClick={() =>
-                setIsComposeOpen(
-                  true,
-                )
-              }
-            >
-
-              <Icon
-                name="plus"
-                size={18}
-              />
-
-              Novo ticket
-
-              <span>
-                Ctrl N
-              </span>
-
-            </button>
-
-          </div>
-
+            Novo
+          </button>
         </header>
 
-        <section className="overview-strip">
-
-          <div className="overview-heading">
-
+        <div className="queue-panel__title">
+          <div>
             <span>
-              OPERAÇÃO DE SUPORTE
+              CENTRAL DE SUPORTE
             </span>
 
             <h1>
-              Fila de atendimento
+              Chamados
             </h1>
-
-            <p>
-              Controle solicitações, prioridades e histórico
-              em uma única central.
-            </p>
-
           </div>
 
-          <div className="overview-metrics">
-
-            <article>
-
-              <div>
-
-                <span>
-                  EM ABERTO
-                </span>
-
-                <i className="metric-signal metric-signal--blue" />
-
-              </div>
-
-              <strong>
-                {stats.open}
-              </strong>
-
-              <small>
-                tickets ativos
-              </small>
-
-            </article>
-
-            <article>
-
-              <div>
-
-                <span>
-                  ALTA PRIORIDADE
-                </span>
-
-                <i className="metric-signal metric-signal--red" />
-
-              </div>
-
-              <strong>
-                {stats.high}
-              </strong>
-
-              <small>
-                exigem atenção
-              </small>
-
-            </article>
-
-            <article>
-
-              <div>
-
-                <span>
-                  RESOLVIDOS
-                </span>
-
-                <i className="metric-signal metric-signal--green" />
-
-              </div>
-
-              <strong>
-                {stats.resolved}
-              </strong>
-
-              <small>
-                {stats.resolvedRate}% da base
-              </small>
-
-            </article>
-
-            <article>
-
-              <div>
-
-                <span>
-                  INTERAÇÕES
-                </span>
-
-                <i className="metric-signal metric-signal--violet" />
-
-              </div>
-
-              <strong>
-                {stats.replies}
-              </strong>
-
-              <small>
-                respostas registradas
-              </small>
-
-            </article>
-
-          </div>
-
-        </section>
-
-        <section className="desk-grid">
-
-          <aside className="ticket-queue">
-
-            <header className="queue-header">
-
-              <div>
-
-                <span>
-                  CAIXA DE ENTRADA
-                </span>
-
-                <h2>
-                  {
-                    navigation.find(
-                      item =>
-                        item.id ===
-                        view,
-                    )?.label ||
-                    'Tickets'
-                  }
-                </h2>
-
-              </div>
-
-              <div className="queue-total">
-                {
-                  filteredTickets.length
-                }
-              </div>
-
-            </header>
-
-            <div className="queue-tools">
-
-              <label>
-
-                <Icon
-                  name="search"
-                  size={17}
-                />
-
-                <input
-                  type="search"
-                  placeholder="Filtrar esta fila"
-                  value={search}
-                  onChange={
-                    event =>
-                      setSearch(
-                        event
-                          .target
-                          .value,
-                      )
-                  }
-                />
-
-              </label>
-
-              <button
-                type="button"
-                aria-label="Opções de filtro"
-              >
-
-                <Icon
-                  name="filter"
-                  size={17}
-                />
-
-              </button>
-
-            </div>
-
-            <div className="queue-list">
-
-              {
-                filteredTickets.length >
-                0
-                  ? filteredTickets.map(
-                      ticket => {
-
-                        const priority =
-                          priorities[
-                            normalizePriority(
-                              ticket.urgencia,
-                            )
-                          ] ||
-                          priorities.medio
-
-                        const status =
-                          normalizeStatus(
-                            ticket.status,
-                          )
-
-                        const active =
-                          selectedTicket
-                            ?.id ===
-                          ticket.id
-
-                        return (
-
-                          <button
-                            type="button"
-                            className={`queue-card ${
-                              active
-                                ? 'is-active'
-                                : ''
-                            }`}
-                            data-priority={
-                              normalizePriority(
-                                ticket.urgencia,
-                              )
-                            }
-                            data-status={
-                              status
-                            }
-                            key={
-                              ticket.id
-                            }
-                            onClick={() =>
-                              setSelectedTicketId(
-                                ticket.id,
-                              )
-                            }
-                          >
-
-                            <div className="queue-card__top">
-
-                              <span className="ticket-code">
-                                {
-                                  getTicketCode(
-                                    ticket.id,
-                                  )
-                                }
-                              </span>
-
-                              <span className="queue-card__date">
-                                {
-                                  formatDate(
-                                    getLastActivity(
-                                      ticket,
-                                    ),
-                                  )
-                                }
-                              </span>
-
-                            </div>
-
-                            <strong>
-                              {
-                                getTicketSubject(
-                                  ticket,
-                                )
-                              }
-                            </strong>
-
-                            <p>
-                              {
-                                ticket.descricao
-                              }
-                            </p>
-
-                            <div className="queue-card__bottom">
-
-                              <span className="requester-chip">
-
-                                <i>
-                                  {
-                                    getInitials(
-                                      ticket.nome,
-                                    )
-                                  }
-                                </i>
-
-                                {
-                                  ticket.nome
-                                }
-
-                              </span>
-
-                              <span
-                                className="priority-pill"
-                                data-priority={
-                                  normalizePriority(
-                                    ticket.urgencia,
-                                  )
-                                }
-                              >
-                                {
-                                  priority.label
-                                }
-                              </span>
-
-                            </div>
-
-                            <div className="queue-card__status">
-
-                              <i />
-
-                              {
-                                status ===
-                                'resolvido'
-                                  ? 'Resolvido'
-                                  : 'Aberto'
-                              }
-
-                            </div>
-
-                          </button>
-
-                        )
-                      },
-                    )
-                  : (
-
-                    <div className="queue-empty">
-
-                      <strong>
-                        Nenhum ticket nesta fila
-                      </strong>
-
-                      <p>
-                        Ajuste a busca ou crie uma nova solicitação.
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setIsComposeOpen(
-                            true,
-                          )
-                        }
-                      >
-                        Criar ticket
-                      </button>
-
-                    </div>
-
-                  )
-              }
-
-            </div>
-
-          </aside>
-
-          <section className="ticket-stage">
-
+          <b>
             {
-              selectedTicket
-                ? (
-                  <>
-
-                    <header className="ticket-header">
-
-                      <div className="ticket-header__main">
-
-                        <div className="ticket-header__meta">
-
-                          <span
-                            className="status-pill"
-                            data-status={
-                              selectedStatus
-                            }
-                          >
-
-                            <i />
-
-                            {
-                              isResolved
-                                ? 'Resolvido'
-                                : 'Em atendimento'
-                            }
-
-                          </span>
-
-                          <span className="ticket-code">
-                            {
-                              getTicketCode(
-                                selectedTicket.id,
-                              )
-                            }
-                          </span>
-
-                          <span className="ticket-category">
-                            {
-                              categoryLabels[
-                                selectedTicket
-                                  .categoria
-                              ] ||
-                              'Geral'
-                            }
-                          </span>
-
-                        </div>
-
-                        <h2>
-                          {
-                            getTicketSubject(
-                              selectedTicket,
-                            )
-                          }
-                        </h2>
-
-                        <p>
-                          Aberto por{' '}
-
-                          <strong>
-                            {
-                              selectedTicket.nome
-                            }
-                          </strong>
-
-                          {' '}em{' '}
-
-                          {
-                            formatDate(
-                              selectedTicket,
-                              'full',
-                            )
-                          }
-                        </p>
-
-                      </div>
-
-                      <div className="ticket-header__actions">
-
-                        <span
-                          className="priority-pill priority-pill--large"
-                          data-priority={
-                            normalizePriority(
-                              selectedTicket
-                                .urgencia,
-                            )
-                          }
-                        >
-                          {
-                            selectedPriority.label
-                          } prioridade
-                        </span>
-
-                        <button
-                          type="button"
-                          className="resolve-button"
-                          data-status={
-                            selectedStatus
-                          }
-                          onClick={
-                            handleToggleStatus
-                          }
-                        >
-
-                          <Icon
-                            name={
-                              isResolved
-                                ? 'reopen'
-                                : 'check'
-                            }
-                            size={17}
-                          />
-
-                          {
-                            isResolved
-                              ? 'Reabrir'
-                              : 'Resolver ticket'
-                          }
-
-                        </button>
-
-                      </div>
-
-                    </header>
-
-                    <div className="ticket-layout">
-
-                      <section className="conversation-panel">
-
-                        <div className="conversation-heading">
-
-                          <div>
-
-                            <span>
-                              CONVERSA
-                            </span>
-
-                            <h3>
-                              Histórico do atendimento
-                            </h3>
-
-                          </div>
-
-                          <div
-                            className="conversation-state"
-                            data-status={
-                              selectedStatus
-                            }
-                          >
-
-                            <i />
-
-                            {
-                              isResolved
-                                ? 'Encerrado'
-                                : 'Ao vivo'
-                            }
-
-                          </div>
-
-                        </div>
-
-                        <div className="conversation-thread">
-
-                          <article className="message message--requester">
-
-                            <div className="message-avatar">
-                              {
-                                getInitials(
-                                  selectedTicket.nome,
-                                )
-                              }
-                            </div>
-
-                            <div className="message-body">
-
-                              <header>
-
-                                <div>
-
-                                  <strong>
-                                    {
-                                      selectedTicket.nome
-                                    }
-                                  </strong>
-
-                                  <span>
-                                    Solicitante
-                                  </span>
-
-                                </div>
-
-                                <time>
-                                  {
-                                    formatDate(
-                                      selectedTicket,
-                                    )
-                                  }
-                                </time>
-
-                              </header>
-
-                              <p>
-                                {
-                                  selectedTicket.descricao
-                                }
-                              </p>
-
-                            </div>
-
-                          </article>
-
-                          <div className="timeline-event">
-
-                            <span className="timeline-event__icon">
-
-                              <Icon
-                                name="clock"
-                                size={14}
-                              />
-
-                            </span>
-
-                            <p>
-                              Ticket{' '}
-
-                              <strong>
-                                {
-                                  getTicketCode(
-                                    selectedTicket.id,
-                                  )
-                                }
-                              </strong>
-
-                              {' '}entrou na fila de atendimento.
-                            </p>
-
-                          </div>
-
-                          {
-                            (
-                              selectedTicket.replies ||
-                              []
-                            ).map(
-                              reply => (
-
-                                <article
-                                  className="message message--support"
-                                  key={
-                                    reply.id
-                                  }
-                                >
-
-                                  <div className="message-avatar">
-                                    LT
-                                  </div>
-
-                                  <div className="message-body">
-
-                                    <header>
-
-                                      <div>
-
-                                        <strong>
-                                          {
-                                            reply.author ||
-                                            'Equipe LTHS'
-                                          }
-                                        </strong>
-
-                                        <span>
-                                          Atendimento
-                                        </span>
-
-                                      </div>
-
-                                      <time>
-                                        {
-                                          formatDate(
-                                            reply,
-                                          )
-                                        }
-                                      </time>
-
-                                    </header>
-
-                                    <p>
-                                      {
-                                        reply.message
-                                      }
-                                    </p>
-
-                                  </div>
-
-                                </article>
-
-                              ),
-                            )
-                          }
-
-                          {
-                            isResolved &&
-                            (
-
-                              <div className="timeline-event timeline-event--resolved">
-
-                                <span className="timeline-event__icon">
-
-                                  <Icon
-                                    name="check"
-                                    size={14}
-                                  />
-
-                                </span>
-
-                                <p>
-                                  Atendimento encerrado e ticket marcado como{' '}
-
-                                  <strong>
-                                    resolvido
-                                  </strong>.
-                                </p>
-
-                              </div>
-
-                            )
-                          }
-
-                        </div>
-
-                        <form
-                          className="reply-box"
-                          onSubmit={
-                            handleReply
-                          }
-                        >
-
-                          <div className="reply-box__header">
-
-                            <div>
-
-                              <span>
-                                RESPONDER COMO
-                              </span>
-
-                              <strong>
-                                Equipe LTHS
-                              </strong>
-
-                            </div>
-
-                            <span className="reply-mode">
-
-                              <span className="online-dot" />
-
-                              Resposta interna
-
-                            </span>
-
-                          </div>
-
-                          <textarea
-                            value={
-                              replyText
-                            }
-                            onChange={
-                              event =>
-                                setReplyText(
-                                  event
-                                    .target
-                                    .value,
-                                )
-                            }
-                            placeholder={
-                              isResolved
-                                ? 'Reabra o ticket para enviar uma nova resposta.'
-                                : 'Escreva uma resposta clara para o solicitante...'
-                            }
-                            rows={4}
-                            disabled={
-                              isResolved
-                            }
-                          />
-
-                          <footer>
-
-                            <span>
-                              {
-                                isResolved
-                                  ? 'O ticket está encerrado.'
-                                  : 'A mensagem ficará registrada no histórico.'
-                              }
-                            </span>
-
-                            <button
-                              type="submit"
-                              disabled={
-                                isResolved ||
-                                !replyText.trim()
-                              }
-                            >
-
-                              Enviar resposta
-
-                              <Icon
-                                name="arrow"
-                                size={16}
-                              />
-
-                            </button>
-
-                          </footer>
-
-                        </form>
-
-                      </section>
-
-                      <aside className="context-panel">
-
-                        <section className="context-section">
-
-                          <span className="context-label">
-                            SOLICITANTE
-                          </span>
-
-                          <div className="requester-profile">
-
-                            <div>
-                              {
-                                getInitials(
-                                  selectedTicket.nome,
-                                )
-                              }
-                            </div>
-
-                            <span>
-
-                              <strong>
-                                {
-                                  selectedTicket.nome
-                                }
-                              </strong>
-
-                              <small>
-                                Solicitante do ticket
-                              </small>
-
-                            </span>
-
-                          </div>
-
-                          <dl className="context-list">
-
-                            <div>
-
-                              <dt>
-
-                                <Icon
-                                  name="mail"
-                                  size={16}
-                                />
-
-                                E-mail
-
-                              </dt>
-
-                              <dd>
-                                {
-                                  selectedTicket.email
-                                }
-                              </dd>
-
-                            </div>
-
-                            <div>
-
-                              <dt>
-
-                                <Icon
-                                  name="clock"
-                                  size={16}
-                                />
-
-                                Criado em
-
-                              </dt>
-
-                              <dd>
-                                {
-                                  formatDate(
-                                    selectedTicket,
-                                  )
-                                }
-                              </dd>
-
-                            </div>
-
-                            <div>
-
-                              <dt>
-
-                                <Icon
-                                  name="inbox"
-                                  size={16}
-                                />
-
-                                Categoria
-
-                              </dt>
-
-                              <dd>
-                                {
-                                  categoryLabels[
-                                    selectedTicket
-                                      .categoria
-                                  ] ||
-                                  'Geral'
-                                }
-                              </dd>
-
-                            </div>
-
-                          </dl>
-
-                        </section>
-
-                        <section className="context-section">
-
-                          <span className="context-label">
-                            NÍVEL DE SERVIÇO
-                          </span>
-
-                          <div
-                            className="sla-card"
-                            data-priority={
-                              normalizePriority(
-                                selectedTicket
-                                  .urgencia,
-                              )
-                            }
-                          >
-
-                            <div>
-
-                              <span>
-                                PRIORIDADE
-                              </span>
-
-                              <strong>
-                                {
-                                  selectedPriority.label
-                                }
-                              </strong>
-
-                            </div>
-
-                            <div>
-
-                              <span>
-                                SLA ALVO
-                              </span>
-
-                              <strong>
-                                {
-                                  selectedPriority.sla
-                                }
-                              </strong>
-
-                            </div>
-
-                          </div>
-
-                          <p className="sla-description">
-                            {
-                              selectedPriority.description
-                            }. O tempo de resposta é apresentado como referência operacional.
-                          </p>
-
-                        </section>
-
-                        <section className="context-section">
-
-                          <span className="context-label">
-                            STATUS
-                          </span>
-
-                          <div
-                            className="status-overview"
-                            data-status={
-                              selectedStatus
-                            }
-                          >
-
-                            <span>
-
-                              <i />
-
-                              {
-                                isResolved
-                                  ? 'Resolvido'
-                                  : 'Aberto'
-                              }
-
-                            </span>
-
-                            <p>
-                              {
-                                isResolved
-                                  ? 'O atendimento foi concluído pela equipe.'
-                                  : 'O chamado permanece disponível para atendimento.'
-                              }
-                            </p>
-
-                          </div>
-
-                        </section>
-
-                        <section className="context-section context-section--danger">
-
-                          <button
-                            type="button"
-                            className="delete-button"
-                            onClick={() =>
-                              handleDelete(
-                                selectedTicket.id,
-                              )
-                            }
-                          >
-
-                            <Icon
-                              name="trash"
-                              size={16}
-                            />
-
-                            Excluir ticket
-
-                          </button>
-
-                        </section>
-
-                      </aside>
-
-                    </div>
-
-                  </>
-                )
-                : (
-
-                  <div className="stage-empty">
-
-                    <span>
-                      CENTRAL DE ATENDIMENTO
-                    </span>
-
-                    <h2>
-                      Nenhum ticket selecionado
-                    </h2>
-
-                    <p>
-                      Crie uma solicitação ou escolha um ticket na fila para abrir o painel de atendimento.
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setIsComposeOpen(
-                          true,
-                        )
-                      }
-                    >
-
-                      <Icon
-                        name="plus"
-                        size={17}
-                      />
-
-                      Abrir novo ticket
-
-                    </button>
-
-                  </div>
-
-                )
+              openTickets.length
             }
+          </b>
+        </div>
 
-          </section>
-
-        </section>
-
-      </main>
-
-      <nav className="mobile-nav">
-
-        {
-          navigation.map(
-            item => (
-
-              <button
-                type="button"
-                className={
-                  view ===
-                  item.id
-                    ? 'is-active'
-                    : ''
-                }
-                key={
-                  item.id
-                }
-                onClick={() =>
-                  setView(
-                    item.id,
-                  )
-                }
-              >
-
-                <Icon
-                  name={
-                    item.icon
-                  }
-                  size={19}
-                />
-
-                <span>
-                  {
-                    item.label
-                      .split(' ')[0]
-                  }
-                </span>
-
-              </button>
-
-            ),
-          )
-        }
-
-        <button
-          type="button"
-          className="mobile-add"
-          onClick={() =>
-            setIsComposeOpen(
-              true,
-            )
-          }
-        >
-
+        <label className="queue-search">
           <Icon
-            name="plus"
-            size={20}
+            name="search"
+            size={17}
           />
 
-        </button>
+          <input
+            type="search"
+            placeholder="Buscar chamados"
+            value={search}
+            onChange={(
+              event
+            ) =>
+              setSearch(
+                event.target
+                  .value
+              )
+            }
+            aria-label="Buscar chamados"
+          />
+        </label>
 
-      </nav>
-
-      {
-        isComposeOpen &&
-        (
-
-          <div
-            className="compose-backdrop"
-            onMouseDown={() =>
-              setIsComposeOpen(
-                false,
+        <div
+          className="queue-filters"
+          aria-label="Filtrar chamados"
+        >
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              'all'
+                ? 'is-selected'
+                : ''
+            }
+            onClick={() =>
+              setStatusFilter(
+                'all'
               )
             }
           >
+            Todos
+          </button>
 
-            <section
-              className="compose-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="new-ticket-title"
-              onMouseDown={
-                event =>
-                  event
-                    .stopPropagation()
-              }
-            >
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              'new'
+                ? 'is-selected'
+                : ''
+            }
+            onClick={() =>
+              setStatusFilter(
+                'new'
+              )
+            }
+          >
+            Novos
+          </button>
 
-              <header className="compose-modal__header">
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              'in_progress'
+                ? 'is-selected'
+                : ''
+            }
+            onClick={() =>
+              setStatusFilter(
+                'in_progress'
+              )
+            }
+          >
+            Em atendimento
+          </button>
+        </div>
 
-                <div>
+        <div className="ticket-list">
+          {filteredTickets.map(
+            (ticket) => {
+              const sla =
+                getSlaState(
+                  ticket
+                )
 
-                  <span>
-                    NOVA SOLICITAÇÃO
-                  </span>
-
-                  <h2 id="new-ticket-title">
-                    Abrir ticket
-                  </h2>
-
-                  <p>
-                    Registre a demanda com as informações essenciais.
-                  </p>
-
-                </div>
-
+              return (
                 <button
                   type="button"
-                  className="modal-close"
+                  key={
+                    ticket.id
+                  }
+                  className={`ticket-row ${
+                    selectedTicket
+                      ?.id ===
+                    ticket.id
+                      ? 'is-active'
+                      : ''
+                  }`}
                   onClick={() =>
-                    setIsComposeOpen(
-                      false,
+                    handleSelectTicket(
+                      ticket.id
                     )
                   }
-                  aria-label="Fechar"
                 >
-                  ×
-                </button>
+                  <div className="ticket-row__top">
+                    <span className="ticket-code">
+                      {formatTicketCode(
+                        ticket.code
+                      )}
+                    </span>
 
-              </header>
-
-              <form
-                className="compose-form"
-                onSubmit={
-                  handleAddTicket
-                }
-              >
-
-                <label className="form-field form-field--wide">
-
-                  <span>
-                    Assunto
-                  </span>
-
-                  <input
-                    type="text"
-                    placeholder="Ex: Falha no acesso ao painel"
-                    value={
-                      assunto
-                    }
-                    onChange={
-                      event =>
-                        setAssunto(
-                          event
-                            .target
-                            .value,
-                        )
-                    }
-                    required
-                  />
-
-                </label>
-
-                <label className="form-field">
-
-                  <span>
-                    Nome do solicitante
-                  </span>
-
-                  <input
-                    type="text"
-                    placeholder="Nome completo"
-                    value={
-                      nome
-                    }
-                    onChange={
-                      event =>
-                        setNome(
-                          event
-                            .target
-                            .value,
-                        )
-                    }
-                    required
-                  />
-
-                </label>
-
-                <label className="form-field">
-
-                  <span>
-                    E-mail para retorno
-                  </span>
-
-                  <input
-                    type="email"
-                    placeholder="nome@empresa.com"
-                    value={
-                      email
-                    }
-                    onChange={
-                      event =>
-                        setEmail(
-                          event
-                            .target
-                            .value,
-                        )
-                    }
-                    required
-                  />
-
-                </label>
-
-                <label className="form-field">
-
-                  <span>
-                    Categoria
-                  </span>
-
-                  <select
-                    value={
-                      categoria
-                    }
-                    onChange={
-                      event =>
-                        setCategoria(
-                          event
-                            .target
-                            .value,
-                        )
-                    }
-                  >
-
-                    <option value="geral">
-                      Geral
-                    </option>
-
-                    <option value="acesso">
-                      Acesso
-                    </option>
-
-                    <option value="sistema">
-                      Sistema
-                    </option>
-
-                    <option value="infraestrutura">
-                      Infraestrutura
-                    </option>
-
-                    <option value="financeiro">
-                      Financeiro
-                    </option>
-
-                  </select>
-
-                </label>
-
-                <fieldset className="form-field">
-
-                  <legend>
-                    Prioridade
-                  </legend>
-
-                  <div className="priority-select">
-
-                    {
-                      Object.entries(
-                        priorities,
-                      ).map(
-                        (
-                          [
-                            value,
-                            priority,
-                          ],
-                        ) => (
-
-                          <label
-                            className={
-                              urgencia ===
-                              value
-                                ? 'is-selected'
-                                : ''
-                            }
-                            data-priority={
-                              value
-                            }
-                            key={
-                              value
-                            }
-                          >
-
-                            <input
-                              type="radio"
-                              name="prioridade"
-                              value={
-                                value
-                              }
-                              checked={
-                                urgencia ===
-                                value
-                              }
-                              onChange={
-                                event =>
-                                  setUrgencia(
-                                    event
-                                      .target
-                                      .value,
-                                  )
-                              }
-                            />
-
-                            <i />
-
-                            <span>
-                              {
-                                priority.label
-                              }
-                            </span>
-
-                          </label>
-
-                        ),
-                      )
-                    }
-
+                    <span
+                      className={`priority-dot priority-dot--${ticket.priority}`}
+                    >
+                      {
+                        PRIORITY_LABELS[
+                          ticket
+                            .priority
+                        ]
+                      }
+                    </span>
                   </div>
 
-                </fieldset>
+                  <strong className="ticket-row__subject">
+                    {
+                      ticket.subject
+                    }
+                  </strong>
 
-                <label className="form-field form-field--wide">
-
-                  <span>
-                    Descrição da solicitação
+                  <span className="ticket-row__requester">
+                    {
+                      ticket
+                        .requester
+                        ?.name
+                    }
                   </span>
 
-                  <textarea
-                    placeholder="Explique o que aconteceu, o impacto e qualquer informação relevante para o atendimento."
-                    value={
-                      descricao
-                    }
-                    onChange={
-                      event =>
-                        setDescricao(
-                          event
-                            .target
-                            .value,
-                        )
-                    }
-                    rows={6}
-                    required
-                  />
+                  <div className="ticket-row__footer">
+                    <span>
+                      {
+                        STATUS_LABELS[
+                          ticket
+                            .status
+                        ]
+                      }
+                    </span>
 
-                </label>
+                    {ticket.status !==
+                      'resolved' && (
+                      <span
+                        className={`sla-text sla-text--${sla.state}`}
+                      >
+                        <Icon
+                          name="clock"
+                          size={13}
+                        />
 
-                <footer className="compose-form__footer">
+                        {formatSlaRemaining(
+                          sla.remainingMs
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              )
+            }
+          )}
 
+          {!filteredTickets
+            .length && (
+            <div className="empty-state">
+              <strong>
+                Nenhum chamado
+                encontrado
+              </strong>
+
+              <span>
+                Ajuste a busca
+                ou os filtros.
+              </span>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      <main className="ticket-workspace">
+        {selectedTicket ? (
+          <>
+            <header className="ticket-header">
+              <div className="ticket-header__main">
+                <div className="ticket-header__eyebrow">
                   <span>
-                    O ticket será salvo localmente neste navegador.
+                    {formatTicketCode(
+                      selectedTicket.code
+                    )}
                   </span>
 
-                  <div>
+                  <span>
+                    {
+                      CATEGORY_LABELS[
+                        selectedTicket
+                          .category
+                      ] ??
+                      selectedTicket
+                        .category
+                    }
+                  </span>
+
+                  <span
+                    className={`ticket-status ticket-status--${selectedTicket.status}`}
+                  >
+                    {
+                      STATUS_LABELS[
+                        selectedTicket
+                          .status
+                      ]
+                    }
+                  </span>
+                </div>
+
+                <h2>
+                  {
+                    selectedTicket.subject
+                  }
+                </h2>
+
+                <p>
+                  Aberto por{' '}
+                  <strong>
+                    {
+                      selectedTicket
+                        .requester
+                        ?.name
+                    }
+                  </strong>{' '}
+                  em{' '}
+                  {formatCompactDate(
+                    selectedTicket.createdAt
+                  )}
+                </p>
+              </div>
+
+              <div className="ticket-header__actions">
+                {selectedTicket.status !==
+                  'resolved' ? (
+                  <>
+                    <button
+                      type="button"
+                      className="secondary-action"
+                      onClick={
+                        handleWaiting
+                      }
+                    >
+                      Aguardar
+                    </button>
 
                     <button
                       type="button"
-                      className="secondary-button"
-                      onClick={() =>
-                        setIsComposeOpen(
-                          false,
-                        )
+                      className="primary-action"
+                      onClick={
+                        handleResolve
                       }
                     >
-                      Cancelar
-                    </button>
-
-                    <button
-                      type="submit"
-                      className="primary-button"
-                    >
-
-                      Criar ticket
-
                       <Icon
-                        name="arrow"
+                        name="check"
                         size={16}
                       />
 
+                      Resolver
                     </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="primary-action"
+                    onClick={
+                      handleReopen
+                    }
+                  >
+                    Reabrir
+                  </button>
+                )}
+              </div>
+            </header>
 
+            <div className="ticket-layout">
+              <section className="conversation-panel">
+                <article className="message-card message-card--requester">
+                  <div className="message-card__avatar">
+                    {getInitials(
+                      selectedTicket
+                        .requester
+                        ?.name
+                    )}
                   </div>
 
-                </footer>
+                  <div className="message-card__content">
+                    <header>
+                      <div>
+                        <strong>
+                          {
+                            selectedTicket
+                              .requester
+                              ?.name
+                          }
+                        </strong>
 
-              </form>
+                        <span>
+                          Solicitante
+                        </span>
+                      </div>
 
-            </section>
+                      <time>
+                        {formatCompactDate(
+                          selectedTicket.createdAt
+                        )}
+                      </time>
+                    </header>
 
+                    <p>
+                      {
+                        selectedTicket.description
+                      }
+                    </p>
+                  </div>
+                </article>
+
+                {(
+                  selectedTicket.replies ??
+                  []
+                ).map(
+                  (reply) => (
+                    <article
+                      className="message-card message-card--support"
+                      key={
+                        reply.id
+                      }
+                    >
+                      <div className="message-card__avatar">
+                        LT
+                      </div>
+
+                      <div className="message-card__content">
+                        <header>
+                          <div>
+                            <strong>
+                              {
+                                reply.author
+                              }
+                            </strong>
+
+                            <span>
+                              Suporte
+                            </span>
+                          </div>
+
+                          <time>
+                            {formatCompactDate(
+                              reply.createdAt
+                            )}
+                          </time>
+                        </header>
+
+                        <p>
+                          {
+                            reply.message
+                          }
+                        </p>
+                      </div>
+                    </article>
+                  )
+                )}
+
+                {(
+                  selectedTicket.internalNotes ??
+                  []
+                ).map(
+                  (note) => (
+                    <article
+                      className="message-card message-card--note"
+                      key={
+                        note.id
+                      }
+                    >
+                      <div className="message-card__avatar">
+                        LT
+                      </div>
+
+                      <div className="message-card__content">
+                        <header>
+                          <div>
+                            <strong>
+                              {
+                                note.author
+                              }
+                            </strong>
+
+                            <span>
+                              Nota
+                              interna
+                            </span>
+                          </div>
+
+                          <time>
+                            {formatCompactDate(
+                              note.createdAt
+                            )}
+                          </time>
+                        </header>
+
+                        <p>
+                          {
+                            note.message
+                          }
+                        </p>
+                      </div>
+                    </article>
+                  )
+                )}
+
+                <form
+                  className="reply-composer"
+                  onSubmit={
+                    handleComposerSubmit
+                  }
+                >
+                  {selectedTicket.status ===
+                  'resolved' ? (
+                    <div className="reply-composer__resolved">
+                      Este chamado
+                      está resolvido.
+                      Reabra o ticket
+                      para registrar
+                      uma nova
+                      interação.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="composer-tabs">
+                        <button
+                          type="button"
+                          className={
+                            composerMode ===
+                            'reply'
+                              ? 'is-active'
+                              : ''
+                          }
+                          onClick={() =>
+                            setComposerMode(
+                              'reply'
+                            )
+                          }
+                        >
+                          Resposta
+                          pública
+                        </button>
+
+                        <button
+                          type="button"
+                          className={
+                            composerMode ===
+                            'note'
+                              ? 'is-active'
+                              : ''
+                          }
+                          onClick={() =>
+                            setComposerMode(
+                              'note'
+                            )
+                          }
+                        >
+                          Nota interna
+                        </button>
+                      </div>
+
+                      <textarea
+                        value={
+                          replyText
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          setReplyText(
+                            event
+                              .target
+                              .value
+                          )
+                        }
+                        placeholder={
+                          composerMode ===
+                          'reply'
+                            ? 'Escreva uma resposta para o solicitante...'
+                            : 'Registre uma observação interna para a equipe...'
+                        }
+                      />
+
+                      <div className="reply-composer__footer">
+                        <span>
+                          {composerMode ===
+                          'reply'
+                            ? 'Visível para o solicitante'
+                            : 'Visível somente para a equipe'}
+                        </span>
+
+                        <button
+                          type="submit"
+                          className="primary-action"
+                          disabled={
+                            !replyText.trim()
+                          }
+                        >
+                          {composerMode ===
+                          'reply'
+                            ? 'Enviar resposta'
+                            : 'Adicionar nota'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </form>
+              </section>
+
+              <aside className="context-panel">
+                <section className="context-section">
+                  <span className="context-section__label">
+                    SOLICITANTE
+                  </span>
+
+                  <div className="requester-profile">
+                    <div className="requester-profile__avatar">
+                      {getInitials(
+                        selectedTicket
+                          .requester
+                          ?.name
+                      )}
+                    </div>
+
+                    <div>
+                      <strong>
+                        {
+                          selectedTicket
+                            .requester
+                            ?.name
+                        }
+                      </strong>
+
+                      <span>
+                        {
+                          selectedTicket
+                            .requester
+                            ?.email
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="context-field">
+                    <span>
+                      Departamento
+                    </span>
+
+                    <strong>
+                      {selectedTicket
+                        .requester
+                        ?.department ||
+                        'Não informado'}
+                    </strong>
+                  </div>
+                </section>
+
+                <section className="context-section">
+                  <span className="context-section__label">
+                    ATENDIMENTO
+                  </span>
+
+                  <label className="context-control">
+                    <span>
+                      Responsável
+                    </span>
+
+                    <select
+                      value={
+                        selectedTicket.assigneeId ??
+                        ''
+                      }
+                      onChange={
+                        handleAssigneeChange
+                      }
+                    >
+                      <option value="">
+                        Não atribuído
+                      </option>
+
+                      {team.map(
+                        (member) => (
+                          <option
+                            value={
+                              member.id
+                            }
+                            key={
+                              member.id
+                            }
+                          >
+                            {
+                              member.name
+                            }
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </label>
+
+                  {selectedAssignee && (
+                    <div className="assignee-summary">
+                      <div>
+                        {selectedAssignee.initials}
+                      </div>
+
+                      <span>
+                        <strong>
+                          {
+                            selectedAssignee.name
+                          }
+                        </strong>
+
+                        <small>
+                          {
+                            selectedAssignee.role
+                          }
+                        </small>
+                      </span>
+                    </div>
+                  )}
+
+                  <label className="context-control">
+                    <span>
+                      Prioridade
+                    </span>
+
+                    <select
+                      value={
+                        selectedTicket.priority
+                      }
+                      onChange={
+                        handlePriorityChange
+                      }
+                    >
+                      <option value="high">
+                        Alta · SLA
+                        2h
+                      </option>
+
+                      <option value="medium">
+                        Média · SLA
+                        8h
+                      </option>
+
+                      <option value="low">
+                        Baixa · SLA
+                        24h
+                      </option>
+                    </select>
+                  </label>
+                </section>
+
+                <section className="context-section">
+                  <span className="context-section__label">
+                    SLA
+                  </span>
+
+                  <div
+                    className={`sla-card sla-card--${selectedSla?.state}`}
+                  >
+                    <div className="sla-card__top">
+                      <Icon
+                        name="clock"
+                        size={18}
+                      />
+
+                      <span>
+                        {
+                          PRIORITY_LABELS[
+                            selectedTicket
+                              .priority
+                          ]
+                        }
+                      </span>
+                    </div>
+
+                    <strong>
+                      {selectedTicket.status ===
+                      'resolved'
+                        ? 'Concluído'
+                        : formatSlaRemaining(
+                            selectedSla
+                              ?.remainingMs
+                          )}
+                    </strong>
+
+                    {selectedTicket.status !==
+                      'resolved' && (
+                      <div className="sla-progress">
+                        <span
+                          style={{
+                            width: `${selectedSla?.percentage ?? 0}%`,
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </aside>
+            </div>
+          </>
+        ) : (
+          <div className="workspace-empty">
+            <Icon
+              name="inbox"
+              size={30}
+            />
+
+            <h2>
+              Nenhum chamado
+            </h2>
+
+            <p>
+              Ainda não existem
+              chamados disponíveis.
+            </p>
           </div>
+        )}
+      </main>
 
-        )
-      }
+      <section
+        className="service-summary"
+        aria-label="Resumo da operação"
+      >
+        <div>
+          <span>
+            Chamados ativos
+          </span>
 
-      {
-        toast &&
-        (
+          <strong>
+            {openTickets.length}
+          </strong>
+        </div>
 
-          <div
-            className="toast"
-            role="status"
-          >
+        <div>
+          <span>
+            Alta prioridade
+          </span>
 
-            <span>
+          <strong>
+            {
+              highPriorityTickets.length
+            }
+          </strong>
+        </div>
 
-              <Icon
-                name="check"
-                size={15}
-              />
+        <div>
+          <span>
+            Aguardando
+          </span>
 
-            </span>
+          <strong>
+            {
+              waitingTickets.length
+            }
+          </strong>
+        </div>
 
-            {toast}
+        <div>
+          <span>
+            Resolvidos
+          </span>
 
-          </div>
-
-        )
-      }
-
+          <strong>
+            {
+              resolvedTickets.length
+            }
+          </strong>
+        </div>
+      </section>
     </div>
   )
 }
