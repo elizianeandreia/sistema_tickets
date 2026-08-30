@@ -577,6 +577,10 @@ export default function App() {
     ? getRequester(selectedTicket)
     : null
 
+  const selectedAssignee = selectedTicket
+    ? team.find((member) => member.id === selectedTicket.assigneeId)
+    : null
+
   const slaInfo = selectedTicket
     ? getSlaState(selectedTicket)
     : null
@@ -608,17 +612,19 @@ export default function App() {
     setDetailsOpen(false)
   }
 
-  function handleComposerSubmit(event) {
+    function handleComposerSubmit(event) {
     event.preventDefault()
 
     if (!selectedTicket || !replyText.trim()) return
     if (selectedTicket.status === 'resolved') return
 
+    const author = selectedAssignee?.name ?? 'Equipe LTHS'
+
     if (composerMode === 'note') {
-      addNoteToTicket(selectedTicket.id, replyText.trim())
+      addNoteToTicket(selectedTicket.id, replyText.trim(), author)
       setToast('Nota interna registrada.')
     } else {
-      replyToTicket(selectedTicket.id, replyText.trim())
+      replyToTicket(selectedTicket.id, replyText.trim(), author)
       setToast('Resposta registrada no chamado.')
     }
 
