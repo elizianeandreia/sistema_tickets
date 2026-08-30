@@ -1,22 +1,4 @@
-const SLA_HOURS = {
-  high: 2,
-  medium: 8,
-  low: 24,
-}
-
-function addMinutes(referenceDate, minutes) {
-  return new Date(
-    referenceDate.getTime() + minutes * 60_000
-  ).toISOString()
-}
-
-function calculateDeadline(createdAt, priority) {
-  const hours = SLA_HOURS[priority] ?? SLA_HOURS.medium
-
-  return new Date(
-    new Date(createdAt).getTime() + hours * 3_600_000
-  ).toISOString()
-}
+import { calculateSlaDeadline } from '../services/ticketService.js'
 
 function createActivity(
   id,
@@ -36,292 +18,424 @@ function createActivity(
   }
 }
 
-export function createSeedTickets(referenceDate = new Date()) {
-  const tickets = [
-    {
-      number: '1048',
-      subject: 'Falha ao autenticar no ambiente financeiro',
+function createTicket({
+  id,
+  code,
+  subject,
+  description,
+  requester,
+  category,
+  priority,
+  status,
+  assigneeId,
+  createdAt,
+  updatedAt,
+  replies = [],
+  internalNotes = [],
+  activity = [],
+  resolvedAt = null,
+}) {
+  return {
+    id,
+    code,
+    subject,
+    description,
+    requester,
+    category,
+    priority,
+    status,
+    assigneeId,
+    createdAt,
+    updatedAt,
+    slaDeadline: calculateSlaDeadline(
+      createdAt,
+      priority
+    ),
+    resolvedAt,
+    replies,
+    internalNotes,
+    activity,
+  }
+}
 
+export function createSeedTickets() {
+  return [
+    createTicket({
+      id: 'ticket-1048',
+      code: 'TK-1048',
+      subject:
+        'Falha ao autenticar no ambiente financeiro',
       description:
         'Usuária não consegue concluir a autenticação no sistema financeiro desde o início do expediente.',
-
       requester: {
         name: 'Mariana Souza',
         email: 'mariana.souza@empresa.demo',
         department: 'Financeiro',
       },
-
       category: 'access',
       priority: 'high',
-      status: 'in_progress',
+      status: 'waiting',
       assigneeId: 'thiago-tadeu',
+      createdAt: '2026-08-30T09:29:00-03:00',
+      updatedAt: '2026-08-30T10:20:00-03:00',
 
-      createdMinutesAgo: 82,
-      updatedMinutesAgo: 18,
+      replies: [
+        {
+          id: 'reply-1048-1',
+          author: 'Equipe LTHS',
+          message:
+            'Solicitação recebida. A equipe está realizando a análise.',
+          createdAt:
+            '2026-08-30T09:47:00-03:00',
+        },
+      ],
 
-      note:
-        'Validar grupo de acesso e sessão SSO antes de solicitar nova autenticação.',
-    },
+      internalNotes: [
+        {
+          id: 'note-1048-1',
+          author: 'Thiago Tadeu',
+          message:
+            'Validar grupo de acesso e sessão SSO antes de solicitar nova autenticação.',
+          createdAt:
+            '2026-08-30T10:20:00-03:00',
+        },
+      ],
 
-    {
-      number: '1047',
+      activity: [
+        createActivity(
+          'activity-1048-1',
+          'ticket_created',
+          'Sistema',
+          'Chamado criado',
+          '2026-08-30T09:29:00-03:00'
+        ),
+
+        createActivity(
+          'activity-1048-2',
+          'reply_added',
+          'Equipe LTHS',
+          'Resposta adicionada ao chamado',
+          '2026-08-30T09:47:00-03:00'
+        ),
+
+        createActivity(
+          'activity-1048-3',
+          'internal_note_added',
+          'Thiago Tadeu',
+          'Nota interna adicionada',
+          '2026-08-30T10:20:00-03:00'
+        ),
+      ],
+    }),
+
+    createTicket({
+      id: 'ticket-1047',
+      code: 'TK-1047',
       subject: 'Notebook sem acesso à VPN',
-
       description:
-        'Notebook corporativo não estabelece conexão com a VPN após atualização do sistema.',
-
+        'Usuário relata que o notebook corporativo não consegue estabelecer conexão com a VPN.',
       requester: {
         name: 'Lucas Martins',
         email: 'lucas.martins@empresa.demo',
         department: 'Comercial',
       },
-
       category: 'network',
       priority: 'medium',
       status: 'in_progress',
-      assigneeId: 'rafael-lima',
+      assigneeId: 'mateus-ichiro',
+      createdAt: '2026-08-30T07:55:00-03:00',
+      updatedAt: '2026-08-30T09:12:00-03:00',
 
-      createdMinutesAgo: 228,
-      updatedMinutesAgo: 54,
-    },
+      replies: [
+        {
+          id: 'reply-1047-1',
+          author: 'Mateus Ichiro',
+          message:
+            'Estamos validando a configuração de rede e o perfil de acesso à VPN.',
+          createdAt:
+            '2026-08-30T09:12:00-03:00',
+        },
+      ],
 
-    {
-      number: '1046',
+      activity: [
+        createActivity(
+          'activity-1047-1',
+          'ticket_created',
+          'Sistema',
+          'Chamado criado',
+          '2026-08-30T07:55:00-03:00'
+        ),
+
+        createActivity(
+          'activity-1047-2',
+          'reply_added',
+          'Mateus Ichiro',
+          'Resposta adicionada ao chamado',
+          '2026-08-30T09:12:00-03:00'
+        ),
+      ],
+    }),
+
+    createTicket({
+      id: 'ticket-1046',
+      code: 'TK-1046',
       subject: 'Solicitação de acesso ao ERP',
-
       description:
-        'Nova colaboradora precisa de perfil de consulta no ERP utilizado pelo departamento.',
-
+        'Solicitante precisa de acesso ao módulo de pedidos do ERP para iniciar as atividades.',
       requester: {
         name: 'Patrícia Alves',
         email: 'patricia.alves@empresa.demo',
-        department: 'Compras',
+        department: 'Operações',
       },
-
       category: 'access',
       priority: 'low',
       status: 'waiting',
       assigneeId: 'thiago-tadeu',
+      createdAt: '2026-08-30T06:10:00-03:00',
+      updatedAt: '2026-08-30T08:35:00-03:00',
 
-      createdMinutesAgo: 540,
-      updatedMinutesAgo: 130,
-    },
+      replies: [
+        {
+          id: 'reply-1046-1',
+          author: 'Thiago Tadeu',
+          message:
+            'A solicitação está em validação com o responsável pelo perfil de acesso.',
+          createdAt:
+            '2026-08-30T08:35:00-03:00',
+        },
+      ],
 
-    {
-      number: '1045',
-      subject: 'Instabilidade no acesso remoto',
+      activity: [
+        createActivity(
+          'activity-1046-1',
+          'ticket_created',
+          'Sistema',
+          'Chamado criado',
+          '2026-08-30T06:10:00-03:00'
+        ),
+      ],
+    }),
 
+    createTicket({
+      id: 'ticket-1045',
+      code: 'TK-1045',
+      subject:
+        'Instabilidade no acesso remoto',
       description:
-        'Sessão remota desconecta de forma intermitente durante o expediente.',
-
+        'Conexão remota apresenta quedas frequentes durante o expediente.',
       requester: {
         name: 'André Costa',
         email: 'andre.costa@empresa.demo',
-        department: 'Operações',
+        department: 'Engenharia',
       },
-
       category: 'network',
       priority: 'high',
       status: 'new',
-      assigneeId: 'rafael-lima',
+      assigneeId: 'mateus-ichiro',
+      createdAt: '2026-08-30T09:58:00-03:00',
+      updatedAt: '2026-08-30T09:58:00-03:00',
 
-      createdMinutesAgo: 106,
-      updatedMinutesAgo: 106,
-    },
+      activity: [
+        createActivity(
+          'activity-1045-1',
+          'ticket_created',
+          'Sistema',
+          'Chamado criado',
+          '2026-08-30T09:58:00-03:00'
+        ),
+      ],
+    }),
 
-    {
-      number: '1044',
-      subject: 'Erro de sincronização com sistema interno',
-
+    createTicket({
+      id: 'ticket-1044',
+      code: 'TK-1044',
+      subject:
+        'Erro de sincronização com sistema interno',
       description:
-        'Registros processados não aparecem no painel de acompanhamento do sistema.',
-
+        'Dados cadastrados no sistema principal não estão sendo sincronizados com o módulo interno.',
       requester: {
         name: 'Fernanda Melo',
         email: 'fernanda.melo@empresa.demo',
-        department: 'Projetos',
+        department: 'Administrativo',
       },
-
       category: 'systems',
       priority: 'medium',
       status: 'in_progress',
-      assigneeId: 'equipe-lths',
+      assigneeId: 'thiago-tadeu',
+      createdAt: '2026-08-30T04:35:00-03:00',
+      updatedAt: '2026-08-30T08:50:00-03:00',
 
-      createdMinutesAgo: 410,
-      updatedMinutesAgo: 62,
-    },
-
-    {
-      number: '1043',
-      subject: 'Impressora de rede indisponível',
-
-      description:
-        'Fila de impressão do setor administrativo permanece offline.',
-
-      requester: {
-        name: 'João Ribeiro',
-        email: 'joao.ribeiro@empresa.demo',
-        department: 'Administrativo',
-      },
-
-      category: 'devices',
-      priority: 'low',
-      status: 'resolved',
-      assigneeId: 'rafael-lima',
-
-      createdMinutesAgo: 1500,
-      updatedMinutesAgo: 980,
-    },
-
-    {
-      number: '1042',
-      subject: 'Solicitação de criação de usuário',
-
-      description:
-        'Criar usuário para novo integrante com acesso padrão ao ambiente interno.',
-
-      requester: {
-        name: 'Beatriz Lima',
-        email: 'beatriz.lima@empresa.demo',
-        department: 'RH',
-      },
-
-      category: 'access',
-      priority: 'low',
-      status: 'resolved',
-      assigneeId: 'equipe-lths',
-
-      createdMinutesAgo: 2500,
-      updatedMinutesAgo: 1800,
-    },
-
-    {
-      number: '1041',
-      subject: 'Lentidão em estação de trabalho',
-
-      description:
-        'Estação apresenta lentidão ao iniciar aplicações corporativas.',
-
-      requester: {
-        name: 'Carlos Nunes',
-        email: 'carlos.nunes@empresa.demo',
-        department: 'Engenharia',
-      },
-
-      category: 'devices',
-      priority: 'medium',
-      status: 'waiting',
-      assigneeId: 'rafael-lima',
-
-      createdMinutesAgo: 620,
-      updatedMinutesAgo: 220,
-    },
-  ]
-
-  return tickets.map((ticket) => {
-    const createdAt = addMinutes(
-      referenceDate,
-      -ticket.createdMinutesAgo
-    )
-
-    const updatedAt = addMinutes(
-      referenceDate,
-      -ticket.updatedMinutesAgo
-    )
-
-    const resolvedAt =
-      ticket.status === 'resolved'
-        ? updatedAt
-        : null
-
-    const replies =
-      ticket.status !== 'new'
-        ? [
-            {
-              id: `reply-${ticket.number}-1`,
-
-              author: 'Equipe LTHS',
-
-              message:
-                ticket.status === 'resolved'
-                  ? 'Atendimento concluído e validado com o solicitante.'
-                  : 'Solicitação recebida. A equipe está realizando a análise.',
-
-              createdAt: addMinutes(
-                new Date(createdAt),
-                18
-              ),
-            },
-          ]
-        : []
-
-    const internalNotes = ticket.note
-      ? [
-          {
-            id: `note-${ticket.number}-1`,
-            author: 'Thiago Tadeu',
-            message: ticket.note,
-            createdAt: addMinutes(
-              new Date(updatedAt),
-              -13
-            ),
-          },
-        ]
-      : []
-
-    const activity = [
-      createActivity(
-        `activity-${ticket.number}-created`,
-        'ticket_created',
-        ticket.requester.name,
-        'Ticket criado',
-        createdAt
-      ),
-
-      createActivity(
-        `activity-${ticket.number}-assigned`,
-        'assignee_changed',
-        'Equipe LTHS',
-        'Responsável definido',
-        addMinutes(
-          new Date(createdAt),
-          8
-        ),
+      replies: [
         {
-          assigneeId: ticket.assigneeId,
-        }
-      ),
-    ]
+          id: 'reply-1044-1',
+          author: 'Thiago Tadeu',
+          message:
+            'Estamos verificando os registros de integração e o processamento da fila.',
+          createdAt:
+            '2026-08-30T08:50:00-03:00',
+        },
+      ],
 
-    return {
-      id: `ticket-${ticket.number}`,
-      code: `TK-${ticket.number}`,
+      activity: [
+        createActivity(
+          'activity-1044-1',
+          'ticket_created',
+          'Sistema',
+          'Chamado criado',
+          '2026-08-30T04:35:00-03:00'
+        ),
+      ],
+    }),
 
-      subject: ticket.subject,
-      description: ticket.description,
+    createTicket({
+      id: 'ticket-1043',
+      code: 'TK-1043',
+      subject:
+        'Impressora de rede indisponível',
+      description:
+        'Impressora compartilhada do setor não aparece disponível para os usuários.',
+      requester: {
+        name: 'Bruno Lima',
+        email: 'bruno.lima@empresa.demo',
+        department: 'Logística',
+      },
+      category: 'devices',
+      priority: 'low',
+      status: 'waiting',
+      assigneeId: 'mateus-ichiro',
+      createdAt: '2026-08-29T15:20:00-03:00',
+      updatedAt: '2026-08-30T08:10:00-03:00',
 
-      requester: ticket.requester,
+      replies: [
+        {
+          id: 'reply-1043-1',
+          author: 'Mateus Ichiro',
+          message:
+            'A conectividade do equipamento está sendo validada.',
+          createdAt:
+            '2026-08-30T08:10:00-03:00',
+        },
+      ],
 
-      category: ticket.category,
-      priority: ticket.priority,
-      status: ticket.status,
+      activity: [
+        createActivity(
+          'activity-1043-1',
+          'ticket_created',
+          'Sistema',
+          'Chamado criado',
+          '2026-08-29T15:20:00-03:00'
+        ),
+      ],
+    }),
 
-      assigneeId: ticket.assigneeId,
+    createTicket({
+      id: 'ticket-1042',
+      code: 'TK-1042',
+      subject:
+        'Atualização de aplicativo corporativo',
+      description:
+        'Aplicativo corporativo foi atualizado e o chamado foi concluído após validação do usuário.',
+      requester: {
+        name: 'Juliana Ribeiro',
+        email: 'juliana.ribeiro@empresa.demo',
+        department: 'Recursos Humanos',
+      },
+      category: 'systems',
+      priority: 'medium',
+      status: 'resolved',
+      assigneeId: 'thiago-tadeu',
+      createdAt: '2026-08-29T08:15:00-03:00',
+      updatedAt: '2026-08-29T13:40:00-03:00',
+      resolvedAt:
+        '2026-08-29T13:40:00-03:00',
 
-      createdAt,
-      updatedAt,
-      resolvedAt,
+      replies: [
+        {
+          id: 'reply-1042-1',
+          author: 'Thiago Tadeu',
+          message:
+            'Atualização realizada e funcionamento validado.',
+          createdAt:
+            '2026-08-29T13:35:00-03:00',
+        },
+      ],
 
-      slaDeadline: calculateDeadline(
-        createdAt,
-        ticket.priority
-      ),
+      activity: [
+        createActivity(
+          'activity-1042-1',
+          'ticket_created',
+          'Sistema',
+          'Chamado criado',
+          '2026-08-29T08:15:00-03:00'
+        ),
 
-      replies,
-      internalNotes,
-      activity,
+        createActivity(
+          'activity-1042-2',
+          'status_changed',
+          'Thiago Tadeu',
+          'Chamado resolvido',
+          '2026-08-29T13:40:00-03:00',
+          {
+            from: 'in_progress',
+            to: 'resolved',
+          }
+        ),
+      ],
+    }),
 
-      demonstrative: true,
-    }
-  })
+    createTicket({
+      id: 'ticket-1041',
+      code: 'TK-1041',
+      subject:
+        'Configuração de novo equipamento',
+      description:
+        'Novo notebook foi preparado, configurado e entregue ao colaborador.',
+      requester: {
+        name: 'Ricardo Gomes',
+        email: 'ricardo.gomes@empresa.demo',
+        department: 'Projetos',
+      },
+      category: 'devices',
+      priority: 'low',
+      status: 'resolved',
+      assigneeId: 'mateus-ichiro',
+      createdAt: '2026-08-28T10:00:00-03:00',
+      updatedAt: '2026-08-28T16:15:00-03:00',
+      resolvedAt:
+        '2026-08-28T16:15:00-03:00',
+
+      replies: [
+        {
+          id: 'reply-1041-1',
+          author: 'Mateus Ichiro',
+          message:
+            'Equipamento configurado e liberado para utilização.',
+          createdAt:
+            '2026-08-28T16:10:00-03:00',
+        },
+      ],
+
+      activity: [
+        createActivity(
+          'activity-1041-1',
+          'ticket_created',
+          'Sistema',
+          'Chamado criado',
+          '2026-08-28T10:00:00-03:00'
+        ),
+
+        createActivity(
+          'activity-1041-2',
+          'status_changed',
+          'Mateus Ichiro',
+          'Chamado resolvido',
+          '2026-08-28T16:15:00-03:00',
+          {
+            from: 'in_progress',
+            to: 'resolved',
+          }
+        ),
+      ],
+    }),
+  ]
 }

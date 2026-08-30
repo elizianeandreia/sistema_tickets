@@ -7,16 +7,14 @@ export const TEAM = [
     initials: 'TT',
     status: 'online',
   },
-
   {
-    id: 'rafael-lima',
-    name: 'Rafael Lima',
+    id: 'mateus-ichiro',
+    name: 'Mateus Ichiro',
     role: 'Analista de infraestrutura',
     specialty: 'Rede, VPN e dispositivos',
-    initials: 'RL',
+    initials: 'MI',
     status: 'online',
   },
-
   {
     id: 'equipe-lths',
     name: 'Equipe LTHS',

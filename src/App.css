@@ -1837,3 +1837,33 @@ html[data-theme="light"]
     animation-duration: 0.01ms !important;
   }
 }
+
+
+html[data-theme="dark"] select {
+  background-color: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-strong);
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] select:hover {
+  background-color: var(--surface-3);
+  border-color: var(--border-strong);
+}
+
+html[data-theme="dark"] select:focus {
+  background-color: var(--surface-2);
+  color: var(--text);
+  border-color: var(--accent);
+  outline: none;
+}
+
+html[data-theme="dark"] select option {
+  background-color: #15171b;
+  color: #eef0f2;
+}
+
+html[data-theme="dark"] select option:checked {
+  background-color: #242735;
+  color: #ffffff;
+}
