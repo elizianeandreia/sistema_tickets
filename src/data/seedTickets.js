@@ -54,7 +54,7 @@ export function createSeedTickets(referenceDate = new Date()) {
       category: 'access',
       priority: 'high',
       status: 'in_progress',
-      assigneeId: 'camila-rocha',
+      assigneeId: 'thiago-tadeu',
 
       createdMinutesAgo: 82,
       updatedMinutesAgo: 18,
@@ -101,7 +101,7 @@ export function createSeedTickets(referenceDate = new Date()) {
       category: 'access',
       priority: 'low',
       status: 'waiting',
-      assigneeId: 'camila-rocha',
+      assigneeId: 'thiago-tadeu',
 
       createdMinutesAgo: 540,
       updatedMinutesAgo: 130,
@@ -259,7 +259,7 @@ export function createSeedTickets(referenceDate = new Date()) {
       ? [
           {
             id: `note-${ticket.number}-1`,
-            author: 'Camila Rocha',
+            author: 'Thiago Tadeu',
             message: ticket.note,
             createdAt: addMinutes(
               new Date(updatedAt),

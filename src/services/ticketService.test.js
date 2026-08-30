@@ -73,7 +73,7 @@ test('primeira resposta deve mover ticket novo para em atendimento', () => {
 
   const updated = addReply(ticket, {
     message: 'Estamos analisando.',
-    author: 'Camila Rocha',
+    author: 'Thiago Tadeu',
     createdAt: '2026-08-29T12:30:00.000Z',
   })
 
@@ -100,7 +100,7 @@ test('nota interna não deve alterar o status do ticket', () => {
 
   const updated = addInternalNote(ticket, {
     message: 'Verificar permissões.',
-    author: 'Camila Rocha',
+    author: 'Thiago Tadeu',
     createdAt: '2026-08-29T12:40:00.000Z',
   })
 
@@ -201,12 +201,12 @@ test('deve alterar responsável', () => {
 
   const updated = changeAssignee(
     ticket,
-    'camila-rocha'
+    'thiago-tadeu'
   )
 
   assert.equal(
     updated.assigneeId,
-    'camila-rocha'
+    'thiago-tadeu'
   )
 })
 

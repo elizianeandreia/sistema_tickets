@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-
 import './App.css'
 
-import {
-  useServiceDesk,
-} from './context/ServiceDeskContext.jsx'
+import { useServiceDesk } from './context/ServiceDeskContext.jsx'
 
 import {
   formatCompactDate,
@@ -38,100 +35,87 @@ const CATEGORY_LABELS = {
   general: 'Geral',
 }
 
-function Icon({
-  name,
-  size = 18,
-}) {
-  const icons = {
+function Icon({ name, size = 18 }) {
+  const paths = {
     inbox: (
       <>
-        <path d="M4 4h16v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z" />
-        <path d="M4 14h4l2 3h4l2-3h4" />
+        <path d="M4 5.5h16v13H4z" />
+        <path d="M4 14h4l2 2h4l2-2h4" />
       </>
     ),
 
     search: (
       <>
-        <circle
-          cx="10.8"
-          cy="10.8"
-          r="6.3"
-        />
+        <circle cx="11" cy="11" r="6" />
         <path d="m16 16 4 4" />
       </>
     ),
 
     plus: (
-      <path d="M12 5v14M5 12h14" />
+      <>
+        <path d="M12 5v14" />
+        <path d="M5 12h14" />
+      </>
     ),
 
-    check: (
-      <path d="m5 12.5 4.2 4.2L19 7" />
-    ),
+    check: <path d="m5 12 4 4L19 6" />,
 
     clock: (
       <>
-        <circle
-          cx="12"
-          cy="12"
-          r="8.5"
-        />
-        <path d="M12 7v5l3.2 2" />
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 8v5l3 2" />
       </>
     ),
 
     user: (
       <>
-        <circle
-          cx="12"
-          cy="8"
-          r="3.5"
-        />
-        <path d="M5 20c.8-4 3-6 7-6s6.2 2 7 6" />
+        <circle cx="12" cy="8" r="3" />
+        <path d="M6 20c0-3.5 2.5-6 6-6s6 2.5 6 6" />
       </>
     ),
 
     users: (
       <>
-        <circle
-          cx="9"
-          cy="8"
-          r="3"
-        />
-        <path d="M3.5 19c.6-3.5 2.5-5.3 5.5-5.3 3.1 0 5 1.8 5.6 5.3" />
-        <path d="M15 6.2a2.7 2.7 0 0 1 0 5.2" />
-        <path d="M16.2 14c2.3.4 3.7 2.1 4.3 5" />
+        <circle cx="9" cy="8" r="3" />
+        <path d="M3 20c0-3.5 2.5-6 6-6 2 0 3.8.8 4.8 2" />
+        <path d="M15 6.5a3 3 0 0 1 0 5.5" />
+        <path d="M16 14c3 0 5 2.2 5 5" />
       </>
     ),
 
     activity: (
-      <path d="M3 12h4l2-6 4 12 2-6h6" />
+      <path d="M3 12h4l2-5 4 10 2-5h6" />
     ),
 
     sun: (
       <>
-        <circle
-          cx="12"
-          cy="12"
-          r="3.5"
-        />
-        <path d="M12 2.5v2M12 19.5v2M4.5 12h-2M21.5 12h-2" />
-        <path d="m5.3 5.3 1.4 1.4m10.6 10.6 1.4 1.4m0-13.4-1.4 1.4M6.7 17.3l-1.4 1.4" />
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" />
       </>
     ),
 
     moon: (
-      <path d="M20 15.4A8.2 8.2 0 0 1 8.6 4a8.3 8.3 0 1 0 11.4 11.4Z" />
+      <path d="M20 15.2A8 8 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
     ),
 
-    chevron: (
-      <path d="m9 18 6-6-6-6" />
+    arrow: (
+      <>
+        <path d="M5 12h13" />
+        <path d="m14 8 4 4-4 4" />
+      </>
+    ),
+
+    info: (
+      <>
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 11v5" />
+        <path d="M12 8h.01" />
+      </>
     ),
   }
 
   return (
     <svg
-      aria-hidden="true"
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -140,13 +124,76 @@ function Icon({
       strokeWidth="1.7"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
-      {icons[name] ?? icons.activity}
+      {paths[name]}
     </svg>
   )
 }
 
-export default function App() {
+function getRequester(ticket) {
+  const requester = ticket?.requester ?? {}
+
+  return {
+    name:
+      requester.name ||
+      ticket?.requesterName ||
+      ticket?.customerName ||
+      'Solicitante',
+
+    email:
+      requester.email ||
+      ticket?.requesterEmail ||
+      ticket?.email ||
+      '',
+
+    department:
+      requester.department ||
+      ticket?.department ||
+      'Não informado',
+  }
+}
+
+function getTicketDescription(ticket) {
+  return (
+    ticket?.description ||
+    ticket?.message ||
+    ticket?.requesterMessage ||
+    ticket?.initialMessage ||
+    'Chamado registrado para análise da equipe de suporte.'
+  )
+}
+
+function TicketMessage({
+  type,
+  author,
+  role,
+  message,
+  createdAt,
+}) {
+  return (
+    <article className={`timeline-entry timeline-entry--${type}`}>
+      <div className="timeline-entry__rail">
+        <span className="timeline-entry__marker" />
+      </div>
+
+      <div className="timeline-entry__time">
+        {formatCompactDate(createdAt)}
+      </div>
+
+      <div className="timeline-entry__content">
+        <div className="timeline-entry__meta">
+          <strong>{author}</strong>
+          <span>{role}</span>
+        </div>
+
+        <p>{message}</p>
+      </div>
+    </article>
+  )
+}
+
+function App() {
   const {
     tickets,
     team,
@@ -163,325 +210,193 @@ export default function App() {
     setTheme,
   } = useServiceDesk()
 
-  const [
-    selectedTicketId,
-    setSelectedTicketId,
-  ] = useState(
-    () => tickets[0]?.id ?? null
+  const [selectedTicketId, setSelectedTicketId] = useState(
+    tickets[0]?.id ?? null
   )
 
-  const [
-    search,
-    setSearch,
-  ] = useState('')
-
-  const [
-    statusFilter,
-    setStatusFilter,
-  ] = useState('all')
-
-  const [
-    replyText,
-    setReplyText,
-  ] = useState('')
-
-  const [
-    composerMode,
-    setComposerMode,
-  ] = useState('reply')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [replyText, setReplyText] = useState('')
+  const [composerMode, setComposerMode] = useState('reply')
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   useEffect(() => {
     document.documentElement.dataset.theme =
-      preferences.theme
+      preferences.theme || 'dark'
   }, [preferences.theme])
 
   useEffect(() => {
-    if (
-      selectedTicketId &&
-      tickets.some(
-        (ticket) =>
-          ticket.id ===
-          selectedTicketId
-      )
-    ) {
+    if (!tickets.length) {
+      setSelectedTicketId(null)
       return
     }
 
-    setSelectedTicketId(
-      tickets[0]?.id ?? null
+    const exists = tickets.some(
+      (ticket) => ticket.id === selectedTicketId
     )
-  }, [
-    tickets,
-    selectedTicketId,
-  ])
 
-  const selectedTicket =
-    useMemo(
-      () =>
-        tickets.find(
-          (ticket) =>
-            ticket.id ===
-            selectedTicketId
-        ) ??
-        tickets[0] ??
-        null,
-      [
-        tickets,
-        selectedTicketId,
+    if (!exists) {
+      setSelectedTicketId(tickets[0].id)
+    }
+  }, [tickets, selectedTicketId])
+
+  const selectedTicket = useMemo(
+    () =>
+      tickets.find(
+        (ticket) => ticket.id === selectedTicketId
+      ) ?? null,
+    [tickets, selectedTicketId]
+  )
+
+  const filteredTickets = useMemo(() => {
+    const normalizedSearch = search
+      .trim()
+      .toLowerCase()
+
+    return tickets.filter((ticket) => {
+      const requester = getRequester(ticket)
+
+      const matchesStatus =
+        statusFilter === 'all' ||
+        ticket.status === statusFilter
+
+      const searchable = [
+        ticket.code,
+        ticket.subject,
+        ticket.title,
+        requester.name,
+        requester.department,
       ]
-    )
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
 
-  const filteredTickets =
-    useMemo(() => {
-      const normalizedSearch =
-        search
-          .trim()
-          .toLocaleLowerCase(
-            'pt-BR'
-          )
+      const matchesSearch =
+        !normalizedSearch ||
+        searchable.includes(normalizedSearch)
 
-      return tickets.filter(
-        (ticket) => {
-          const matchesStatus =
-            statusFilter ===
-              'all' ||
-            ticket.status ===
-              statusFilter
+      return matchesStatus && matchesSearch
+    })
+  }, [tickets, search, statusFilter])
 
-          if (!matchesStatus) {
-            return false
-          }
+  const selectedRequester =
+    getRequester(selectedTicket)
 
-          if (
-            !normalizedSearch
-          ) {
-            return true
-          }
+  const selectedAssignee = team.find(
+    (member) =>
+      member.id === selectedTicket?.assigneeId
+  )
 
-          const searchableText = [
-            ticket.code,
-            ticket.subject,
-            ticket.description,
-            ticket.requester
-              ?.name,
-            ticket.requester
-              ?.email,
-            ticket.requester
-              ?.department,
-            ticket.category,
-          ]
-            .filter(Boolean)
-            .join(' ')
-            .toLocaleLowerCase(
-              'pt-BR'
-            )
-
-          return searchableText.includes(
-            normalizedSearch
-          )
-        }
-      )
-    }, [
-      tickets,
-      search,
-      statusFilter,
-    ])
+  const sla = selectedTicket
+    ? getSlaState(selectedTicket)
+    : null
 
   const highPriorityTickets =
-    useMemo(
-      () =>
-        openTickets.filter(
-          (ticket) =>
-            ticket.priority ===
-            'high'
-        ),
-      [openTickets]
-    )
+    tickets.filter(
+      (ticket) =>
+        ticket.priority === 'high' &&
+        ticket.status !== 'resolved'
+    ).length
 
   const waitingTickets =
-    useMemo(
-      () =>
-        tickets.filter(
-          (ticket) =>
-            ticket.status ===
-            'waiting'
-        ),
-      [tickets]
-    )
+    tickets.filter(
+      (ticket) => ticket.status === 'waiting'
+    ).length
 
-  const selectedSla =
-    selectedTicket
-      ? getSlaState(
-          selectedTicket
-        )
-      : null
+  const logoPath =
+    `${import.meta.env.BASE_URL}imagem/logo2026.png`
 
-  const selectedAssignee =
-    selectedTicket
-      ? team.find(
-          (member) =>
-            member.id ===
-            selectedTicket.assigneeId
-        )
-      : null
-
-  function handleSelectTicket(
-    ticketId
-  ) {
-    setSelectedTicketId(
-      ticketId
-    )
-
+  function handleSelectTicket(ticketId) {
+    setSelectedTicketId(ticketId)
     setReplyText('')
+    setComposerMode('reply')
+    setDetailsOpen(false)
   }
 
-  function handleComposerSubmit(
-    event
-  ) {
+  function handleComposerSubmit(event) {
     event.preventDefault()
 
-    if (
-      !selectedTicket ||
-      !replyText.trim()
-    ) {
-      return
-    }
+    if (!selectedTicket) return
 
-    if (
-      selectedTicket.status ===
-      'resolved'
-    ) {
-      return
-    }
+    const message = replyText.trim()
 
-    const data = {
-      message:
-        replyText.trim(),
+    if (!message) return
 
-      author:
-        'Equipe LTHS',
-
-      createdAt:
-        new Date(),
-    }
-
-    if (
-      composerMode === 'note'
-    ) {
-      addNoteToTicket(
-        selectedTicket.id,
-        data
-      )
+    if (composerMode === 'note') {
+      addNoteToTicket(selectedTicket.id, {
+        message,
+        author: selectedAssignee?.name || 'Equipe LTHS',
+      })
     } else {
-      replyToTicket(
-        selectedTicket.id,
-        data
-      )
+      replyToTicket(selectedTicket.id, {
+        message,
+        author: selectedAssignee?.name || 'Equipe LTHS',
+      })
     }
 
     setReplyText('')
   }
 
   function handleResolve() {
-    if (!selectedTicket) {
-      return
-    }
+    if (!selectedTicket) return
 
-    closeTicket(
-      selectedTicket.id,
-      {
-        author:
-          'Equipe LTHS',
-      }
-    )
+    closeTicket(selectedTicket.id, {
+      author: selectedAssignee?.name || 'Equipe LTHS',
+    })
   }
 
   function handleReopen() {
-    if (!selectedTicket) {
-      return
-    }
+    if (!selectedTicket) return
 
-    reopenResolvedTicket(
-      selectedTicket.id,
-      {
-        author:
-          'Equipe LTHS',
-      }
-    )
+    reopenResolvedTicket(selectedTicket.id, {
+      author: selectedAssignee?.name || 'Equipe LTHS',
+    })
   }
 
   function handleWaiting() {
-    if (!selectedTicket) {
-      return
-    }
+    if (!selectedTicket) return
 
-    setTicketWaiting(
-      selectedTicket.id,
-      {
-        author:
-          'Equipe LTHS',
-      }
-    )
+    setTicketWaiting(selectedTicket.id, {
+      author: selectedAssignee?.name || 'Equipe LTHS',
+    })
   }
 
-  function handlePriorityChange(
-    event
-  ) {
-    if (!selectedTicket) {
-      return
-    }
+  function handlePriorityChange(event) {
+    if (!selectedTicket) return
 
     setTicketPriority(
       selectedTicket.id,
       event.target.value,
       {
         author:
-          'Equipe LTHS',
+          selectedAssignee?.name || 'Equipe LTHS',
       }
     )
   }
 
-  function handleAssigneeChange(
-    event
-  ) {
-    if (!selectedTicket) {
-      return
-    }
+  function handleAssigneeChange(event) {
+    if (!selectedTicket) return
 
     setTicketAssignee(
       selectedTicket.id,
-      event.target.value ||
-        null,
+      event.target.value || null,
       {
-        author:
-          'Equipe LTHS',
+        author: 'Equipe LTHS',
       }
     )
   }
 
   function toggleTheme() {
     setTheme(
-      preferences.theme ===
-        'dark'
-        ? 'light'
-        : 'dark'
+      preferences.theme === 'light'
+        ? 'dark'
+        : 'light'
     )
   }
 
-  const logoPath =
-    `${import.meta.env.BASE_URL}imagem/logo2026.png`
-
   return (
-    <div
-      className="support-app"
-      data-theme={
-        preferences.theme
-      }
-    >
-      <aside
-        className="nav-rail"
-        aria-label="Navegação principal"
-      >
+    <div className="support-app">
+      <aside className="nav-rail">
         <div className="nav-rail__brand">
           <img
             src={logoPath}
@@ -489,11 +404,15 @@ export default function App() {
           />
         </div>
 
-        <nav className="nav-rail__nav">
+        <nav
+          className="nav-rail__nav"
+          aria-label="Navegação principal"
+        >
           <button
-            type="button"
             className="is-active"
-            aria-label="Tickets"
+            type="button"
+            aria-label="Chamados"
+            title="Chamados"
           >
             <Icon name="inbox" />
           </button>
@@ -501,37 +420,32 @@ export default function App() {
           <button
             type="button"
             aria-label="Equipe"
+            title="Equipe"
           >
             <Icon name="users" />
           </button>
 
           <button
             type="button"
-            aria-label="Indicadores"
+            aria-label="Operação"
+            title="Operação"
           >
             <Icon name="activity" />
           </button>
         </nav>
 
         <button
-          type="button"
           className="nav-rail__help"
-          onClick={
-            toggleTheme
-          }
-          aria-label={
-            preferences.theme ===
-            'dark'
-              ? 'Ativar tema claro'
-              : 'Ativar tema escuro'
-          }
+          type="button"
+          onClick={toggleTheme}
+          aria-label="Alternar tema"
+          title="Alternar tema"
         >
           <Icon
             name={
-              preferences.theme ===
-              'dark'
-                ? 'sun'
-                : 'moon'
+              preferences.theme === 'light'
+                ? 'moon'
+                : 'sun'
             }
           />
         </button>
@@ -540,9 +454,7 @@ export default function App() {
       <aside className="queue-panel">
         <header className="queue-panel__header">
           <div className="brand-lockup">
-            <strong>
-              Service Desk
-            </strong>
+            <strong>Service Desk</strong>
 
             <span>
               <i />
@@ -551,74 +463,46 @@ export default function App() {
           </div>
 
           <button
-            type="button"
             className="queue-create"
+            type="button"
           >
-            <Icon
-              name="plus"
-              size={16}
-            />
-
+            <Icon name="plus" size={15} />
             Novo
           </button>
         </header>
 
         <div className="queue-panel__title">
           <div>
-            <span>
-              CENTRAL DE SUPORTE
-            </span>
-
-            <h1>
-              Chamados
-            </h1>
+            <span>Central de suporte</span>
+            <h1>Chamados</h1>
           </div>
 
-          <b>
-            {
-              openTickets.length
-            }
-          </b>
+          <b>{openTickets.length}</b>
         </div>
 
         <label className="queue-search">
-          <Icon
-            name="search"
-            size={17}
-          />
+          <Icon name="search" size={15} />
 
           <input
             type="search"
             placeholder="Buscar chamados"
             value={search}
-            onChange={(
-              event
-            ) =>
-              setSearch(
-                event.target
-                  .value
-              )
+            onChange={(event) =>
+              setSearch(event.target.value)
             }
-            aria-label="Buscar chamados"
           />
         </label>
 
-        <div
-          className="queue-filters"
-          aria-label="Filtrar chamados"
-        >
+        <div className="queue-filters">
           <button
             type="button"
             className={
-              statusFilter ===
-              'all'
+              statusFilter === 'all'
                 ? 'is-selected'
                 : ''
             }
             onClick={() =>
-              setStatusFilter(
-                'all'
-              )
+              setStatusFilter('all')
             }
           >
             Todos
@@ -627,15 +511,12 @@ export default function App() {
           <button
             type="button"
             className={
-              statusFilter ===
-              'new'
+              statusFilter === 'new'
                 ? 'is-selected'
                 : ''
             }
             onClick={() =>
-              setStatusFilter(
-                'new'
-              )
+              setStatusFilter('new')
             }
           >
             Novos
@@ -644,15 +525,12 @@ export default function App() {
           <button
             type="button"
             className={
-              statusFilter ===
-              'in_progress'
+              statusFilter === 'in_progress'
                 ? 'is-selected'
                 : ''
             }
             onClick={() =>
-              setStatusFilter(
-                'in_progress'
-              )
+              setStatusFilter('in_progress')
             }
           >
             Em atendimento
@@ -660,30 +538,30 @@ export default function App() {
         </div>
 
         <div className="ticket-list">
-          {filteredTickets.map(
-            (ticket) => {
-              const sla =
-                getSlaState(
-                  ticket
-                )
+          {filteredTickets.length ? (
+            filteredTickets.map((ticket) => {
+              const requester =
+                getRequester(ticket)
+
+              const ticketSla =
+                getSlaState(ticket)
+
+              const subject =
+                ticket.subject ||
+                ticket.title ||
+                'Chamado sem título'
 
               return (
                 <button
+                  key={ticket.id}
                   type="button"
-                  key={
-                    ticket.id
-                  }
                   className={`ticket-row ${
-                    selectedTicket
-                      ?.id ===
-                    ticket.id
+                    ticket.id === selectedTicketId
                       ? 'is-active'
                       : ''
                   }`}
                   onClick={() =>
-                    handleSelectTicket(
-                      ticket.id
-                    )
+                    handleSelectTicket(ticket.id)
                   }
                 >
                   <div className="ticket-row__top">
@@ -698,33 +576,25 @@ export default function App() {
                     >
                       {
                         PRIORITY_LABELS[
-                          ticket
-                            .priority
+                          ticket.priority
                         ]
                       }
                     </span>
                   </div>
 
                   <strong className="ticket-row__subject">
-                    {
-                      ticket.subject
-                    }
+                    {subject}
                   </strong>
 
                   <span className="ticket-row__requester">
-                    {
-                      ticket
-                        .requester
-                        ?.name
-                    }
+                    {requester.name}
                   </span>
 
                   <div className="ticket-row__footer">
                     <span>
                       {
                         STATUS_LABELS[
-                          ticket
-                            .status
+                          ticket.status
                         ]
                       }
                     </span>
@@ -732,294 +602,312 @@ export default function App() {
                     {ticket.status !==
                       'resolved' && (
                       <span
-                        className={`sla-text sla-text--${sla.state}`}
+                        className={`sla-text sla-text--${ticketSla.state}`}
                       >
                         <Icon
                           name="clock"
-                          size={13}
+                          size={12}
                         />
 
                         {formatSlaRemaining(
-                          sla.remainingMs
+                          ticketSla.remainingMs
                         )}
                       </span>
                     )}
                   </div>
                 </button>
               )
-            }
-          )}
-
-          {!filteredTickets
-            .length && (
+            })
+          ) : (
             <div className="empty-state">
               <strong>
-                Nenhum chamado
-                encontrado
+                Nenhum chamado encontrado
               </strong>
 
               <span>
-                Ajuste a busca
-                ou os filtros.
+                Ajuste os filtros ou a busca.
               </span>
             </div>
           )}
         </div>
+
+        <footer className="queue-health">
+          <span>
+            <b>{openTickets.length}</b>
+            ativos
+          </span>
+
+          <span>
+            <b>{highPriorityTickets}</b>
+            alta
+          </span>
+
+          <span>
+            <b>{waitingTickets}</b>
+            aguardando
+          </span>
+        </footer>
       </aside>
 
       <main className="ticket-workspace">
         {selectedTicket ? (
           <>
-            <header className="ticket-header">
-              <div className="ticket-header__main">
-                <div className="ticket-header__eyebrow">
-                  <span>
-                    {formatTicketCode(
-                      selectedTicket.code
+            <section className="ticket-document">
+              <header className="ticket-document__header">
+                <div className="ticket-document__identity">
+                  <div className="ticket-document__eyebrow">
+                    <span>
+                      {formatTicketCode(
+                        selectedTicket.code
+                      )}
+                    </span>
+
+                    <span>/</span>
+
+                    <span>
+                      {
+                        CATEGORY_LABELS[
+                          selectedTicket.category
+                        ] ||
+                        selectedTicket.category ||
+                        'Geral'
+                      }
+                    </span>
+
+                    <span
+                      className={`ticket-status ticket-status--${selectedTicket.status}`}
+                    >
+                      {
+                        STATUS_LABELS[
+                          selectedTicket.status
+                        ]
+                      }
+                    </span>
+                  </div>
+
+                  <h2>
+                    {selectedTicket.subject ||
+                      selectedTicket.title ||
+                      'Chamado sem título'}
+                  </h2>
+
+                  <p>
+                    Aberto por{' '}
+                    <strong>
+                      {selectedRequester.name}
+                    </strong>{' '}
+                    em{' '}
+                    {formatCompactDate(
+                      selectedTicket.createdAt
                     )}
-                  </span>
-
-                  <span>
-                    {
-                      CATEGORY_LABELS[
-                        selectedTicket
-                          .category
-                      ] ??
-                      selectedTicket
-                        .category
-                    }
-                  </span>
-
-                  <span
-                    className={`ticket-status ticket-status--${selectedTicket.status}`}
-                  >
-                    {
-                      STATUS_LABELS[
-                        selectedTicket
-                          .status
-                      ]
-                    }
-                  </span>
+                  </p>
                 </div>
 
-                <h2>
-                  {
-                    selectedTicket.subject
-                  }
-                </h2>
+                <div
+                  className={`ticket-document__sla ticket-document__sla--${sla.state}`}
+                >
+                  <span>SLA</span>
 
-                <p>
-                  Aberto por{' '}
                   <strong>
-                    {
-                      selectedTicket
-                        .requester
-                        ?.name
-                    }
-                  </strong>{' '}
-                  em{' '}
-                  {formatCompactDate(
-                    selectedTicket.createdAt
-                  )}
-                </p>
-              </div>
-
-              <div className="ticket-header__actions">
-                {selectedTicket.status !==
-                  'resolved' ? (
-                  <>
-                    <button
-                      type="button"
-                      className="secondary-action"
-                      onClick={
-                        handleWaiting
-                      }
-                    >
-                      Aguardar
-                    </button>
-
-                    <button
-                      type="button"
-                      className="primary-action"
-                      onClick={
-                        handleResolve
-                      }
-                    >
-                      <Icon
-                        name="check"
-                        size={16}
-                      />
-
-                      Resolver
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className="primary-action"
-                    onClick={
-                      handleReopen
-                    }
-                  >
-                    Reabrir
-                  </button>
-                )}
-              </div>
-            </header>
-
-            <div className="ticket-layout">
-              <section className="conversation-panel">
-                <article className="message-card message-card--requester">
-                  <div className="message-card__avatar">
-                    {getInitials(
-                      selectedTicket
-                        .requester
-                        ?.name
-                    )}
-                  </div>
-
-                  <div className="message-card__content">
-                    <header>
-                      <div>
-                        <strong>
-                          {
-                            selectedTicket
-                              .requester
-                              ?.name
-                          }
-                        </strong>
-
-                        <span>
-                          Solicitante
-                        </span>
-                      </div>
-
-                      <time>
-                        {formatCompactDate(
-                          selectedTicket.createdAt
+                    {selectedTicket.status ===
+                    'resolved'
+                      ? 'Concluído'
+                      : formatSlaRemaining(
+                          sla.remainingMs
                         )}
-                      </time>
-                    </header>
+                  </strong>
 
-                    <p>
-                      {
-                        selectedTicket.description
-                      }
-                    </p>
-                  </div>
-                </article>
+                  <small>
+                    {
+                      PRIORITY_LABELS[
+                        selectedTicket.priority
+                      ]
+                    }{' '}
+                    prioridade
+                  </small>
+                </div>
+              </header>
 
-                {(
-                  selectedTicket.replies ??
-                  []
-                ).map(
-                  (reply) => (
-                    <article
-                      className="message-card message-card--support"
-                      key={
-                        reply.id
-                      }
-                    >
-                      <div className="message-card__avatar">
-                        LT
-                      </div>
+              <div className="ticket-document__meta">
+                <div>
+                  <span>Solicitante</span>
+                  <strong>
+                    {selectedRequester.name}
+                  </strong>
+                </div>
 
-                      <div className="message-card__content">
-                        <header>
-                          <div>
-                            <strong>
-                              {
-                                reply.author
-                              }
-                            </strong>
+                <div>
+                  <span>Departamento</span>
+                  <strong>
+                    {selectedRequester.department}
+                  </strong>
+                </div>
 
-                            <span>
-                              Suporte
-                            </span>
-                          </div>
+                <div>
+                  <span>Responsável</span>
+                  <strong>
+                    {selectedAssignee?.name ||
+                      'Não atribuído'}
+                  </strong>
+                </div>
 
-                          <time>
-                            {formatCompactDate(
-                              reply.createdAt
-                            )}
-                          </time>
-                        </header>
-
-                        <p>
-                          {
-                            reply.message
-                          }
-                        </p>
-                      </div>
-                    </article>
-                  )
-                )}
-
-                {(
-                  selectedTicket.internalNotes ??
-                  []
-                ).map(
-                  (note) => (
-                    <article
-                      className="message-card message-card--note"
-                      key={
-                        note.id
-                      }
-                    >
-                      <div className="message-card__avatar">
-                        LT
-                      </div>
-
-                      <div className="message-card__content">
-                        <header>
-                          <div>
-                            <strong>
-                              {
-                                note.author
-                              }
-                            </strong>
-
-                            <span>
-                              Nota
-                              interna
-                            </span>
-                          </div>
-
-                          <time>
-                            {formatCompactDate(
-                              note.createdAt
-                            )}
-                          </time>
-                        </header>
-
-                        <p>
-                          {
-                            note.message
-                          }
-                        </p>
-                      </div>
-                    </article>
-                  )
-                )}
-
-                <form
-                  className="reply-composer"
-                  onSubmit={
-                    handleComposerSubmit
+                <button
+                  type="button"
+                  className="ticket-document__details"
+                  onClick={() =>
+                    setDetailsOpen(
+                      (current) => !current
+                    )
                   }
                 >
+                  <Icon name="info" size={14} />
+
+                  {detailsOpen
+                    ? 'Ocultar detalhes'
+                    : 'Detalhes'}
+                </button>
+              </div>
+
+              {detailsOpen && (
+                <div className="ticket-details">
+                  <div>
+                    <span>E-mail</span>
+                    <strong>
+                      {selectedRequester.email ||
+                        'Não informado'}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Categoria</span>
+                    <strong>
+                      {
+                        CATEGORY_LABELS[
+                          selectedTicket.category
+                        ]
+                      }
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Criado em</span>
+                    <strong>
+                      {formatCompactDate(
+                        selectedTicket.createdAt
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Última atualização</span>
+                    <strong>
+                      {formatCompactDate(
+                        selectedTicket.updatedAt
+                      )}
+                    </strong>
+                  </div>
+                </div>
+              )}
+
+              <div className="ticket-document__body">
+                <section className="conversation-panel">
+                  <div className="conversation-heading">
+                    <span>Registro do atendimento</span>
+
+                    <b>
+                      {
+                        (selectedTicket.replies
+                          ?.length || 0) +
+                        (selectedTicket
+                          .internalNotes?.length ||
+                          0) +
+                        1
+                      }{' '}
+                      eventos
+                    </b>
+                  </div>
+
+                  <div className="conversation-timeline">
+                    <TicketMessage
+                      type="requester"
+                      author={selectedRequester.name}
+                      role="Solicitante"
+                      message={getTicketDescription(
+                        selectedTicket
+                      )}
+                      createdAt={
+                        selectedTicket.createdAt
+                      }
+                    />
+
+                    {[
+                      ...(selectedTicket.replies ||
+                        []).map((reply) => ({
+                        ...reply,
+                        timelineType: 'support',
+                        role: 'Suporte',
+                      })),
+
+                      ...(selectedTicket.internalNotes ||
+                        []).map((note) => ({
+                        ...note,
+                        timelineType: 'note',
+                        role: 'Nota interna',
+                      })),
+                    ]
+                      .sort(
+                        (a, b) =>
+                          new Date(a.createdAt) -
+                          new Date(b.createdAt)
+                      )
+                      .map((item) => (
+                        <TicketMessage
+                          key={item.id}
+                          type={
+                            item.timelineType
+                          }
+                          author={
+                            item.author ||
+                            'Equipe LTHS'
+                          }
+                          role={item.role}
+                          message={item.message}
+                          createdAt={
+                            item.createdAt
+                          }
+                        />
+                      ))}
+                  </div>
+
                   {selectedTicket.status ===
                   'resolved' ? (
-                    <div className="reply-composer__resolved">
-                      Este chamado
-                      está resolvido.
-                      Reabra o ticket
-                      para registrar
-                      uma nova
-                      interação.
+                    <div className="reply-composer reply-composer--resolved">
+                      <div className="reply-composer__resolved">
+                        <span>
+                          Chamado encerrado
+                        </span>
+
+                        <strong>
+                          O atendimento foi
+                          concluído.
+                        </strong>
+
+                        <button
+                          type="button"
+                          className="secondary-action"
+                          onClick={handleReopen}
+                        >
+                          Reabrir chamado
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <>
+                    <form
+                      className="reply-composer"
+                      onSubmit={
+                        handleComposerSubmit
+                      }
+                    >
                       <div className="composer-tabs">
                         <button
                           type="button"
@@ -1035,8 +923,7 @@ export default function App() {
                             )
                           }
                         >
-                          Resposta
-                          pública
+                          Resposta pública
                         </button>
 
                         <button
@@ -1058,16 +945,10 @@ export default function App() {
                       </div>
 
                       <textarea
-                        value={
-                          replyText
-                        }
-                        onChange={(
-                          event
-                        ) =>
+                        value={replyText}
+                        onChange={(event) =>
                           setReplyText(
-                            event
-                              .target
-                              .value
+                            event.target.value
                           )
                         }
                         placeholder={
@@ -1078,17 +959,17 @@ export default function App() {
                         }
                       />
 
-                      <div className="reply-composer__footer">
+                      <footer className="reply-composer__footer">
                         <span>
                           {composerMode ===
                           'reply'
-                            ? 'Visível para o solicitante'
-                            : 'Visível somente para a equipe'}
+                            ? 'Visível ao solicitante'
+                            : 'Visível apenas à equipe'}
                         </span>
 
                         <button
-                          type="submit"
                           className="primary-action"
+                          type="submit"
                           disabled={
                             !replyText.trim()
                           }
@@ -1097,274 +978,150 @@ export default function App() {
                           'reply'
                             ? 'Enviar resposta'
                             : 'Adicionar nota'}
+
+                          <Icon
+                            name="arrow"
+                            size={14}
+                          />
                         </button>
-                      </div>
-                    </>
+                      </footer>
+                    </form>
                   )}
-                </form>
-              </section>
-
-              <aside className="context-panel">
-                <section className="context-section">
-                  <span className="context-section__label">
-                    SOLICITANTE
-                  </span>
-
-                  <div className="requester-profile">
-                    <div className="requester-profile__avatar">
-                      {getInitials(
-                        selectedTicket
-                          .requester
-                          ?.name
-                      )}
-                    </div>
-
-                    <div>
-                      <strong>
-                        {
-                          selectedTicket
-                            .requester
-                            ?.name
-                        }
-                      </strong>
-
-                      <span>
-                        {
-                          selectedTicket
-                            .requester
-                            ?.email
-                        }
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="context-field">
-                    <span>
-                      Departamento
-                    </span>
-
-                    <strong>
-                      {selectedTicket
-                        .requester
-                        ?.department ||
-                        'Não informado'}
-                    </strong>
-                  </div>
                 </section>
+              </div>
+            </section>
 
-                <section className="context-section">
-                  <span className="context-section__label">
-                    ATENDIMENTO
-                  </span>
+            <section className="operations-bar">
+              <label className="operations-bar__field">
+                <span>Responsável</span>
 
-                  <label className="context-control">
-                    <span>
-                      Responsável
-                    </span>
+                <select
+                  value={
+                    selectedTicket.assigneeId ||
+                    ''
+                  }
+                  onChange={
+                    handleAssigneeChange
+                  }
+                >
+                  <option value="">
+                    Não atribuído
+                  </option>
 
-                    <select
-                      value={
-                        selectedTicket.assigneeId ??
-                        ''
-                      }
-                      onChange={
-                        handleAssigneeChange
-                      }
+                  {team.map((member) => (
+                    <option
+                      key={member.id}
+                      value={member.id}
                     >
-                      <option value="">
-                        Não atribuído
-                      </option>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-                      {team.map(
-                        (member) => (
-                          <option
-                            value={
-                              member.id
-                            }
-                            key={
-                              member.id
-                            }
-                          >
-                            {
-                              member.name
-                            }
-                          </option>
-                        )
+              <label className="operations-bar__field">
+                <span>Prioridade</span>
+
+                <select
+                  value={
+                    selectedTicket.priority
+                  }
+                  onChange={
+                    handlePriorityChange
+                  }
+                >
+                  <option value="high">
+                    Alta · SLA 2h
+                  </option>
+
+                  <option value="medium">
+                    Média · SLA 8h
+                  </option>
+
+                  <option value="low">
+                    Baixa · SLA 24h
+                  </option>
+                </select>
+              </label>
+
+              <div
+                className={`operations-bar__sla operations-bar__sla--${sla.state}`}
+              >
+                <span>SLA operacional</span>
+
+                <strong>
+                  {selectedTicket.status ===
+                  'resolved'
+                    ? 'Resolvido'
+                    : formatSlaRemaining(
+                        sla.remainingMs
                       )}
-                    </select>
-                  </label>
+                </strong>
+              </div>
 
-                  {selectedAssignee && (
-                    <div className="assignee-summary">
-                      <div>
-                        {selectedAssignee.initials}
-                      </div>
-
-                      <span>
-                        <strong>
-                          {
-                            selectedAssignee.name
-                          }
-                        </strong>
-
-                        <small>
-                          {
-                            selectedAssignee.role
-                          }
-                        </small>
-                      </span>
-                    </div>
-                  )}
-
-                  <label className="context-control">
-                    <span>
-                      Prioridade
-                    </span>
-
-                    <select
-                      value={
-                        selectedTicket.priority
-                      }
-                      onChange={
-                        handlePriorityChange
-                      }
-                    >
-                      <option value="high">
-                        Alta · SLA
-                        2h
-                      </option>
-
-                      <option value="medium">
-                        Média · SLA
-                        8h
-                      </option>
-
-                      <option value="low">
-                        Baixa · SLA
-                        24h
-                      </option>
-                    </select>
-                  </label>
-                </section>
-
-                <section className="context-section">
-                  <span className="context-section__label">
-                    SLA
-                  </span>
-
-                  <div
-                    className={`sla-card sla-card--${selectedSla?.state}`}
+              <div className="operations-bar__actions">
+                {selectedTicket.status ===
+                'resolved' ? (
+                  <button
+                    type="button"
+                    className="secondary-action"
+                    onClick={handleReopen}
                   >
-                    <div className="sla-card__top">
-                      <Icon
-                        name="clock"
-                        size={18}
-                      />
-
-                      <span>
-                        {
-                          PRIORITY_LABELS[
-                            selectedTicket
-                              .priority
-                          ]
-                        }
-                      </span>
-                    </div>
-
-                    <strong>
+                    Reabrir
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="secondary-action"
+                      onClick={handleWaiting}
+                      disabled={
+                        selectedTicket.status ===
+                        'waiting'
+                      }
+                    >
                       {selectedTicket.status ===
-                      'resolved'
-                        ? 'Concluído'
-                        : formatSlaRemaining(
-                            selectedSla
-                              ?.remainingMs
-                          )}
-                    </strong>
+                      'waiting'
+                        ? 'Aguardando'
+                        : 'Aguardar'}
+                    </button>
 
-                    {selectedTicket.status !==
-                      'resolved' && (
-                      <div className="sla-progress">
-                        <span
-                          style={{
-                            width: `${selectedSla?.percentage ?? 0}%`,
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </section>
-              </aside>
-            </div>
+                    <button
+                      type="button"
+                      className="primary-action"
+                      onClick={handleResolve}
+                    >
+                      <Icon
+                        name="check"
+                        size={15}
+                      />
+                      Resolver
+                    </button>
+                  </>
+                )}
+              </div>
+            </section>
           </>
         ) : (
           <div className="workspace-empty">
             <Icon
               name="inbox"
-              size={30}
+              size={26}
             />
 
             <h2>
-              Nenhum chamado
+              Nenhum chamado selecionado
             </h2>
 
             <p>
-              Ainda não existem
-              chamados disponíveis.
+              Selecione um item da fila para
+              iniciar o atendimento.
             </p>
           </div>
         )}
       </main>
-
-      <section
-        className="service-summary"
-        aria-label="Resumo da operação"
-      >
-        <div>
-          <span>
-            Chamados ativos
-          </span>
-
-          <strong>
-            {openTickets.length}
-          </strong>
-        </div>
-
-        <div>
-          <span>
-            Alta prioridade
-          </span>
-
-          <strong>
-            {
-              highPriorityTickets.length
-            }
-          </strong>
-        </div>
-
-        <div>
-          <span>
-            Aguardando
-          </span>
-
-          <strong>
-            {
-              waitingTickets.length
-            }
-          </strong>
-        </div>
-
-        <div>
-          <span>
-            Resolvidos
-          </span>
-
-          <strong>
-            {
-              resolvedTickets.length
-            }
-          </strong>
-        </div>
-      </section>
     </div>
   )
 }
+
+export default App

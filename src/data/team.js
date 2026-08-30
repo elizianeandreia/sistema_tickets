@@ -1,10 +1,10 @@
 export const TEAM = [
   {
-    id: 'camila-rocha',
-    name: 'Camila Rocha',
+    id: 'thiago-tadeu',
+    name: 'Thiago Tadeu',
     role: 'Analista de suporte',
     specialty: 'Acessos e sistemas corporativos',
-    initials: 'CR',
+    initials: 'TT',
     status: 'online',
   },
 
