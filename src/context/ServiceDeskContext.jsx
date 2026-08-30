@@ -5,240 +5,247 @@ import {
   useMemo,
   useState,
 } from 'react'
-
-import {
-  loadWorkspace,
-  saveWorkspace,
-} from '../utils/storage.js'
-
 import {
   addInternalNote,
   addReply,
+  calculateSlaDeadline,
   changeAssignee,
   changePriority,
   markWaiting,
   reopenTicket,
   resolveTicket,
 } from '../services/ticketService.js'
+import {
+  loadWorkspace,
+  saveWorkspace,
+} from '../utils/storage.js'
 
 const ServiceDeskContext = createContext(null)
 
-export function ServiceDeskProvider({
-  children,
-}) {
-  const [workspace, setWorkspace] =
-    useState(() => loadWorkspace())
+function createId(prefix = 'item') {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `${prefix}-${crypto.randomUUID()}`
+  }
+
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`
+}
+
+function getNextTicketCode(tickets) {
+  const highest = tickets.reduce((current, ticket) => {
+    const numeric = Number(
+      String(ticket?.code ?? '')
+        .replace(/\D/g, ''),
+    )
+
+    return Number.isFinite(numeric)
+      ? Math.max(current, numeric)
+      : current
+  }, 1000)
+
+  return `TK-${highest + 1}`
+}
+
+export function ServiceDeskProvider({ children }) {
+  const [initialWorkspace] = useState(() => loadWorkspace())
+
+  const [tickets, setTickets] = useState(initialWorkspace.tickets)
+  const [team, setTeam] = useState(initialWorkspace.team)
+  const [preferences, setPreferences] = useState(
+    initialWorkspace.preferences,
+  )
 
   useEffect(() => {
-    saveWorkspace(
-      window.localStorage,
-      workspace
-    )
-  }, [workspace])
+    saveWorkspace(window.localStorage, {
+      tickets,
+      team,
+      preferences,
+      version: initialWorkspace.version ?? 1,
+    })
+  }, [
+    initialWorkspace.version,
+    preferences,
+    team,
+    tickets,
+  ])
 
-  function updateTicket(
-    ticketId,
-    updater
-  ) {
-    setWorkspace(
-      (currentWorkspace) => ({
-        ...currentWorkspace,
-
-        tickets:
-          currentWorkspace.tickets.map(
-            (ticket) =>
-              ticket.id === ticketId
-                ? updater(ticket)
-                : ticket
-          ),
-      })
+  function updateTicket(ticketId, updater) {
+    setTickets((currentTickets) =>
+      currentTickets.map((ticket) =>
+        ticket.id === ticketId ? updater(ticket) : ticket,
+      ),
     )
   }
 
-  function replyToTicket(
-    ticketId,
-    data
-  ) {
-    updateTicket(
-      ticketId,
-      (ticket) =>
-        addReply(ticket, data)
+  function createTicket(input) {
+    const now = new Date()
+    const createdAt = now.toISOString()
+    const priority = input.priority || 'medium'
+
+    const ticket = {
+      id: createId('ticket'),
+      code: getNextTicketCode(tickets),
+      subject: input.subject,
+      description: input.description,
+      requester: {
+        name: input.requesterName,
+        email: input.requesterEmail,
+        department: input.department || 'Não informado',
+      },
+      category: input.category || 'general',
+      priority,
+      status: 'new',
+      assigneeId: input.assigneeId || null,
+      createdAt,
+      updatedAt: createdAt,
+      resolvedAt: null,
+      slaDeadline: calculateSlaDeadline(createdAt, priority),
+      replies: [],
+      internalNotes: [],
+      activity: [
+        {
+          id: createId('activity'),
+          type: 'ticket_created',
+          author: 'Equipe LTHS',
+          message: 'Chamado criado',
+          createdAt,
+        },
+      ],
+    }
+
+    setTickets((currentTickets) => [ticket, ...currentTickets])
+    return ticket
+  }
+
+  function replyToTicket(ticketId, message) {
+    updateTicket(ticketId, (ticket) =>
+      addReply(
+        ticket,
+        message,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function addNoteToTicket(
-    ticketId,
-    data
-  ) {
-    updateTicket(
-      ticketId,
-      (ticket) =>
-        addInternalNote(
-          ticket,
-          data
-        )
+  function addNoteToTicket(ticketId, message) {
+    updateTicket(ticketId, (ticket) =>
+      addInternalNote(
+        ticket,
+        message,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function setTicketWaiting(
-    ticketId,
-    data = {}
-  ) {
-    updateTicket(
-      ticketId,
-      (ticket) =>
-        markWaiting(
-          ticket,
-          data
-        )
+  function setTicketWaiting(ticketId) {
+    updateTicket(ticketId, (ticket) =>
+      markWaiting(
+        ticket,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function closeTicket(
-    ticketId,
-    data = {}
-  ) {
-    updateTicket(
-      ticketId,
-      (ticket) =>
-        resolveTicket(
-          ticket,
-          data
-        )
+  function closeTicket(ticketId) {
+    updateTicket(ticketId, (ticket) =>
+      resolveTicket(
+        ticket,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function reopenResolvedTicket(
-    ticketId,
-    data = {}
-  ) {
-    updateTicket(
-      ticketId,
-      (ticket) =>
-        reopenTicket(
-          ticket,
-          data
-        )
+  function reopenResolvedTicket(ticketId) {
+    updateTicket(ticketId, (ticket) =>
+      reopenTicket(
+        ticket,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function setTicketPriority(
-    ticketId,
-    priority,
-    data = {}
-  ) {
-    updateTicket(
-      ticketId,
-      (ticket) =>
-        changePriority(
-          ticket,
-          priority,
-          data
-        )
+  function setTicketPriority(ticketId, priority) {
+    updateTicket(ticketId, (ticket) =>
+      changePriority(
+        ticket,
+        priority,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function setTicketAssignee(
-    ticketId,
-    assigneeId,
-    data = {}
-  ) {
-    updateTicket(
-      ticketId,
-      (ticket) =>
-        changeAssignee(
-          ticket,
-          assigneeId,
-          data
-        )
+  function setTicketAssignee(ticketId, assigneeId) {
+    updateTicket(ticketId, (ticket) =>
+      changeAssignee(
+        ticket,
+        assigneeId,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
   function setTheme(theme) {
-    setWorkspace(
-      (currentWorkspace) => ({
-        ...currentWorkspace,
-
-        preferences: {
-          ...currentWorkspace.preferences,
-
-          theme:
-            theme === 'light'
-              ? 'light'
-              : 'dark',
-        },
-      })
-    )
+    setPreferences((current) => ({
+      ...current,
+      theme,
+    }))
   }
 
-  const openTickets =
-    useMemo(
-      () =>
-        workspace.tickets.filter(
-          (ticket) =>
-            ticket.status !==
-            'resolved'
-        ),
-      [workspace.tickets]
-    )
+  const openTickets = useMemo(
+    () => tickets.filter((ticket) => ticket.status !== 'resolved'),
+    [tickets],
+  )
 
-  const resolvedTickets =
-    useMemo(
-      () =>
-        workspace.tickets.filter(
-          (ticket) =>
-            ticket.status ===
-            'resolved'
-        ),
-      [workspace.tickets]
-    )
+  const resolvedTickets = useMemo(
+    () => tickets.filter((ticket) => ticket.status === 'resolved'),
+    [tickets],
+  )
 
-  const value = {
-    workspace,
-
-    tickets:
-      workspace.tickets,
-
-    team:
-      workspace.team,
-
-    preferences:
-      workspace.preferences,
-
-    openTickets,
-    resolvedTickets,
-
-    replyToTicket,
-    addNoteToTicket,
-
-    setTicketWaiting,
-    closeTicket,
-    reopenResolvedTicket,
-
-    setTicketPriority,
-    setTicketAssignee,
-
-    setTheme,
-  }
+  const value = useMemo(
+    () => ({
+      tickets,
+      team,
+      preferences,
+      openTickets,
+      resolvedTickets,
+      createTicket,
+      replyToTicket,
+      addNoteToTicket,
+      setTicketWaiting,
+      closeTicket,
+      reopenResolvedTicket,
+      setTicketPriority,
+      setTicketAssignee,
+      setTheme,
+    }),
+    [
+      openTickets,
+      preferences,
+      resolvedTickets,
+      team,
+      tickets,
+    ],
+  )
 
   return (
-    <ServiceDeskContext.Provider
-      value={value}
-    >
+    <ServiceDeskContext.Provider value={value}>
       {children}
     </ServiceDeskContext.Provider>
   )
 }
 
 export function useServiceDesk() {
-  const context =
-    useContext(
-      ServiceDeskContext
-    )
+  const context = useContext(ServiceDeskContext)
 
   if (!context) {
     throw new Error(
-      'useServiceDesk deve ser utilizado dentro de ServiceDeskProvider.'
+      'useServiceDesk deve ser usado dentro de ServiceDeskProvider',
     )
   }
 
