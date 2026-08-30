@@ -22,6 +22,8 @@ import {
 
 const ServiceDeskContext = createContext(null)
 
+const DEFAULT_AUTHOR = 'Equipe LTHS'
+
 function createId(prefix = 'item') {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return `${prefix}-${crypto.randomUUID()}`
@@ -33,8 +35,7 @@ function createId(prefix = 'item') {
 function getNextTicketCode(tickets) {
   const highest = tickets.reduce((current, ticket) => {
     const numeric = Number(
-      String(ticket?.code ?? '')
-        .replace(/\D/g, ''),
+      String(ticket?.code ?? '').replace(/\D/g, ''),
     )
 
     return Number.isFinite(numeric)
@@ -70,9 +71,18 @@ export function ServiceDeskProvider({ children }) {
 
   function updateTicket(ticketId, updater) {
     setTickets((currentTickets) =>
-      currentTickets.map((ticket) =>
-        ticket.id === ticketId ? updater(ticket) : ticket,
-      ),
+      currentTickets.map((ticket) => {
+        if (ticket.id !== ticketId) {
+          return ticket
+        }
+
+        try {
+          return updater(ticket)
+        } catch (error) {
+          console.error(error)
+          return ticket
+        }
+      }),
     )
   }
 
@@ -105,7 +115,7 @@ export function ServiceDeskProvider({ children }) {
         {
           id: createId('activity'),
           type: 'ticket_created',
-          author: 'Equipe LTHS',
+          author: DEFAULT_AUTHOR,
           message: 'Chamado criado',
           createdAt,
         },
@@ -116,77 +126,68 @@ export function ServiceDeskProvider({ children }) {
     return ticket
   }
 
-  function replyToTicket(ticketId, message) {
+  function replyToTicket(ticketId, message, author = DEFAULT_AUTHOR) {
     updateTicket(ticketId, (ticket) =>
-      addReply(
-        ticket,
+      addReply(ticket, {
         message,
-        'Equipe LTHS',
-        new Date(),
-      ),
+        author,
+        createdAt: new Date(),
+      }),
     )
   }
 
-  function addNoteToTicket(ticketId, message) {
+  function addNoteToTicket(ticketId, message, author = DEFAULT_AUTHOR) {
     updateTicket(ticketId, (ticket) =>
-      addInternalNote(
-        ticket,
+      addInternalNote(ticket, {
         message,
-        'Equipe LTHS',
-        new Date(),
-      ),
+        author,
+        createdAt: new Date(),
+      }),
     )
   }
 
-  function setTicketWaiting(ticketId) {
+  function setTicketWaiting(ticketId, author = DEFAULT_AUTHOR) {
     updateTicket(ticketId, (ticket) =>
-      markWaiting(
-        ticket,
-        'Equipe LTHS',
-        new Date(),
-      ),
+      markWaiting(ticket, {
+        author,
+        createdAt: new Date(),
+      }),
     )
   }
 
-  function closeTicket(ticketId) {
+  function closeTicket(ticketId, author = DEFAULT_AUTHOR) {
     updateTicket(ticketId, (ticket) =>
-      resolveTicket(
-        ticket,
-        'Equipe LTHS',
-        new Date(),
-      ),
+      resolveTicket(ticket, {
+        author,
+        createdAt: new Date(),
+      }),
     )
   }
 
-  function reopenResolvedTicket(ticketId) {
+  function reopenResolvedTicket(ticketId, author = DEFAULT_AUTHOR) {
     updateTicket(ticketId, (ticket) =>
-      reopenTicket(
-        ticket,
-        'Equipe LTHS',
-        new Date(),
-      ),
+      reopenTicket(ticket, {
+        author,
+        createdAt: new Date(),
+      }),
     )
   }
 
-  function setTicketPriority(ticketId, priority) {
+  function setTicketPriority(ticketId, priority, author = DEFAULT_AUTHOR) {
     updateTicket(ticketId, (ticket) =>
-      changePriority(
-        ticket,
-        priority,
-        'Equipe LTHS',
-        new Date(),
-      ),
+      changePriority(ticket, priority, {
+        author,
+        createdAt: new Date(),
+      }),
     )
   }
 
-  function setTicketAssignee(ticketId, assigneeId) {
+  function setTicketAssignee(ticketId, assigneeId, author = DEFAULT_AUTHOR) {
     updateTicket(ticketId, (ticket) =>
-      changeAssignee(
-        ticket,
-        assigneeId,
-        'Equipe LTHS',
-        new Date(),
-      ),
+      changeAssignee(ticket, assigneeId, {
+        author,
+        createdAt: new Date(),
+      }),
     )
   }
 

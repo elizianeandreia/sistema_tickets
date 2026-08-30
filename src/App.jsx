@@ -175,9 +175,10 @@ function getRemainingMs(ticket) {
 function getSlaLabel(state) {
   const labels = {
     healthy: 'Dentro do prazo',
-    warning: 'Atenção',
+    attention: 'Atenção',
     critical: 'Crítico',
-    overdue: 'SLA vencido',
+    breached: 'SLA vencido',
+    resolved: 'Concluído',
   }
 
   return labels[state] ?? 'Em acompanhamento'
@@ -576,13 +577,11 @@ export default function App() {
     ? getRequester(selectedTicket)
     : null
 
-  const selectedAssignee = selectedTicket
-    ? team.find((member) => member.id === selectedTicket.assigneeId)
+  const slaInfo = selectedTicket
+    ? getSlaState(selectedTicket)
     : null
 
-  const slaState = selectedTicket
-    ? getSlaState(selectedTicket)
-    : 'healthy'
+  const slaState = slaInfo?.state ?? 'healthy'
 
   const slaRemaining = selectedTicket
     ? getRemainingMs(selectedTicket)
