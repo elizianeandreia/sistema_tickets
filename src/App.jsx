@@ -93,7 +93,9 @@ function Icon({ name, size = 18 }) {
         <path d="M12 2v2.2M12 19.8V22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2 12h2.2M19.8 12H22M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6" />
       </>
     ),
-    moon: <path d="M20.2 15.4A8 8 0 0 1 8.6 3.8 8.2 8.2 0 1 0 20.2 15.4Z" />,
+    moon: (
+      <path d="M20.2 15.4A8 8 0 0 1 8.6 3.8 8.2 8.2 0 1 0 20.2 15.4Z" />
+    ),
     arrow: <path d="m9 18 6-6-6-6" />,
     info: (
       <>
@@ -175,10 +177,9 @@ function getRemainingMs(ticket) {
 function getSlaLabel(state) {
   const labels = {
     healthy: 'Dentro do prazo',
-    attention: 'Atenção',
+    warning: 'Atenção',
     critical: 'Crítico',
-    breached: 'SLA vencido',
-    resolved: 'Concluído',
+    overdue: 'SLA vencido',
   }
 
   return labels[state] ?? 'Em acompanhamento'
@@ -265,7 +266,6 @@ function NewTicketDrawer({
         <form className="new-ticket-form" onSubmit={onSubmit}>
           <div className="new-ticket-form__section">
             <div className="new-ticket-form__section-heading">
-              <span>01</span>
               <div>
                 <strong>Solicitante</strong>
                 <small>Identificação de quem abriu o chamado</small>
@@ -311,7 +311,6 @@ function NewTicketDrawer({
 
           <div className="new-ticket-form__section">
             <div className="new-ticket-form__section-heading">
-              <span>02</span>
               <div>
                 <strong>Solicitação</strong>
                 <small>Contexto necessário para iniciar o atendimento</small>
@@ -378,35 +377,73 @@ function NewTicketDrawer({
 
           <div className="new-ticket-form__section">
             <div className="new-ticket-form__section-heading">
-              <span>03</span>
               <div>
                 <strong>Prioridade e SLA</strong>
-                <small>O prazo é definido automaticamente</small>
+                <small>
+                  O prazo de atendimento é definido automaticamente conforme a
+                  prioridade
+                </small>
               </div>
             </div>
 
-            <div className="priority-choice-grid">
+            <div className="priority-card-grid">
               {[
-                ['high', 'Alta', '2h'],
-                ['medium', 'Média', '8h'],
-                ['low', 'Baixa', '24h'],
-              ].map(([value, label, sla]) => (
+                {
+                  value: 'high',
+                  label: 'Alta',
+                  description: 'Impacto crítico',
+                  sla: '2 horas',
+                },
+                {
+                  value: 'medium',
+                  label: 'Média',
+                  description: 'Impacto moderado',
+                  sla: '8 horas',
+                },
+                {
+                  value: 'low',
+                  label: 'Baixa',
+                  description: 'Impacto reduzido',
+                  sla: '24 horas',
+                },
+              ].map((priority) => (
                 <label
-                  key={value}
-                  className={`priority-choice ${
-                    form.priority === value ? 'is-selected' : ''
+                  key={priority.value}
+                  className={`priority-card priority-card--${priority.value} ${
+                    form.priority === priority.value ? 'is-selected' : ''
                   }`}
                 >
                   <input
                     type="radio"
                     name="priority"
-                    value={value}
-                    checked={form.priority === value}
+                    value={priority.value}
+                    checked={form.priority === priority.value}
                     onChange={onChange}
                   />
-                  <span>
-                    <strong>{label}</strong>
-                    <small>SLA {sla}</small>
+
+                  <span className="priority-card__content">
+                    <span className="priority-card__top">
+                      <span className="priority-card__title">
+                        <i aria-hidden="true" />
+                        <strong>{priority.label}</strong>
+                      </span>
+
+                      <span
+                        className="priority-card__check"
+                        aria-hidden="true"
+                      >
+                        <Icon name="check" size={13} />
+                      </span>
+                    </span>
+
+                    <span className="priority-card__description">
+                      {priority.description}
+                    </span>
+
+                    <span className="priority-card__sla">
+                      <span>SLA</span>
+                      <strong>{priority.sla}</strong>
+                    </span>
                   </span>
                 </label>
               ))}
@@ -581,11 +618,9 @@ export default function App() {
     ? team.find((member) => member.id === selectedTicket.assigneeId)
     : null
 
-  const slaInfo = selectedTicket
+  const slaState = selectedTicket
     ? getSlaState(selectedTicket)
-    : null
-
-  const slaState = slaInfo?.state ?? 'healthy'
+    : 'healthy'
 
   const slaRemaining = selectedTicket
     ? getRemainingMs(selectedTicket)
@@ -612,19 +647,17 @@ export default function App() {
     setDetailsOpen(false)
   }
 
-    function handleComposerSubmit(event) {
+  function handleComposerSubmit(event) {
     event.preventDefault()
 
     if (!selectedTicket || !replyText.trim()) return
     if (selectedTicket.status === 'resolved') return
 
-    const author = selectedAssignee?.name ?? 'Equipe LTHS'
-
     if (composerMode === 'note') {
-      addNoteToTicket(selectedTicket.id, replyText.trim(), author)
+      addNoteToTicket(selectedTicket.id, replyText.trim())
       setToast('Nota interna registrada.')
     } else {
-      replyToTicket(selectedTicket.id, replyText.trim(), author)
+      replyToTicket(selectedTicket.id, replyText.trim())
       setToast('Resposta registrada no chamado.')
     }
 
@@ -678,6 +711,7 @@ export default function App() {
 
   function handleNewTicketChange(event) {
     const { name, value } = event.target
+
     setNewTicketForm((current) => ({
       ...current,
       [name]: value,
@@ -794,11 +828,13 @@ export default function App() {
             <span>FILA DE ATENDIMENTO</span>
             <h1>Chamados</h1>
           </div>
+
           <strong>{openTickets.length}</strong>
         </div>
 
         <label className="queue-search">
           <Icon name="search" size={16} />
+
           <input
             ref={searchRef}
             type="search"
@@ -807,6 +843,7 @@ export default function App() {
             placeholder="Buscar por código, assunto ou pessoa"
             aria-label="Buscar chamados"
           />
+
           <kbd>Ctrl K</kbd>
         </label>
 
@@ -862,6 +899,7 @@ export default function App() {
               <Icon name="search" size={24} />
               <strong>Nenhum chamado encontrado</strong>
               <p>Altere a busca ou selecione outro status.</p>
+
               <button
                 type="button"
                 onClick={() => {
@@ -897,18 +935,20 @@ export default function App() {
                   <div className="ticket-document__eyebrow">
                     <span>{formatTicketCode(selectedTicket.code)}</span>
                     <i />
+
                     <span>
                       {CATEGORY_LABELS[selectedTicket.category] ??
                         selectedTicket.category}
                     </span>
+
                     <i />
+
                     <span data-status={selectedTicket.status}>
                       {STATUS_LABELS[selectedTicket.status]}
                     </span>
                   </div>
 
                   <h2>{selectedTicket.subject}</h2>
-
                   <p>{getTicketDescription(selectedTicket)}</p>
                 </div>
 
@@ -939,9 +979,11 @@ export default function App() {
 
                 <div>
                   <span>RESPONSÁVEL</span>
+
                   <strong>
                     {selectedAssignee?.name ?? 'Não atribuído'}
                   </strong>
+
                   <small>
                     {selectedAssignee?.role ?? 'Aguardando atribuição'}
                   </small>
@@ -955,7 +997,9 @@ export default function App() {
                   onClick={() => setDetailsOpen((open) => !open)}
                 >
                   <span>DETALHES</span>
-                  <strong>{detailsOpen ? 'Ocultar' : 'Ver contexto'}</strong>
+                  <strong>
+                    {detailsOpen ? 'Ocultar' : 'Ver contexto'}
+                  </strong>
                   <Icon name="arrow" size={15} />
                 </button>
               </div>
@@ -1003,6 +1047,7 @@ export default function App() {
                       <span>REGISTRO DO ATENDIMENTO</span>
                       <h3>Histórico do chamado</h3>
                     </div>
+
                     <strong>
                       {eventCount} {eventCount === 1 ? 'evento' : 'eventos'}
                     </strong>
@@ -1040,12 +1085,14 @@ export default function App() {
                   {selectedTicket.status === 'resolved' ? (
                     <div className="resolved-composer-state">
                       <Icon name="check" />
+
                       <div>
                         <strong>Chamado concluído</strong>
                         <p>
                           Reabra o ticket para registrar uma nova interação.
                         </p>
                       </div>
+
                       <button type="button" onClick={handleReopen}>
                         Reabrir chamado
                       </button>
@@ -1079,7 +1126,9 @@ export default function App() {
 
                       <textarea
                         value={replyText}
-                        onChange={(event) => setReplyText(event.target.value)}
+                        onChange={(event) =>
+                          setReplyText(event.target.value)
+                        }
                         onKeyDown={handleComposerKeyDown}
                         placeholder={
                           composerMode === 'note'
@@ -1101,6 +1150,7 @@ export default function App() {
                           disabled={!replyText.trim()}
                         >
                           <Icon name="send" size={15} />
+
                           {composerMode === 'note'
                             ? 'Registrar nota'
                             : 'Enviar resposta'}
@@ -1115,12 +1165,14 @@ export default function App() {
             <div className="operations-bar">
               <label className="operations-bar__field">
                 <span>RESPONSÁVEL</span>
+
                 <select
                   value={selectedTicket.assigneeId ?? ''}
                   onChange={handleAssigneeChange}
                   disabled={selectedTicket.status === 'resolved'}
                 >
                   <option value="">Não atribuído</option>
+
                   {team.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.name}
@@ -1131,14 +1183,15 @@ export default function App() {
 
               <label className="operations-bar__field">
                 <span>PRIORIDADE</span>
+
                 <select
                   value={selectedTicket.priority}
                   onChange={handlePriorityChange}
                   disabled={selectedTicket.status === 'resolved'}
                 >
-                  <option value="high">Alta · SLA 2h</option>
-                  <option value="medium">Média · SLA 8h</option>
-                  <option value="low">Baixa · SLA 24h</option>
+                  <option value="high">Alta</option>
+                  <option value="medium">Média</option>
+                  <option value="low">Baixa</option>
                 </select>
               </label>
 
@@ -1169,6 +1222,7 @@ export default function App() {
                       disabled={selectedTicket.status === 'waiting'}
                     >
                       <Icon name="clock" size={15} />
+
                       {selectedTicket.status === 'waiting'
                         ? 'Aguardando'
                         : 'Aguardar'}
@@ -1194,6 +1248,7 @@ export default function App() {
               <span>SERVICE DESK</span>
               <h2>A fila está vazia</h2>
               <p>Crie um chamado para iniciar o atendimento.</p>
+
               <button
                 type="button"
                 onClick={() => setNewTicketOpen(true)}
@@ -1219,6 +1274,7 @@ export default function App() {
         <div className="app-toast" role="status">
           <Icon name="check" size={16} />
           <span>{toast}</span>
+
           <button
             type="button"
             onClick={() => setToast('')}
