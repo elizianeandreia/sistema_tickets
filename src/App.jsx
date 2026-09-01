@@ -102,6 +102,14 @@ function Icon({ name, size = 18 }) {
       </>
     ),
     close: <path d="M6 6l12 12M18 6 6 18" />,
+    trash: (
+      <>
+        <path d="M4 7h16" />
+        <path d="M9 7V4h6v3" />
+        <path d="M7 7l1 13h8l1-13" />
+        <path d="M10 11v5M14 11v5" />
+      </>
+    ),
     send: (
       <>
         <path d="m4 4 16 8-16 8 3-8-3-8Z" />
@@ -465,6 +473,64 @@ function NewTicketDrawer({
   )
 }
 
+function ConfirmDeleteDialog({ open, ticket, onCancel, onConfirm }) {
+  if (!open || !ticket) return null
+
+  return (
+    <div className="confirm-overlay" role="presentation">
+      <button
+        type="button"
+        className="confirm-backdrop"
+        aria-label="Cancelar exclusão"
+        onClick={onCancel}
+      />
+
+      <section
+        className="confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-ticket-title"
+        aria-describedby="delete-ticket-description"
+      >
+        <div className="confirm-dialog__icon" aria-hidden="true">
+          <Icon name="trash" size={20} />
+        </div>
+
+        <div className="confirm-dialog__content">
+          <span>EXCLUSÃO PERMANENTE</span>
+          <h2 id="delete-ticket-title">
+            Excluir {formatTicketCode(ticket.code)}?
+          </h2>
+          <p id="delete-ticket-description">
+            Esta ação removerá permanentemente o chamado e todo o seu histórico.
+          </p>
+          <strong>{ticket.subject}</strong>
+        </div>
+
+        <div className="confirm-dialog__actions">
+          <button
+            type="button"
+            className="confirm-dialog__cancel"
+            onClick={onCancel}
+            autoFocus
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            className="confirm-dialog__danger"
+            onClick={onConfirm}
+          >
+            <Icon name="trash" size={15} />
+            Excluir ticket
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export default function App() {
   const {
     tickets,
@@ -479,6 +545,7 @@ export default function App() {
     reopenResolvedTicket,
     setTicketPriority,
     setTicketAssignee,
+    deleteTicket,
     setTheme,
   } = useServiceDesk()
 
@@ -492,6 +559,7 @@ export default function App() {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [newTicketOpen, setNewTicketOpen] = useState(false)
   const [newTicketForm, setNewTicketForm] = useState(EMPTY_FORM)
+  const [deleteConfirmation, setDeleteConfirmation] = useState(false)
   const [toast, setToast] = useState('')
 
   const searchRef = useRef(null)
@@ -533,14 +601,20 @@ export default function App() {
         setNewTicketOpen(true)
       }
 
-      if (event.key === 'Escape' && newTicketOpen) {
-        setNewTicketOpen(false)
+      if (event.key === 'Escape') {
+        if (newTicketOpen) {
+          setNewTicketOpen(false)
+        }
+
+        if (deleteConfirmation) {
+          setDeleteConfirmation(false)
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyboard)
     return () => window.removeEventListener('keydown', handleKeyboard)
-  }, [newTicketOpen])
+  }, [deleteConfirmation, newTicketOpen])
 
   const selectedTicket = useMemo(
     () =>
@@ -640,6 +714,7 @@ export default function App() {
     setReplyText('')
     setComposerMode('reply')
     setDetailsOpen(false)
+    setDeleteConfirmation(false)
   }
 
   function handleComposerSubmit(event) {
@@ -698,6 +773,41 @@ export default function App() {
     if (!selectedTicket) return
     setTicketAssignee(selectedTicket.id, event.target.value || null)
     setToast('Responsável atualizado.')
+  }
+
+  function handleDeleteRequest() {
+    if (!selectedTicket) return
+    setDeleteConfirmation(true)
+  }
+
+  function handleDeleteConfirm() {
+    if (!selectedTicket) return
+
+    const remainingTickets = tickets.filter(
+      (ticket) => ticket.id !== selectedTicket.id,
+    )
+    const remainingVisibleTickets = filteredTickets.filter(
+      (ticket) => ticket.id !== selectedTicket.id,
+    )
+    const nextTicket =
+      remainingVisibleTickets[0] ??
+      remainingTickets[0] ??
+      null
+    const deletedCode = formatTicketCode(selectedTicket.code)
+
+    deleteTicket(selectedTicket.id)
+    setSelectedTicketId(nextTicket?.id ?? null)
+
+    if (!remainingVisibleTickets.length && remainingTickets.length) {
+      setSearch('')
+      setStatusFilter('all')
+    }
+
+    setReplyText('')
+    setComposerMode('reply')
+    setDetailsOpen(false)
+    setDeleteConfirmation(false)
+    setToast(`${deletedCode} excluído permanentemente.`)
   }
 
   function handleThemeToggle() {
@@ -1180,6 +1290,15 @@ export default function App() {
               </div>
 
               <div className="operations-bar__actions">
+                <button
+                  type="button"
+                  className="operation-danger"
+                  onClick={handleDeleteRequest}
+                >
+                  <Icon name="trash" size={15} />
+                  Excluir
+                </button>
+
                 {selectedTicket.status === 'resolved' ? (
                   <button
                     type="button"
@@ -1233,6 +1352,13 @@ export default function App() {
           </section>
         )}
       </main>
+
+      <ConfirmDeleteDialog
+        open={deleteConfirmation}
+        ticket={selectedTicket}
+        onCancel={() => setDeleteConfirmation(false)}
+        onConfirm={handleDeleteConfirm}
+      />
 
       <NewTicketDrawer
         open={newTicketOpen}
