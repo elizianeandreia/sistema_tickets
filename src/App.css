@@ -1521,10 +1521,7 @@ html[data-theme="dark"] select option {
   color: var(--text);
   background: var(--surface-2);
   font-size: 12px;
-  transition:
-    border-color 140ms ease,
-    background 140ms ease,
-    box-shadow 140ms ease;
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
 }
 
 .new-ticket-form input:not([type="radio"]):focus,
@@ -1596,10 +1593,7 @@ html[data-theme="dark"] select option {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface-2);
-  transition:
-    border-color 140ms ease,
-    background 140ms ease,
-    box-shadow 140ms ease;
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
 }
 
 .priority-card:hover .priority-card__content {
@@ -1657,10 +1651,7 @@ html[data-theme="dark"] select option {
   border-radius: 50%;
   color: transparent;
   background: var(--surface);
-  transition:
-    color 140ms ease,
-    border-color 140ms ease,
-    background 140ms ease;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
 }
 
 .priority-card.is-selected .priority-card__check {

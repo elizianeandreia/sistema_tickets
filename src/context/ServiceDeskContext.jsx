@@ -22,8 +22,6 @@ import {
 
 const ServiceDeskContext = createContext(null)
 
-const DEFAULT_AUTHOR = 'Equipe LTHS'
-
 function createId(prefix = 'item') {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return `${prefix}-${crypto.randomUUID()}`
@@ -35,7 +33,8 @@ function createId(prefix = 'item') {
 function getNextTicketCode(tickets) {
   const highest = tickets.reduce((current, ticket) => {
     const numeric = Number(
-      String(ticket?.code ?? '').replace(/\D/g, ''),
+      String(ticket?.code ?? '')
+        .replace(/\D/g, ''),
     )
 
     return Number.isFinite(numeric)
@@ -71,18 +70,9 @@ export function ServiceDeskProvider({ children }) {
 
   function updateTicket(ticketId, updater) {
     setTickets((currentTickets) =>
-      currentTickets.map((ticket) => {
-        if (ticket.id !== ticketId) {
-          return ticket
-        }
-
-        try {
-          return updater(ticket)
-        } catch (error) {
-          console.error(error)
-          return ticket
-        }
-      }),
+      currentTickets.map((ticket) =>
+        ticket.id === ticketId ? updater(ticket) : ticket,
+      ),
     )
   }
 
@@ -115,7 +105,7 @@ export function ServiceDeskProvider({ children }) {
         {
           id: createId('activity'),
           type: 'ticket_created',
-          author: DEFAULT_AUTHOR,
+          author: 'Equipe LTHS',
           message: 'Chamado criado',
           createdAt,
         },
@@ -126,68 +116,83 @@ export function ServiceDeskProvider({ children }) {
     return ticket
   }
 
-  function replyToTicket(ticketId, message, author = DEFAULT_AUTHOR) {
+  function replyToTicket(ticketId, message) {
     updateTicket(ticketId, (ticket) =>
-      addReply(ticket, {
+      addReply(
+        ticket,
         message,
-        author,
-        createdAt: new Date(),
-      }),
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function addNoteToTicket(ticketId, message, author = DEFAULT_AUTHOR) {
+  function addNoteToTicket(ticketId, message) {
     updateTicket(ticketId, (ticket) =>
-      addInternalNote(ticket, {
+      addInternalNote(
+        ticket,
         message,
-        author,
-        createdAt: new Date(),
-      }),
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function setTicketWaiting(ticketId, author = DEFAULT_AUTHOR) {
+  function setTicketWaiting(ticketId) {
     updateTicket(ticketId, (ticket) =>
-      markWaiting(ticket, {
-        author,
-        createdAt: new Date(),
-      }),
+      markWaiting(
+        ticket,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function closeTicket(ticketId, author = DEFAULT_AUTHOR) {
+  function closeTicket(ticketId) {
     updateTicket(ticketId, (ticket) =>
-      resolveTicket(ticket, {
-        author,
-        createdAt: new Date(),
-      }),
+      resolveTicket(
+        ticket,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function reopenResolvedTicket(ticketId, author = DEFAULT_AUTHOR) {
+  function reopenResolvedTicket(ticketId) {
     updateTicket(ticketId, (ticket) =>
-      reopenTicket(ticket, {
-        author,
-        createdAt: new Date(),
-      }),
+      reopenTicket(
+        ticket,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function setTicketPriority(ticketId, priority, author = DEFAULT_AUTHOR) {
+  function setTicketPriority(ticketId, priority) {
     updateTicket(ticketId, (ticket) =>
-      changePriority(ticket, priority, {
-        author,
-        createdAt: new Date(),
-      }),
+      changePriority(
+        ticket,
+        priority,
+        'Equipe LTHS',
+        new Date(),
+      ),
     )
   }
 
-  function setTicketAssignee(ticketId, assigneeId, author = DEFAULT_AUTHOR) {
+  function setTicketAssignee(ticketId, assigneeId) {
     updateTicket(ticketId, (ticket) =>
-      changeAssignee(ticket, assigneeId, {
-        author,
-        createdAt: new Date(),
-      }),
+      changeAssignee(
+        ticket,
+        assigneeId,
+        'Equipe LTHS',
+        new Date(),
+      ),
+    )
+  }
+
+  function deleteTicket(ticketId) {
+    setTickets((currentTickets) =>
+      currentTickets.filter((ticket) => ticket.id !== ticketId),
     )
   }
 
@@ -223,6 +228,7 @@ export function ServiceDeskProvider({ children }) {
       reopenResolvedTicket,
       setTicketPriority,
       setTicketAssignee,
+      deleteTicket,
       setTheme,
     }),
     [

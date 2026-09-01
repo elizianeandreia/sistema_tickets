@@ -93,9 +93,7 @@ function Icon({ name, size = 18 }) {
         <path d="M12 2v2.2M12 19.8V22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2 12h2.2M19.8 12H22M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6" />
       </>
     ),
-    moon: (
-      <path d="M20.2 15.4A8 8 0 0 1 8.6 3.8 8.2 8.2 0 1 0 20.2 15.4Z" />
-    ),
+    moon: <path d="M20.2 15.4A8 8 0 0 1 8.6 3.8 8.2 8.2 0 1 0 20.2 15.4Z" />,
     arrow: <path d="m9 18 6-6-6-6" />,
     info: (
       <>
@@ -428,10 +426,7 @@ function NewTicketDrawer({
                         <strong>{priority.label}</strong>
                       </span>
 
-                      <span
-                        className="priority-card__check"
-                        aria-hidden="true"
-                      >
+                      <span className="priority-card__check" aria-hidden="true">
                         <Icon name="check" size={13} />
                       </span>
                     </span>
@@ -711,7 +706,6 @@ export default function App() {
 
   function handleNewTicketChange(event) {
     const { name, value } = event.target
-
     setNewTicketForm((current) => ({
       ...current,
       [name]: value,
@@ -828,13 +822,11 @@ export default function App() {
             <span>FILA DE ATENDIMENTO</span>
             <h1>Chamados</h1>
           </div>
-
           <strong>{openTickets.length}</strong>
         </div>
 
         <label className="queue-search">
           <Icon name="search" size={16} />
-
           <input
             ref={searchRef}
             type="search"
@@ -843,7 +835,6 @@ export default function App() {
             placeholder="Buscar por código, assunto ou pessoa"
             aria-label="Buscar chamados"
           />
-
           <kbd>Ctrl K</kbd>
         </label>
 
@@ -899,7 +890,6 @@ export default function App() {
               <Icon name="search" size={24} />
               <strong>Nenhum chamado encontrado</strong>
               <p>Altere a busca ou selecione outro status.</p>
-
               <button
                 type="button"
                 onClick={() => {
@@ -935,20 +925,18 @@ export default function App() {
                   <div className="ticket-document__eyebrow">
                     <span>{formatTicketCode(selectedTicket.code)}</span>
                     <i />
-
                     <span>
                       {CATEGORY_LABELS[selectedTicket.category] ??
                         selectedTicket.category}
                     </span>
-
                     <i />
-
                     <span data-status={selectedTicket.status}>
                       {STATUS_LABELS[selectedTicket.status]}
                     </span>
                   </div>
 
                   <h2>{selectedTicket.subject}</h2>
+
                   <p>{getTicketDescription(selectedTicket)}</p>
                 </div>
 
@@ -979,11 +967,9 @@ export default function App() {
 
                 <div>
                   <span>RESPONSÁVEL</span>
-
                   <strong>
                     {selectedAssignee?.name ?? 'Não atribuído'}
                   </strong>
-
                   <small>
                     {selectedAssignee?.role ?? 'Aguardando atribuição'}
                   </small>
@@ -997,9 +983,7 @@ export default function App() {
                   onClick={() => setDetailsOpen((open) => !open)}
                 >
                   <span>DETALHES</span>
-                  <strong>
-                    {detailsOpen ? 'Ocultar' : 'Ver contexto'}
-                  </strong>
+                  <strong>{detailsOpen ? 'Ocultar' : 'Ver contexto'}</strong>
                   <Icon name="arrow" size={15} />
                 </button>
               </div>
@@ -1047,7 +1031,6 @@ export default function App() {
                       <span>REGISTRO DO ATENDIMENTO</span>
                       <h3>Histórico do chamado</h3>
                     </div>
-
                     <strong>
                       {eventCount} {eventCount === 1 ? 'evento' : 'eventos'}
                     </strong>
@@ -1085,14 +1068,12 @@ export default function App() {
                   {selectedTicket.status === 'resolved' ? (
                     <div className="resolved-composer-state">
                       <Icon name="check" />
-
                       <div>
                         <strong>Chamado concluído</strong>
                         <p>
                           Reabra o ticket para registrar uma nova interação.
                         </p>
                       </div>
-
                       <button type="button" onClick={handleReopen}>
                         Reabrir chamado
                       </button>
@@ -1126,9 +1107,7 @@ export default function App() {
 
                       <textarea
                         value={replyText}
-                        onChange={(event) =>
-                          setReplyText(event.target.value)
-                        }
+                        onChange={(event) => setReplyText(event.target.value)}
                         onKeyDown={handleComposerKeyDown}
                         placeholder={
                           composerMode === 'note'
@@ -1150,7 +1129,6 @@ export default function App() {
                           disabled={!replyText.trim()}
                         >
                           <Icon name="send" size={15} />
-
                           {composerMode === 'note'
                             ? 'Registrar nota'
                             : 'Enviar resposta'}
@@ -1165,14 +1143,12 @@ export default function App() {
             <div className="operations-bar">
               <label className="operations-bar__field">
                 <span>RESPONSÁVEL</span>
-
                 <select
                   value={selectedTicket.assigneeId ?? ''}
                   onChange={handleAssigneeChange}
                   disabled={selectedTicket.status === 'resolved'}
                 >
                   <option value="">Não atribuído</option>
-
                   {team.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.name}
@@ -1183,7 +1159,6 @@ export default function App() {
 
               <label className="operations-bar__field">
                 <span>PRIORIDADE</span>
-
                 <select
                   value={selectedTicket.priority}
                   onChange={handlePriorityChange}
@@ -1222,7 +1197,6 @@ export default function App() {
                       disabled={selectedTicket.status === 'waiting'}
                     >
                       <Icon name="clock" size={15} />
-
                       {selectedTicket.status === 'waiting'
                         ? 'Aguardando'
                         : 'Aguardar'}
@@ -1248,7 +1222,6 @@ export default function App() {
               <span>SERVICE DESK</span>
               <h2>A fila está vazia</h2>
               <p>Crie um chamado para iniciar o atendimento.</p>
-
               <button
                 type="button"
                 onClick={() => setNewTicketOpen(true)}
@@ -1274,7 +1247,6 @@ export default function App() {
         <div className="app-toast" role="status">
           <Icon name="check" size={16} />
           <span>{toast}</span>
-
           <button
             type="button"
             onClick={() => setToast('')}
