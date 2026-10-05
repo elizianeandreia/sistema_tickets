@@ -4,18 +4,33 @@ body,
   width: 100%;
   min-width: 320px;
   min-height: 100%;
+  margin: 0;
 }
 
 html {
-  background: #0a0d12;
+  background: #f3f4f6;
 }
 
 body {
-  margin: 0;
-  overflow-x: hidden;
-  background: #0a0d12;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #f3f4f6;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+img,
+svg {
+  display: block;
 }

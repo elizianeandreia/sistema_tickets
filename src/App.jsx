@@ -12,10 +12,10 @@ import {
 } from './services/ticketService.js'
 
 const STATUS_LABELS = {
-  new: 'Novo',
-  in_progress: 'Em atendimento',
-  waiting: 'Aguardando',
-  resolved: 'Resolvido',
+  new: 'A fazer',
+  in_progress: 'Atendendo',
+  waiting: 'Pausado',
+  resolved: 'Finalizado',
 }
 
 const PRIORITY_LABELS = {
@@ -32,12 +32,31 @@ const CATEGORY_LABELS = {
   general: 'Geral',
 }
 
-const FILTERS = [
-  { id: 'all', label: 'Todos' },
-  { id: 'new', label: 'Novos' },
-  { id: 'in_progress', label: 'Em atendimento' },
-  { id: 'waiting', label: 'Aguardando' },
-  { id: 'resolved', label: 'Resolvidos' },
+const BOARD_COLUMNS = [
+  {
+    id: 'new',
+    title: 'A FAZER',
+    icon: 'flag',
+    tone: 'todo',
+  },
+  {
+    id: 'in_progress',
+    title: 'ATENDENDO',
+    icon: 'play',
+    tone: 'progress',
+  },
+  {
+    id: 'waiting',
+    title: 'PAUSADO',
+    icon: 'pause',
+    tone: 'waiting',
+  },
+  {
+    id: 'resolved',
+    title: 'FINALIZADO',
+    icon: 'check',
+    tone: 'done',
+  },
 ]
 
 const EMPTY_FORM = {
@@ -51,7 +70,10 @@ const EMPTY_FORM = {
   assigneeId: '',
 }
 
-function Icon({ name, size = 18 }) {
+function Icon({
+  name,
+  size = 18,
+}) {
   const icons = {
     inbox: (
       <>
@@ -59,49 +81,97 @@ function Icon({ name, size = 18 }) {
         <path d="M4 14h4l2 3h4l2-3h4" />
       </>
     ),
+
     search: (
       <>
-        <circle cx="10.8" cy="10.8" r="6.3" />
+        <circle
+          cx="10.8"
+          cy="10.8"
+          r="6.3"
+        />
         <path d="m16 16 4 4" />
       </>
     ),
-    plus: <path d="M12 5v14M5 12h14" />,
-    check: <path d="m5 12 4 4L19 6" />,
+
+    plus: (
+      <path d="M12 5v14M5 12h14" />
+    ),
+
+    check: (
+      <path d="m5 12 4 4L19 6" />
+    ),
+
     clock: (
       <>
-        <circle cx="12" cy="12" r="8.5" />
+        <circle
+          cx="12"
+          cy="12"
+          r="8.5"
+        />
         <path d="M12 7v5l3.5 2" />
       </>
     ),
+
     user: (
       <>
-        <circle cx="12" cy="8" r="3.2" />
+        <circle
+          cx="12"
+          cy="8"
+          r="3.2"
+        />
         <path d="M5.5 20c.7-4.1 3-6.2 6.5-6.2s5.8 2.1 6.5 6.2" />
       </>
     ),
+
     users: (
       <>
-        <circle cx="9" cy="8.5" r="3" />
+        <circle
+          cx="9"
+          cy="8.5"
+          r="3"
+        />
         <path d="M3.5 19c.6-3.6 2.5-5.4 5.5-5.4s4.9 1.8 5.5 5.4" />
         <path d="M15.5 6.5a2.6 2.6 0 0 1 0 5.1M17 14c2 .5 3.2 2.1 3.5 4.7" />
       </>
     ),
-    activity: <path d="M3 12h4l2.2-5 4 10 2.2-5H21" />,
+
+    chart: (
+      <>
+        <path d="M5 20V10M12 20V4M19 20v-7" />
+        <path d="M3 20h18" />
+      </>
+    ),
+
+    settings: (
+      <>
+        <circle
+          cx="12"
+          cy="12"
+          r="3"
+        />
+        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9A1.7 1.7 0 0 0 21 10h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" />
+      </>
+    ),
+
     sun: (
       <>
-        <circle cx="12" cy="12" r="3.5" />
+        <circle
+          cx="12"
+          cy="12"
+          r="3.5"
+        />
         <path d="M12 2v2.2M12 19.8V22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2 12h2.2M19.8 12H22M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6" />
       </>
     ),
-    moon: <path d="M20.2 15.4A8 8 0 0 1 8.6 3.8 8.2 8.2 0 1 0 20.2 15.4Z" />,
-    arrow: <path d="m9 18 6-6-6-6" />,
-    info: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 10v6M12 7h.01" />
-      </>
+
+    moon: (
+      <path d="M20.2 15.4A8 8 0 0 1 8.6 3.8 8.2 8.2 0 1 0 20.2 15.4Z" />
     ),
-    close: <path d="M6 6l12 12M18 6 6 18" />,
+
+    close: (
+      <path d="M6 6l12 12M18 6 6 18" />
+    ),
+
     trash: (
       <>
         <path d="M4 7h16" />
@@ -110,10 +180,35 @@ function Icon({ name, size = 18 }) {
         <path d="M10 11v5M14 11v5" />
       </>
     ),
+
     send: (
       <>
         <path d="m4 4 16 8-16 8 3-8-3-8Z" />
         <path d="M7 12h13" />
+      </>
+    ),
+
+    flag: (
+      <>
+        <path d="M5 21V4" />
+        <path d="M5 5h10l-1.8 3L15 11H5" />
+      </>
+    ),
+
+    play: (
+      <path d="m9 7 8 5-8 5V7Z" />
+    ),
+
+    pause: (
+      <>
+        <path d="M9 7v10M15 7v10" />
+      </>
+    ),
+
+    bell: (
+      <>
+        <path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 7H3s3 0 3-7" />
+        <path d="M10 20h4" />
       </>
     ),
   }
@@ -130,13 +225,14 @@ function Icon({ name, size = 18 }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      {icons[name] ?? icons.info}
+      {icons[name] ?? icons.inbox}
     </svg>
   )
 }
 
 function getRequester(ticket) {
-  const requester = ticket?.requester ?? {}
+  const requester =
+    ticket?.requester ?? {}
 
   return {
     name:
@@ -144,11 +240,13 @@ function getRequester(ticket) {
       ticket?.requesterName ||
       ticket?.customerName ||
       'Solicitante',
+
     email:
       requester.email ||
       ticket?.requesterEmail ||
       ticket?.email ||
       '',
+
     department:
       requester.department ||
       ticket?.department ||
@@ -167,15 +265,30 @@ function getTicketDescription(ticket) {
 }
 
 function getRemainingMs(ticket) {
-  if (!ticket?.slaDeadline) return 0
+  if (!ticket?.slaDeadline) {
+    return 0
+  }
 
-  const deadline = new Date(ticket.slaDeadline).getTime()
+  const deadline =
+    new Date(
+      ticket.slaDeadline,
+    ).getTime()
+
   const reference =
-    ticket.status === 'resolved' && ticket.resolvedAt
-      ? new Date(ticket.resolvedAt).getTime()
+    ticket.status ===
+      'resolved' &&
+    ticket.resolvedAt
+      ? new Date(
+          ticket.resolvedAt,
+        ).getTime()
       : Date.now()
 
-  if (!Number.isFinite(deadline) || !Number.isFinite(reference)) return 0
+  if (
+    !Number.isFinite(deadline) ||
+    !Number.isFinite(reference)
+  ) {
+    return 0
+  }
 
   return deadline - reference
 }
@@ -188,30 +301,101 @@ function getSlaLabel(state) {
     overdue: 'SLA vencido',
   }
 
-  return labels[state] ?? 'Em acompanhamento'
-}
-
-function getMessageAuthor(item, fallback = 'Equipe LTHS') {
-  return item?.author || item?.authorName || fallback
-}
-
-function TicketMessage({ type, author, message, createdAt }) {
   return (
-    <article className={`timeline-entry timeline-entry--${type}`}>
-      <div className="timeline-entry__rail" aria-hidden="true">
-        <span className="timeline-entry__marker" />
-      </div>
+    labels[state] ??
+    'Em acompanhamento'
+  )
+}
 
-      <time
-        className="timeline-entry__time"
-        dateTime={createdAt || undefined}
-      >
-        {formatCompactDate(createdAt)}
-      </time>
+function getInitials(name = '') {
+  return (
+    String(name)
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(
+        (part) => part[0],
+      )
+      .join('')
+      .toUpperCase() || 'LT'
+  )
+}
+
+function getSlaProgress(ticket) {
+  if (
+    ticket?.status ===
+    'resolved'
+  ) {
+    return 100
+  }
+
+  const created =
+    new Date(
+      ticket?.createdAt,
+    ).getTime()
+
+  const deadline =
+    new Date(
+      ticket?.slaDeadline,
+    ).getTime()
+
+  if (
+    !Number.isFinite(created) ||
+    !Number.isFinite(deadline) ||
+    deadline <= created
+  ) {
+    return 0
+  }
+
+  const total =
+    deadline - created
+
+  const elapsed =
+    Date.now() - created
+
+  return Math.max(
+    3,
+    Math.min(
+      100,
+      Math.round(
+        (elapsed / total) * 100,
+      ),
+    ),
+  )
+}
+
+function getMessageAuthor(
+  item,
+  fallback = 'Equipe LTHS',
+) {
+  return (
+    item?.author ||
+    item?.authorName ||
+    fallback
+  )
+}
+
+function TicketMessage({
+  type,
+  author,
+  message,
+  createdAt,
+}) {
+  return (
+    <article
+      className={`timeline-entry timeline-entry--${type}`}
+    >
+      <div className="timeline-entry__avatar">
+        {getInitials(author)}
+      </div>
 
       <div className="timeline-entry__content">
         <div className="timeline-entry__meta">
-          <strong>{author}</strong>
+          <strong>
+            {author}
+          </strong>
+
           <span>
             {type === 'requester'
               ? 'Solicitante'
@@ -219,6 +403,17 @@ function TicketMessage({ type, author, message, createdAt }) {
                 ? 'Nota interna'
                 : 'Suporte'}
           </span>
+
+          <time
+            dateTime={
+              createdAt ||
+              undefined
+            }
+          >
+            {formatCompactDate(
+              createdAt,
+            )}
+          </time>
         </div>
 
         <p>{message}</p>
@@ -235,13 +430,18 @@ function NewTicketDrawer({
   onClose,
   onSubmit,
 }) {
-  if (!open) return null
+  if (!open) {
+    return null
+  }
 
   return (
-    <div className="new-ticket-overlay" role="presentation">
+    <div
+      className="modal-layer"
+      role="presentation"
+    >
       <button
         type="button"
-        className="new-ticket-backdrop"
+        className="modal-backdrop"
         aria-label="Fechar criação de chamado"
         onClick={onClose}
       />
@@ -252,16 +452,26 @@ function NewTicketDrawer({
         aria-modal="true"
         aria-labelledby="new-ticket-title"
       >
-        <header className="new-ticket-drawer__header">
+        <header className="drawer-header">
           <div>
-            <span>NOVO REGISTRO</span>
-            <h2 id="new-ticket-title">Criar chamado</h2>
-            <p>Registre a solicitação e envie diretamente para a fila.</p>
+            <span>
+              NOVO REGISTRO
+            </span>
+
+            <h2 id="new-ticket-title">
+              Criar chamado
+            </h2>
+
+            <p>
+              Registre a solicitação e
+              envie diretamente para a
+              fila.
+            </p>
           </div>
 
           <button
             type="button"
-            className="new-ticket-drawer__close"
+            className="icon-button"
             onClick={onClose}
             aria-label="Fechar"
           >
@@ -269,66 +479,91 @@ function NewTicketDrawer({
           </button>
         </header>
 
-        <form className="new-ticket-form" onSubmit={onSubmit}>
-          <div className="new-ticket-form__section">
-            <div className="new-ticket-form__section-heading">
-              <div>
-                <strong>Solicitante</strong>
-                <small>Identificação de quem abriu o chamado</small>
-              </div>
+        <form
+          className="new-ticket-form"
+          onSubmit={onSubmit}
+        >
+          <section className="form-section">
+            <div className="form-section__title">
+              <strong>
+                Solicitante
+              </strong>
+
+              <small>
+                Dados de quem abriu o
+                chamado
+              </small>
             </div>
 
             <label>
               <span>Nome *</span>
+
               <input
                 autoFocus
                 required
                 name="requesterName"
-                value={form.requesterName}
+                value={
+                  form.requesterName
+                }
                 onChange={onChange}
                 placeholder="Nome do solicitante"
               />
             </label>
 
-            <div className="new-ticket-form__grid">
+            <div className="form-grid">
               <label>
                 <span>E-mail *</span>
+
                 <input
                   required
                   type="email"
                   name="requesterEmail"
-                  value={form.requesterEmail}
+                  value={
+                    form.requesterEmail
+                  }
                   onChange={onChange}
                   placeholder="nome@empresa.com"
                 />
               </label>
 
               <label>
-                <span>Departamento</span>
+                <span>
+                  Departamento
+                </span>
+
                 <input
                   name="department"
-                  value={form.department}
+                  value={
+                    form.department
+                  }
                   onChange={onChange}
                   placeholder="Ex.: Financeiro"
                 />
               </label>
             </div>
-          </div>
+          </section>
 
-          <div className="new-ticket-form__section">
-            <div className="new-ticket-form__section-heading">
-              <div>
-                <strong>Solicitação</strong>
-                <small>Contexto necessário para iniciar o atendimento</small>
-              </div>
+          <section className="form-section">
+            <div className="form-section__title">
+              <strong>
+                Solicitação
+              </strong>
+
+              <small>
+                Contexto necessário para
+                o atendimento
+              </small>
             </div>
 
             <label>
               <span>Assunto *</span>
+
               <input
                 required
                 name="subject"
-                value={form.subject}
+                value={
+                  form.subject
+                }
                 onChange={onChange}
                 placeholder="Resumo curto do problema"
               />
@@ -336,134 +571,188 @@ function NewTicketDrawer({
 
             <label>
               <span>Descrição *</span>
+
               <textarea
                 required
                 name="description"
-                value={form.description}
+                value={
+                  form.description
+                }
                 onChange={onChange}
                 rows="5"
-                placeholder="Descreva o que está acontecendo, impacto e contexto."
+                placeholder="Descreva o problema, impacto e contexto."
               />
             </label>
 
-            <div className="new-ticket-form__grid">
+            <div className="form-grid">
               <label>
-                <span>Categoria *</span>
+                <span>
+                  Categoria *
+                </span>
+
                 <select
                   required
                   name="category"
-                  value={form.category}
+                  value={
+                    form.category
+                  }
                   onChange={onChange}
                 >
-                  {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                  {Object.entries(
+                    CATEGORY_LABELS,
+                  ).map(
+                    ([
+                      value,
+                      label,
+                    ]) => (
+                      <option
+                        key={
+                          value
+                        }
+                        value={
+                          value
+                        }
+                      >
+                        {
+                          label
+                        }
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
 
               <label>
-                <span>Responsável</span>
+                <span>
+                  Responsável
+                </span>
+
                 <select
                   name="assigneeId"
-                  value={form.assigneeId}
+                  value={
+                    form.assigneeId
+                  }
                   onChange={onChange}
                 >
-                  <option value="">Sem atribuição</option>
-                  {team.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name}
-                    </option>
-                  ))}
+                  <option value="">
+                    Sem atribuição
+                  </option>
+
+                  {team.map(
+                    (member) => (
+                      <option
+                        key={
+                          member.id
+                        }
+                        value={
+                          member.id
+                        }
+                      >
+                        {
+                          member.name
+                        }
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
             </div>
-          </div>
+          </section>
 
-          <div className="new-ticket-form__section">
-            <div className="new-ticket-form__section-heading">
-              <div>
-                <strong>Prioridade e SLA</strong>
-                <small>
-                  O prazo de atendimento é definido automaticamente conforme a
-                  prioridade
-                </small>
-              </div>
+          <section className="form-section">
+            <div className="form-section__title">
+              <strong>
+                Prioridade
+              </strong>
+
+              <small>
+                O SLA é calculado
+                automaticamente
+              </small>
             </div>
 
-            <div className="priority-card-grid">
+            <div className="priority-grid">
               {[
-                {
-                  value: 'high',
-                  label: 'Alta',
-                  description: 'Impacto crítico',
-                  sla: '2 horas',
-                },
-                {
-                  value: 'medium',
-                  label: 'Média',
-                  description: 'Impacto moderado',
-                  sla: '8 horas',
-                },
-                {
-                  value: 'low',
-                  label: 'Baixa',
-                  description: 'Impacto reduzido',
-                  sla: '24 horas',
-                },
-              ].map((priority) => (
-                <label
-                  key={priority.value}
-                  className={`priority-card priority-card--${priority.value} ${
-                    form.priority === priority.value ? 'is-selected' : ''
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="priority"
-                    value={priority.value}
-                    checked={form.priority === priority.value}
-                    onChange={onChange}
-                  />
+                [
+                  'high',
+                  'Alta',
+                  '2h',
+                ],
+                [
+                  'medium',
+                  'Média',
+                  '8h',
+                ],
+                [
+                  'low',
+                  'Baixa',
+                  '24h',
+                ],
+              ].map(
+                ([
+                  value,
+                  label,
+                  sla,
+                ]) => (
+                  <label
+                    key={
+                      value
+                    }
+                    className={`priority-option priority-option--${value} ${
+                      form.priority ===
+                      value
+                        ? 'is-selected'
+                        : ''
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="priority"
+                      value={
+                        value
+                      }
+                      checked={
+                        form.priority ===
+                        value
+                      }
+                      onChange={
+                        onChange
+                      }
+                    />
 
-                  <span className="priority-card__content">
-                    <span className="priority-card__top">
-                      <span className="priority-card__title">
-                        <i aria-hidden="true" />
-                        <strong>{priority.label}</strong>
-                      </span>
+                    <span>
+                      <strong>
+                        {label}
+                      </strong>
 
-                      <span className="priority-card__check" aria-hidden="true">
-                        <Icon name="check" size={13} />
-                      </span>
+                      <small>
+                        SLA {sla}
+                      </small>
                     </span>
-
-                    <span className="priority-card__description">
-                      {priority.description}
-                    </span>
-
-                    <span className="priority-card__sla">
-                      <span>SLA</span>
-                      <strong>{priority.sla}</strong>
-                    </span>
-                  </span>
-                </label>
-              ))}
+                  </label>
+                ),
+              )}
             </div>
-          </div>
+          </section>
 
-          <footer className="new-ticket-form__footer">
+          <footer className="drawer-footer">
             <button
               type="button"
-              className="new-ticket-secondary"
+              className="button button--ghost"
               onClick={onClose}
             >
               Cancelar
             </button>
 
-            <button type="submit" className="new-ticket-primary">
-              <Icon name="plus" size={16} />
+            <button
+              type="submit"
+              className="button button--primary"
+            >
+              <Icon
+                name="plus"
+                size={16}
+              />
+
               Criar chamado
             </button>
           </footer>
@@ -473,11 +762,24 @@ function NewTicketDrawer({
   )
 }
 
-function ConfirmDeleteDialog({ open, ticket, onCancel, onConfirm }) {
-  if (!open || !ticket) return null
+function ConfirmDeleteDialog({
+  open,
+  ticket,
+  onCancel,
+  onConfirm,
+}) {
+  if (
+    !open ||
+    !ticket
+  ) {
+    return null
+  }
 
   return (
-    <div className="confirm-overlay" role="presentation">
+    <div
+      className="confirm-overlay"
+      role="presentation"
+    >
       <button
         type="button"
         className="confirm-backdrop"
@@ -492,19 +794,38 @@ function ConfirmDeleteDialog({ open, ticket, onCancel, onConfirm }) {
         aria-labelledby="delete-ticket-title"
         aria-describedby="delete-ticket-description"
       >
-        <div className="confirm-dialog__icon" aria-hidden="true">
-          <Icon name="trash" size={20} />
+        <div
+          className="confirm-dialog__icon"
+          aria-hidden="true"
+        >
+          <Icon
+            name="trash"
+            size={20}
+          />
         </div>
 
         <div className="confirm-dialog__content">
-          <span>EXCLUSÃO PERMANENTE</span>
+          <span>
+            EXCLUSÃO PERMANENTE
+          </span>
+
           <h2 id="delete-ticket-title">
-            Excluir {formatTicketCode(ticket.code)}?
+            Excluir{' '}
+            {formatTicketCode(
+              ticket.code,
+            )}
+            ?
           </h2>
+
           <p id="delete-ticket-description">
-            Esta ação removerá permanentemente o chamado e todo o seu histórico.
+            Esta ação removerá
+            permanentemente o chamado e
+            todo o seu histórico.
           </p>
-          <strong>{ticket.subject}</strong>
+
+          <strong>
+            {ticket.subject}
+          </strong>
         </div>
 
         <div className="confirm-dialog__actions">
@@ -522,7 +843,11 @@ function ConfirmDeleteDialog({ open, ticket, onCancel, onConfirm }) {
             className="confirm-dialog__danger"
             onClick={onConfirm}
           >
-            <Icon name="trash" size={15} />
+            <Icon
+              name="trash"
+              size={15}
+            />
+
             Excluir ticket
           </button>
         </div>
@@ -536,11 +861,11 @@ export default function App() {
     tickets,
     team,
     preferences,
-    openTickets,
     createTicket,
     replyToTicket,
     addNoteToTicket,
     setTicketWaiting,
+    resumeTicket,
     closeTicket,
     reopenResolvedTicket,
     setTicketPriority,
@@ -549,25 +874,91 @@ export default function App() {
     setTheme,
   } = useServiceDesk()
 
-  const [selectedTicketId, setSelectedTicketId] = useState(
-    () => tickets[0]?.id ?? null,
+  const [
+    selectedTicketId,
+    setSelectedTicketId,
+  ] = useState(
+    () =>
+      tickets[0]?.id ??
+      null,
   )
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [replyText, setReplyText] = useState('')
-  const [composerMode, setComposerMode] = useState('reply')
-  const [detailsOpen, setDetailsOpen] = useState(false)
-  const [newTicketOpen, setNewTicketOpen] = useState(false)
-  const [newTicketForm, setNewTicketForm] = useState(EMPTY_FORM)
-  const [deleteConfirmation, setDeleteConfirmation] = useState(false)
-  const [toast, setToast] = useState('')
 
-  const searchRef = useRef(null)
-  const logoPath = `${import.meta.env.BASE_URL}imagem/logo2026.png`
+  const [
+    search,
+    setSearch,
+  ] = useState('')
+
+  const [
+    replyText,
+    setReplyText,
+  ] = useState('')
+
+  const [
+    composerMode,
+    setComposerMode,
+  ] = useState('reply')
+
+  const [
+    ticketPanelOpen,
+    setTicketPanelOpen,
+  ] = useState(false)
+
+  const [
+    newTicketOpen,
+    setNewTicketOpen,
+  ] = useState(false)
+
+  const [
+    newTicketForm,
+    setNewTicketForm,
+  ] = useState(
+    EMPTY_FORM,
+  )
+
+  const [
+    deleteConfirmation,
+    setDeleteConfirmation,
+  ] = useState(false)
+
+  const [
+    toast,
+    setToast,
+  ] = useState('')
+
+  const searchRef =
+    useRef(null)
+
+  const logoPath =
+    `${import.meta.env.BASE_URL}imagem/logo2026.png`
+
+  const currentTheme =
+    preferences?.theme ===
+    'dark'
+      ? 'dark'
+      : 'light'
 
   useEffect(() => {
-    document.documentElement.dataset.theme = preferences?.theme ?? 'dark'
-  }, [preferences?.theme])
+    document.documentElement.dataset.theme =
+      currentTheme
+  }, [currentTheme])
+
+  useEffect(() => {
+    const migrationKey =
+      'lths-service-desk:kanban-light-default-v1'
+
+    if (
+      !window.localStorage.getItem(
+        migrationKey,
+      )
+    ) {
+      setTheme('light')
+
+      window.localStorage.setItem(
+        migrationKey,
+        '1',
+      )
+    }
+  }, [setTheme])
 
   useEffect(() => {
     if (!tickets.length) {
@@ -575,671 +966,1423 @@ export default function App() {
       return
     }
 
-    if (!tickets.some((ticket) => ticket.id === selectedTicketId)) {
-      setSelectedTicketId(tickets[0].id)
+    if (
+      !tickets.some(
+        (ticket) =>
+          ticket.id ===
+          selectedTicketId,
+      )
+    ) {
+      setSelectedTicketId(
+        tickets[0].id,
+      )
     }
-  }, [selectedTicketId, tickets])
+  }, [
+    selectedTicketId,
+    tickets,
+  ])
 
   useEffect(() => {
-    if (!toast) return undefined
+    if (!toast) {
+      return undefined
+    }
 
-    const timer = window.setTimeout(() => setToast(''), 3200)
-    return () => window.clearTimeout(timer)
+    const timer =
+      window.setTimeout(
+        () =>
+          setToast(''),
+        3200,
+      )
+
+    return () =>
+      window.clearTimeout(
+        timer,
+      )
   }, [toast])
 
   useEffect(() => {
-    function handleKeyboard(event) {
-      const key = event.key.toLowerCase()
+    function handleKeyboard(
+      event,
+    ) {
+      const key =
+        event.key.toLowerCase()
 
-      if ((event.ctrlKey || event.metaKey) && key === 'k') {
+      if (
+        (
+          event.ctrlKey ||
+          event.metaKey
+        ) &&
+        key === 'k'
+      ) {
         event.preventDefault()
+
         searchRef.current?.focus()
       }
 
-      if ((event.ctrlKey || event.metaKey) && key === 'n') {
+      if (
+        (
+          event.ctrlKey ||
+          event.metaKey
+        ) &&
+        key === 'n'
+      ) {
         event.preventDefault()
-        setNewTicketOpen(true)
+
+        setNewTicketOpen(
+          true,
+        )
       }
 
-      if (event.key === 'Escape') {
-        if (newTicketOpen) {
-          setNewTicketOpen(false)
-        }
-
-        if (deleteConfirmation) {
-          setDeleteConfirmation(false)
+      if (
+        event.key ===
+        'Escape'
+      ) {
+        if (
+          deleteConfirmation
+        ) {
+          setDeleteConfirmation(
+            false,
+          )
+        } else if (
+          newTicketOpen
+        ) {
+          setNewTicketOpen(
+            false,
+          )
+        } else if (
+          ticketPanelOpen
+        ) {
+          setTicketPanelOpen(
+            false,
+          )
         }
       }
     }
 
-    window.addEventListener('keydown', handleKeyboard)
-    return () => window.removeEventListener('keydown', handleKeyboard)
-  }, [deleteConfirmation, newTicketOpen])
+    window.addEventListener(
+      'keydown',
+      handleKeyboard,
+    )
 
-  const selectedTicket = useMemo(
-    () =>
-      tickets.find((ticket) => ticket.id === selectedTicketId) ??
-      tickets[0] ??
-      null,
-    [selectedTicketId, tickets],
-  )
-
-  const filterCounts = useMemo(() => {
-    const counts = {
-      all: tickets.length,
-      new: 0,
-      in_progress: 0,
-      waiting: 0,
-      resolved: 0,
-    }
-
-    tickets.forEach((ticket) => {
-      if (counts[ticket.status] !== undefined) {
-        counts[ticket.status] += 1
-      }
-    })
-
-    return counts
-  }, [tickets])
-
-  const filteredTickets = useMemo(() => {
-    const term = search.trim().toLocaleLowerCase('pt-BR')
-
-    return tickets
-      .filter((ticket) => {
-        const matchesStatus =
-          statusFilter === 'all' || ticket.status === statusFilter
-
-        const requester = getRequester(ticket)
-        const assignee =
-          team.find((member) => member.id === ticket.assigneeId)?.name ?? ''
-
-        const haystack = [
-          ticket.code,
-          ticket.subject,
-          getTicketDescription(ticket),
-          requester.name,
-          requester.email,
-          requester.department,
-          CATEGORY_LABELS[ticket.category] ?? ticket.category,
-          PRIORITY_LABELS[ticket.priority] ?? ticket.priority,
-          STATUS_LABELS[ticket.status] ?? ticket.status,
-          assignee,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLocaleLowerCase('pt-BR')
-
-        return matchesStatus && (!term || haystack.includes(term))
-      })
-      .sort(
-        (a, b) =>
-          new Date(b.updatedAt || b.createdAt).getTime() -
-          new Date(a.updatedAt || a.createdAt).getTime(),
+    return () =>
+      window.removeEventListener(
+        'keydown',
+        handleKeyboard,
       )
-  }, [search, statusFilter, team, tickets])
+  }, [
+    deleteConfirmation,
+    newTicketOpen,
+    ticketPanelOpen,
+  ])
 
-  const selectedRequester = selectedTicket
-    ? getRequester(selectedTicket)
-    : null
+  const selectedTicket =
+    useMemo(
+      () =>
+        tickets.find(
+          (ticket) =>
+            ticket.id ===
+            selectedTicketId,
+        ) ??
+        tickets[0] ??
+        null,
+      [
+        selectedTicketId,
+        tickets,
+      ],
+    )
 
-  const selectedAssignee = selectedTicket
-    ? team.find((member) => member.id === selectedTicket.assigneeId)
-    : null
+  const boardTickets =
+    useMemo(() => {
+      const term =
+        search
+          .trim()
+          .toLocaleLowerCase(
+            'pt-BR',
+          )
 
-  const slaState = selectedTicket
-    ? getSlaState(selectedTicket)
-    : 'healthy'
+      return tickets
+        .filter(
+          (ticket) => {
+            if (!term) {
+              return true
+            }
 
-  const slaRemaining = selectedTicket
-    ? getRemainingMs(selectedTicket)
-    : 0
+            const requester =
+              getRequester(
+                ticket,
+              )
 
-  const highPriorityTickets = openTickets.filter(
-    (ticket) => ticket.priority === 'high',
-  ).length
+            const assignee =
+              team.find(
+                (member) =>
+                  member.id ===
+                  ticket.assigneeId,
+              )?.name ?? ''
 
-  const waitingTickets = openTickets.filter(
-    (ticket) => ticket.status === 'waiting',
-  ).length
+            const haystack = [
+              ticket.code,
+              ticket.subject,
+              getTicketDescription(
+                ticket,
+              ),
+              requester.name,
+              requester.email,
+              requester.department,
+              CATEGORY_LABELS[
+                ticket.category
+              ] ??
+                ticket.category,
+              PRIORITY_LABELS[
+                ticket.priority
+              ] ??
+                ticket.priority,
+              STATUS_LABELS[
+                ticket.status
+              ] ??
+                ticket.status,
+              assignee,
+            ]
+              .filter(Boolean)
+              .join(' ')
+              .toLocaleLowerCase(
+                'pt-BR',
+              )
 
-  const eventCount = selectedTicket
-    ? 1 +
-      (selectedTicket.replies?.length ?? 0) +
-      (selectedTicket.internalNotes?.length ?? 0)
-    : 0
+            return haystack.includes(
+              term,
+            )
+          },
+        )
+        .sort(
+          (a, b) =>
+            new Date(
+              b.updatedAt ||
+                b.createdAt,
+            ).getTime() -
+            new Date(
+              a.updatedAt ||
+                a.createdAt,
+            ).getTime(),
+        )
+    }, [
+      search,
+      team,
+      tickets,
+    ])
 
-  function handleSelectTicket(ticketId) {
-    setSelectedTicketId(ticketId)
+  const selectedRequester =
+    selectedTicket
+      ? getRequester(
+          selectedTicket,
+        )
+      : null
+
+  const selectedAssignee =
+    selectedTicket
+      ? team.find(
+          (member) =>
+            member.id ===
+            selectedTicket.assigneeId,
+        )
+      : null
+
+  const selectedSlaState =
+    selectedTicket
+      ? getSlaState(
+          selectedTicket,
+        )
+      : 'healthy'
+
+  const selectedSlaRemaining =
+    selectedTicket
+      ? getRemainingMs(
+          selectedTicket,
+        )
+      : 0
+
+  function handleSelectTicket(
+    ticketId,
+  ) {
+    setSelectedTicketId(
+      ticketId,
+    )
+
     setReplyText('')
-    setComposerMode('reply')
-    setDetailsOpen(false)
-    setDeleteConfirmation(false)
+
+    setComposerMode(
+      'reply',
+    )
+
+    setDeleteConfirmation(
+      false,
+    )
+
+    setTicketPanelOpen(
+      true,
+    )
   }
 
-  function handleComposerSubmit(event) {
+  function handleComposerSubmit(
+    event,
+  ) {
     event.preventDefault()
 
-    if (!selectedTicket || !replyText.trim()) return
-    if (selectedTicket.status === 'resolved') return
+    if (
+      !selectedTicket ||
+      !replyText.trim() ||
+      selectedTicket.status ===
+        'resolved'
+    ) {
+      return
+    }
 
-    if (composerMode === 'note') {
-      addNoteToTicket(selectedTicket.id, replyText.trim())
-      setToast('Nota interna registrada.')
+    if (
+      composerMode ===
+      'note'
+    ) {
+      addNoteToTicket(
+        selectedTicket.id,
+        replyText.trim(),
+      )
+
+      setToast(
+        'Nota interna registrada.',
+      )
     } else {
-      replyToTicket(selectedTicket.id, replyText.trim())
-      setToast('Resposta registrada no chamado.')
+      replyToTicket(
+        selectedTicket.id,
+        replyText.trim(),
+      )
+
+      setToast(
+        'Resposta registrada no chamado.',
+      )
     }
 
     setReplyText('')
   }
 
-  function handleComposerKeyDown(event) {
+  function handleComposerKeyDown(
+    event,
+  ) {
     if (
-      (event.ctrlKey || event.metaKey) &&
-      event.key === 'Enter' &&
+      (
+        event.ctrlKey ||
+        event.metaKey
+      ) &&
+      event.key ===
+        'Enter' &&
       replyText.trim()
     ) {
       event.preventDefault()
+
       event.currentTarget.form?.requestSubmit()
     }
   }
 
   function handleResolve() {
-    if (!selectedTicket) return
-    closeTicket(selectedTicket.id)
-    setToast(`${formatTicketCode(selectedTicket.code)} resolvido.`)
+    if (!selectedTicket) {
+      return
+    }
+
+    closeTicket(
+      selectedTicket.id,
+    )
+
+    setToast(
+      `${formatTicketCode(
+        selectedTicket.code,
+      )} resolvido.`,
+    )
   }
 
   function handleReopen() {
-    if (!selectedTicket) return
-    reopenResolvedTicket(selectedTicket.id)
-    setToast(`${formatTicketCode(selectedTicket.code)} reaberto.`)
+    if (!selectedTicket) {
+      return
+    }
+
+    reopenResolvedTicket(
+      selectedTicket.id,
+    )
+
+    setToast(
+      `${formatTicketCode(
+        selectedTicket.code,
+      )} reaberto.`,
+    )
   }
 
   function handleWaiting() {
-    if (!selectedTicket || selectedTicket.status === 'resolved') return
-    setTicketWaiting(selectedTicket.id)
-    setToast('Chamado marcado como aguardando.')
+    if (
+      !selectedTicket ||
+      selectedTicket.status ===
+        'resolved' ||
+      selectedTicket.status ===
+        'waiting'
+    ) {
+      return
+    }
+
+    setTicketWaiting(
+      selectedTicket.id,
+    )
+
+    setToast(
+      'Chamado pausado.',
+    )
   }
 
-  function handlePriorityChange(event) {
-    if (!selectedTicket) return
-    setTicketPriority(selectedTicket.id, event.target.value)
-    setToast('Prioridade e SLA atualizados.')
+  function handleResume() {
+    if (
+      !selectedTicket ||
+      selectedTicket.status !==
+        'waiting'
+    ) {
+      return
+    }
+
+    resumeTicket(
+      selectedTicket.id,
+    )
+
+    setToast(
+      'Chamado retomado e movido para Atendendo.',
+    )
   }
 
-  function handleAssigneeChange(event) {
-    if (!selectedTicket) return
-    setTicketAssignee(selectedTicket.id, event.target.value || null)
-    setToast('Responsável atualizado.')
+  function handlePriorityChange(
+    event,
+  ) {
+    if (!selectedTicket) {
+      return
+    }
+
+    setTicketPriority(
+      selectedTicket.id,
+      event.target.value,
+    )
+
+    setToast(
+      'Prioridade e SLA atualizados.',
+    )
+  }
+
+  function handleAssigneeChange(
+    event,
+  ) {
+    if (!selectedTicket) {
+      return
+    }
+
+    setTicketAssignee(
+      selectedTicket.id,
+      event.target.value ||
+        null,
+    )
+
+    setToast(
+      'Responsável atualizado.',
+    )
   }
 
   function handleDeleteRequest() {
-    if (!selectedTicket) return
-    setDeleteConfirmation(true)
+    if (!selectedTicket) {
+      return
+    }
+
+    setDeleteConfirmation(
+      true,
+    )
   }
 
   function handleDeleteConfirm() {
-    if (!selectedTicket) return
-
-    const remainingTickets = tickets.filter(
-      (ticket) => ticket.id !== selectedTicket.id,
-    )
-    const remainingVisibleTickets = filteredTickets.filter(
-      (ticket) => ticket.id !== selectedTicket.id,
-    )
-    const nextTicket =
-      remainingVisibleTickets[0] ??
-      remainingTickets[0] ??
-      null
-    const deletedCode = formatTicketCode(selectedTicket.code)
-
-    deleteTicket(selectedTicket.id)
-    setSelectedTicketId(nextTicket?.id ?? null)
-
-    if (!remainingVisibleTickets.length && remainingTickets.length) {
-      setSearch('')
-      setStatusFilter('all')
+    if (!selectedTicket) {
+      return
     }
 
+    const deletedId =
+      selectedTicket.id
+
+    const deletedCode =
+      formatTicketCode(
+        selectedTicket.code,
+      )
+
+    const nextTicket =
+      tickets.find(
+        (ticket) =>
+          ticket.id !==
+          deletedId,
+      ) ?? null
+
+    deleteTicket(
+      deletedId,
+    )
+
+    setSelectedTicketId(
+      nextTicket?.id ??
+        null,
+    )
+
+    setDeleteConfirmation(
+      false,
+    )
+
+    setTicketPanelOpen(
+      false,
+    )
+
     setReplyText('')
-    setComposerMode('reply')
-    setDetailsOpen(false)
-    setDeleteConfirmation(false)
-    setToast(`${deletedCode} excluído permanentemente.`)
+
+    setComposerMode(
+      'reply',
+    )
+
+    setToast(
+      `${deletedCode} excluído permanentemente.`,
+    )
   }
 
   function handleThemeToggle() {
-    setTheme(preferences?.theme === 'light' ? 'dark' : 'light')
+    setTheme(
+      currentTheme ===
+        'light'
+        ? 'dark'
+        : 'light',
+    )
   }
 
-  function handleNewTicketChange(event) {
-    const { name, value } = event.target
-    setNewTicketForm((current) => ({
-      ...current,
-      [name]: value,
-    }))
+  function handleNewTicketChange(
+    event,
+  ) {
+    const {
+      name,
+      value,
+    } = event.target
+
+    setNewTicketForm(
+      (current) => ({
+        ...current,
+        [name]: value,
+      }),
+    )
   }
 
-  function handleNewTicketSubmit(event) {
+  function handleNewTicketSubmit(
+    event,
+  ) {
     event.preventDefault()
 
-    const ticket = createTicket({
-      requesterName: newTicketForm.requesterName.trim(),
-      requesterEmail: newTicketForm.requesterEmail.trim(),
-      department: newTicketForm.department.trim(),
-      subject: newTicketForm.subject.trim(),
-      category: newTicketForm.category,
-      description: newTicketForm.description.trim(),
-      priority: newTicketForm.priority,
-      assigneeId: newTicketForm.assigneeId || null,
-    })
+    const ticket =
+      createTicket({
+        requesterName:
+          newTicketForm.requesterName.trim(),
 
-    if (!ticket) return
+        requesterEmail:
+          newTicketForm.requesterEmail.trim(),
 
-    setSelectedTicketId(ticket.id)
-    setStatusFilter('all')
+        department:
+          newTicketForm.department.trim(),
+
+        subject:
+          newTicketForm.subject.trim(),
+
+        category:
+          newTicketForm.category,
+
+        description:
+          newTicketForm.description.trim(),
+
+        priority:
+          newTicketForm.priority,
+
+        assigneeId:
+          newTicketForm.assigneeId ||
+          null,
+      })
+
+    if (!ticket) {
+      return
+    }
+
+    setSelectedTicketId(
+      ticket.id,
+    )
+
     setSearch('')
-    setNewTicketForm(EMPTY_FORM)
-    setNewTicketOpen(false)
-    setToast(`${formatTicketCode(ticket.code)} criado com sucesso.`)
-  }
 
-  function closeNewTicket() {
-    setNewTicketOpen(false)
+    setNewTicketForm(
+      EMPTY_FORM,
+    )
+
+    setNewTicketOpen(
+      false,
+    )
+
+    setTicketPanelOpen(
+      true,
+    )
+
+    setToast(
+      `${formatTicketCode(
+        ticket.code,
+      )} criado com sucesso.`,
+    )
   }
 
   return (
     <div className="support-app">
-      <aside className="nav-rail" aria-label="Navegação principal">
+      <aside
+        className="nav-rail"
+        aria-label="Navegação principal"
+      >
         <div className="nav-rail__brand">
-          <img src={logoPath} alt="LTHS Tecnologia" />
+          <img
+            src={logoPath}
+            alt="LTHS Tecnologia"
+          />
         </div>
 
         <nav className="nav-rail__nav">
           <button
             type="button"
+            aria-label="Visão geral"
+          >
+            <Icon name="chart" />
+          </button>
+
+          <button
+            type="button"
             className="is-active"
-            aria-label="Fila de chamados"
+            aria-label="Tickets"
           >
             <Icon name="inbox" />
           </button>
 
           <button
             type="button"
-            aria-label="Novo chamado"
-            onClick={() => setNewTicketOpen(true)}
+            aria-label="Novo ticket"
+            onClick={() =>
+              setNewTicketOpen(
+                true,
+              )
+            }
           >
             <Icon name="plus" />
           </button>
 
           <button
             type="button"
-            aria-label="Buscar chamados"
-            onClick={() => searchRef.current?.focus()}
+            aria-label="Equipe"
           >
-            <Icon name="search" />
+            <Icon name="users" />
           </button>
 
           <button
             type="button"
-            aria-label="Equipe"
-            onClick={() => setDetailsOpen((open) => !open)}
+            aria-label="Configurações"
           >
-            <Icon name="users" />
+            <Icon name="settings" />
           </button>
         </nav>
 
         <button
           type="button"
-          className="nav-rail__help"
+          className="nav-rail__theme"
           aria-label={
-            preferences?.theme === 'light'
+            currentTheme ===
+            'light'
               ? 'Ativar modo escuro'
               : 'Ativar modo claro'
           }
-          onClick={handleThemeToggle}
+          onClick={
+            handleThemeToggle
+          }
         >
           <Icon
-            name={preferences?.theme === 'light' ? 'moon' : 'sun'}
+            name={
+              currentTheme ===
+              'light'
+                ? 'moon'
+                : 'sun'
+            }
           />
         </button>
       </aside>
 
-      <aside className="queue-panel">
-        <header className="queue-panel__header">
-          <div className="brand-lockup">
-            <strong>Service Desk</strong>
+      <div className="app-content">
+        <header className="topbar">
+          <div className="topbar__breadcrumb">
+            <strong>
+              Tickets
+            </strong>
+
+            <span>•</span>
+
             <span>
-              <i />
-              Operação online
+              Listagem de Tickets
             </span>
           </div>
 
-          <button
-            type="button"
-            className="queue-create"
-            onClick={() => setNewTicketOpen(true)}
-          >
-            <Icon name="plus" size={16} />
-            Novo
-          </button>
+          <div className="topbar__actions">
+            <label className="global-search">
+              <Icon
+                name="search"
+                size={16}
+              />
+
+              <input
+                ref={searchRef}
+                type="search"
+                value={search}
+                onChange={(
+                  event,
+                ) =>
+                  setSearch(
+                    event.target
+                      .value,
+                  )
+                }
+                placeholder="Buscar"
+                aria-label="Buscar tickets"
+              />
+
+              <kbd>
+                Ctrl K
+              </kbd>
+            </label>
+
+            <button
+              type="button"
+              className="topbar-icon"
+              aria-label="Notificações"
+            >
+              <Icon
+                name="bell"
+                size={17}
+              />
+            </button>
+
+            <button
+              type="button"
+              className="topbar-icon"
+              aria-label="Alternar tema"
+              onClick={
+                handleThemeToggle
+              }
+            >
+              <Icon
+                name={
+                  currentTheme ===
+                  'light'
+                    ? 'moon'
+                    : 'sun'
+                }
+                size={17}
+              />
+            </button>
+
+            <button
+              type="button"
+              className="new-ticket-button"
+              onClick={() =>
+                setNewTicketOpen(
+                  true,
+                )
+              }
+            >
+              <Icon
+                name="plus"
+                size={16}
+              />
+
+              Novo ticket
+            </button>
+          </div>
         </header>
 
-        <div className="queue-panel__title">
-          <div>
-            <span>FILA DE ATENDIMENTO</span>
-            <h1>Chamados</h1>
-          </div>
-          <strong>{openTickets.length}</strong>
-        </div>
+        <main className="kanban-page">
+          <div className="kanban-page__heading">
+            <div>
+              <span>
+                CENTRAL DE
+                ATENDIMENTO
+              </span>
 
-        <label className="queue-search">
-          <Icon name="search" size={16} />
-          <input
-            ref={searchRef}
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por código, assunto ou pessoa"
-            aria-label="Buscar chamados"
-          />
-          <kbd>Ctrl K</kbd>
-        </label>
+              <h1>
+                Tickets
+              </h1>
 
-        <div className="queue-filters" aria-label="Filtros por status">
-          {FILTERS.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              className={statusFilter === filter.id ? 'is-active' : ''}
-              onClick={() => setStatusFilter(filter.id)}
-            >
-              <span>{filter.label}</span>
-              <small>{filterCounts[filter.id]}</small>
-            </button>
-          ))}
-        </div>
-
-        <div className="ticket-list">
-          {filteredTickets.length ? (
-            filteredTickets.map((ticket) => {
-              const requester = getRequester(ticket)
-              const active = ticket.id === selectedTicket?.id
-
-              return (
-                <button
-                  key={ticket.id}
-                  type="button"
-                  className={`ticket-row ${active ? 'is-active' : ''}`}
-                  data-priority={ticket.priority}
-                  data-status={ticket.status}
-                  onClick={() => handleSelectTicket(ticket.id)}
-                >
-                  <div className="ticket-row__top">
-                    <span>{formatTicketCode(ticket.code)}</span>
-                    <time>{formatCompactDate(ticket.updatedAt)}</time>
-                  </div>
-
-                  <strong className="ticket-row__subject">
-                    {ticket.subject}
-                  </strong>
-
-                  <p>{requester.name}</p>
-
-                  <div className="ticket-row__bottom">
-                    <span>{PRIORITY_LABELS[ticket.priority]}</span>
-                    <span>{STATUS_LABELS[ticket.status]}</span>
-                  </div>
-                </button>
-              )
-            })
-          ) : (
-            <div className="queue-empty-state">
-              <Icon name="search" size={24} />
-              <strong>Nenhum chamado encontrado</strong>
-              <p>Altere a busca ou selecione outro status.</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch('')
-                  setStatusFilter('all')
-                }}
-              >
-                Limpar filtros
-              </button>
+              <p>
+                Acompanhe os
+                chamados por etapa
+                de atendimento.
+              </p>
             </div>
-          )}
-        </div>
 
-        <footer className="queue-health">
-          <div>
-            <span>Alta prioridade</span>
-            <strong>{highPriorityTickets}</strong>
+            <div className="kanban-summary">
+              <span>
+                <strong>
+                  {tickets.length}
+                </strong>{' '}
+                total
+              </span>
+
+              <span>
+                <strong>
+                  {
+                    tickets.filter(
+                      (ticket) =>
+                        ticket.status !==
+                        'resolved',
+                    ).length
+                  }
+                </strong>{' '}
+                em aberto
+              </span>
+            </div>
           </div>
 
-          <div>
-            <span>Aguardando</span>
-            <strong>{waitingTickets}</strong>
+          <div
+            className="kanban-board"
+            aria-label="Quadro de tickets por status"
+          >
+            {BOARD_COLUMNS.map(
+              (column) => {
+                const columnTickets =
+                  boardTickets.filter(
+                    (ticket) =>
+                      ticket.status ===
+                      column.id,
+                  )
+
+                return (
+                  <section
+                    key={
+                      column.id
+                    }
+                    className="kanban-column"
+                    data-tone={
+                      column.tone
+                    }
+                  >
+                    <header className="kanban-column__header">
+                      <div>
+                        <span className="kanban-column__icon">
+                          <Icon
+                            name={
+                              column.icon
+                            }
+                            size={15}
+                          />
+                        </span>
+
+                        <strong>
+                          {
+                            column.title
+                          }
+                        </strong>
+                      </div>
+
+                      <span className="kanban-column__count">
+                        {
+                          columnTickets.length
+                        }
+                      </span>
+                    </header>
+
+                    <div className="kanban-column__body">
+                      {columnTickets.length ? (
+                        columnTickets.map(
+                          (
+                            ticket,
+                          ) => {
+                            const requester =
+                              getRequester(
+                                ticket,
+                              )
+
+                            const assignee =
+                              team.find(
+                                (
+                                  member,
+                                ) =>
+                                  member.id ===
+                                  ticket.assigneeId,
+                              )
+
+                            const slaState =
+                              getSlaState(
+                                ticket,
+                              )
+
+                            const remaining =
+                              getRemainingMs(
+                                ticket,
+                              )
+
+                            const progress =
+                              getSlaProgress(
+                                ticket,
+                              )
+
+                            return (
+                              <button
+                                key={
+                                  ticket.id
+                                }
+                                type="button"
+                                className="ticket-card"
+                                data-priority={
+                                  ticket.priority
+                                }
+                                data-sla={
+                                  slaState
+                                }
+                                onClick={() =>
+                                  handleSelectTicket(
+                                    ticket.id,
+                                  )
+                                }
+                              >
+                                <div className="ticket-card__top">
+                                  <span className="ticket-code">
+                                    {formatTicketCode(
+                                      ticket.code,
+                                    )}
+                                  </span>
+
+                                  <span
+                                    className="ticket-card__open"
+                                    aria-hidden="true"
+                                  />
+                                </div>
+
+                                <span className="ticket-category">
+                                  {CATEGORY_LABELS[
+                                    ticket
+                                      .category
+                                  ] ??
+                                    ticket.category}
+                                </span>
+
+                                <strong className="ticket-card__subject">
+                                  {
+                                    ticket.subject
+                                  }
+                                </strong>
+
+                                <p className="ticket-card__requester">
+                                  {
+                                    requester.name
+                                  }
+                                </p>
+
+                                <small className="ticket-card__department">
+                                  {
+                                    requester.department
+                                  }
+                                </small>
+
+                                <div className="ticket-card__meta">
+                                  <div className="ticket-assignee">
+                                    <span className="avatar">
+                                      {getInitials(
+                                        assignee?.name ??
+                                          'LTHS',
+                                      )}
+                                    </span>
+
+                                    <span>
+                                      {assignee?.name ??
+                                        'Não atribuído'}
+                                    </span>
+                                  </div>
+
+                                  <span
+                                    className={`priority-pill priority-pill--${ticket.priority}`}
+                                  >
+                                    {
+                                      PRIORITY_LABELS[
+                                        ticket
+                                          .priority
+                                      ]
+                                    }
+                                  </span>
+
+                                  <time>
+                                    {formatCompactDate(
+                                      ticket.updatedAt ||
+                                        ticket.createdAt,
+                                    )}
+                                  </time>
+                                </div>
+
+                                <div className="ticket-card__sla">
+                                  <div className="sla-track">
+                                    <span
+                                      style={{
+                                        width:
+                                          `${progress}%`,
+                                      }}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <span>
+                                      {ticket.status ===
+                                      'resolved'
+                                        ? 'Concluído'
+                                        : getSlaLabel(
+                                            slaState,
+                                          )}
+                                    </span>
+
+                                    <strong>
+                                      {ticket.status ===
+                                      'resolved'
+                                        ? 'Finalizado'
+                                        : formatSlaRemaining(
+                                            remaining,
+                                          )}
+                                    </strong>
+                                  </div>
+                                </div>
+                              </button>
+                            )
+                          },
+                        )
+                      ) : (
+                        <div className="column-empty">
+                          <span>
+                            Nenhum ticket
+                            nesta etapa
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )
+              },
+            )}
           </div>
-        </footer>
-      </aside>
+        </main>
+      </div>
 
-      <main className="ticket-workspace">
-        {selectedTicket ? (
-          <>
-            <section className="ticket-document">
-              <header className="ticket-document__header">
-                <div className="ticket-document__identity">
-                  <div className="ticket-document__eyebrow">
-                    <span>{formatTicketCode(selectedTicket.code)}</span>
-                    <i />
-                    <span>
-                      {CATEGORY_LABELS[selectedTicket.category] ??
-                        selectedTicket.category}
-                    </span>
-                    <i />
-                    <span data-status={selectedTicket.status}>
-                      {STATUS_LABELS[selectedTicket.status]}
-                    </span>
-                  </div>
+      {ticketPanelOpen &&
+        selectedTicket && (
+          <div
+            className="modal-layer"
+            role="presentation"
+          >
+            <button
+              type="button"
+              className="modal-backdrop"
+              aria-label="Fechar detalhes do ticket"
+              onClick={() =>
+                setTicketPanelOpen(
+                  false,
+                )
+              }
+            />
 
-                  <h2>{selectedTicket.subject}</h2>
+            <aside
+              className="ticket-detail-drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="ticket-detail-title"
+            >
+              <header className="drawer-header ticket-detail-drawer__header">
+                <div>
+                  <span>
+                    {formatTicketCode(
+                      selectedTicket.code,
+                    )}{' '}
+                    ·{' '}
+                    {CATEGORY_LABELS[
+                      selectedTicket
+                        .category
+                    ] ??
+                      selectedTicket.category}
+                  </span>
 
-                  <p>{getTicketDescription(selectedTicket)}</p>
+                  <h2 id="ticket-detail-title">
+                    {
+                      selectedTicket.subject
+                    }
+                  </h2>
+
+                  <p>
+                    {getTicketDescription(
+                      selectedTicket,
+                    )}
+                  </p>
                 </div>
 
-                <div
-                  className="ticket-document__sla"
-                  data-state={slaState}
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() =>
+                    setTicketPanelOpen(
+                      false,
+                    )
+                  }
+                  aria-label="Fechar detalhes"
                 >
-                  <span>SLA</span>
-                  <strong>{formatSlaRemaining(slaRemaining)}</strong>
-                  <small>{getSlaLabel(slaState)}</small>
-                </div>
+                  <Icon name="close" />
+                </button>
               </header>
 
-              <div className="ticket-document__meta">
-                <div>
-                  <span>SOLICITANTE</span>
-                  <strong>{selectedRequester.name}</strong>
-                  <small>{selectedRequester.email || 'Sem e-mail'}</small>
-                </div>
-
-                <div>
-                  <span>DEPARTAMENTO</span>
-                  <strong>{selectedRequester.department}</strong>
-                  <small>
-                    Criado {formatCompactDate(selectedTicket.createdAt)}
-                  </small>
-                </div>
-
-                <div>
-                  <span>RESPONSÁVEL</span>
-                  <strong>
-                    {selectedAssignee?.name ?? 'Não atribuído'}
-                  </strong>
-                  <small>
-                    {selectedAssignee?.role ?? 'Aguardando atribuição'}
-                  </small>
-                </div>
-
-                <button
-                  type="button"
-                  className={`ticket-document__details-toggle ${
-                    detailsOpen ? 'is-open' : ''
-                  }`}
-                  onClick={() => setDetailsOpen((open) => !open)}
-                >
-                  <span>DETALHES</span>
-                  <strong>{detailsOpen ? 'Ocultar' : 'Ver contexto'}</strong>
-                  <Icon name="arrow" size={15} />
-                </button>
-              </div>
-
-              {detailsOpen && (
-                <div className="ticket-details">
+              <div className="ticket-detail-scroll">
+                <section className="detail-overview">
                   <div>
-                    <span>E-mail</span>
+                    <span>
+                      SOLICITANTE
+                    </span>
+
                     <strong>
-                      {selectedRequester.email || 'Não informado'}
+                      {
+                        selectedRequester.name
+                      }
                     </strong>
+
+                    <small>
+                      {selectedRequester.email ||
+                        'Sem e-mail'}
+                    </small>
                   </div>
 
                   <div>
-                    <span>Categoria</span>
+                    <span>
+                      DEPARTAMENTO
+                    </span>
+
                     <strong>
-                      {CATEGORY_LABELS[selectedTicket.category] ??
-                        selectedTicket.category}
+                      {
+                        selectedRequester.department
+                      }
                     </strong>
+
+                    <small>
+                      {formatDateTime(
+                        selectedTicket.createdAt,
+                      )}
+                    </small>
                   </div>
 
                   <div>
-                    <span>Criado em</span>
+                    <span>
+                      STATUS
+                    </span>
+
                     <strong>
-                      {formatDateTime(selectedTicket.createdAt)}
+                      {
+                        STATUS_LABELS[
+                          selectedTicket
+                            .status
+                        ]
+                      }
                     </strong>
+
+                    <small>
+                      Atualizado{' '}
+                      {formatCompactDate(
+                        selectedTicket.updatedAt,
+                      )}
+                    </small>
                   </div>
 
-                  <div>
-                    <span>Atualizado em</span>
-                    <strong>
-                      {formatDateTime(selectedTicket.updatedAt)}
-                    </strong>
-                  </div>
-                </div>
-              )}
+                  <div
+                    data-sla={
+                      selectedSlaState
+                    }
+                  >
+                    <span>
+                      SLA
+                    </span>
 
-              <div className="ticket-document__body">
-                <section
-                  key={selectedTicket.id}
-                  className="conversation-panel"
-                >
+                    <strong>
+                      {selectedTicket.status ===
+                      'resolved'
+                        ? 'Finalizado'
+                        : formatSlaRemaining(
+                            selectedSlaRemaining,
+                          )}
+                    </strong>
+
+                    <small>
+                      {getSlaLabel(
+                        selectedSlaState,
+                      )}
+                    </small>
+                  </div>
+                </section>
+
+                <section className="detail-controls">
+                  <label>
+                    <span>
+                      Responsável
+                    </span>
+
+                    <select
+                      value={
+                        selectedTicket.assigneeId ??
+                        ''
+                      }
+                      onChange={
+                        handleAssigneeChange
+                      }
+                      disabled={
+                        selectedTicket.status ===
+                        'resolved'
+                      }
+                    >
+                      <option value="">
+                        Não atribuído
+                      </option>
+
+                      {team.map(
+                        (member) => (
+                          <option
+                            key={
+                              member.id
+                            }
+                            value={
+                              member.id
+                            }
+                          >
+                            {
+                              member.name
+                            }
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </label>
+
+                  <label>
+                    <span>
+                      Prioridade
+                    </span>
+
+                    <select
+                      value={
+                        selectedTicket.priority
+                      }
+                      onChange={
+                        handlePriorityChange
+                      }
+                      disabled={
+                        selectedTicket.status ===
+                        'resolved'
+                      }
+                    >
+                      <option value="high">
+                        Alta
+                      </option>
+
+                      <option value="medium">
+                        Média
+                      </option>
+
+                      <option value="low">
+                        Baixa
+                      </option>
+                    </select>
+                  </label>
+                </section>
+
+                <section className="conversation-panel">
                   <header className="conversation-heading">
                     <div>
-                      <span>REGISTRO DO ATENDIMENTO</span>
-                      <h3>Histórico do chamado</h3>
+                      <span>
+                        HISTÓRICO
+                      </span>
+
+                      <h3>
+                        Atendimento
+                      </h3>
                     </div>
-                    <strong>
-                      {eventCount} {eventCount === 1 ? 'evento' : 'eventos'}
-                    </strong>
                   </header>
 
                   <div className="conversation-timeline">
                     <TicketMessage
                       type="requester"
-                      author={selectedRequester.name}
-                      message={getTicketDescription(selectedTicket)}
-                      createdAt={selectedTicket.createdAt}
+                      author={
+                        selectedRequester.name
+                      }
+                      message={getTicketDescription(
+                        selectedTicket,
+                      )}
+                      createdAt={
+                        selectedTicket.createdAt
+                      }
                     />
 
-                    {(selectedTicket.replies ?? []).map((reply) => (
-                      <TicketMessage
-                        key={reply.id}
-                        type="reply"
-                        author={getMessageAuthor(reply)}
-                        message={reply.message}
-                        createdAt={reply.createdAt}
-                      />
-                    ))}
+                    {(
+                      selectedTicket.replies ??
+                      []
+                    ).map(
+                      (reply) => (
+                        <TicketMessage
+                          key={
+                            reply.id
+                          }
+                          type="reply"
+                          author={getMessageAuthor(
+                            reply,
+                          )}
+                          message={
+                            reply.message
+                          }
+                          createdAt={
+                            reply.createdAt
+                          }
+                        />
+                      ),
+                    )}
 
-                    {(selectedTicket.internalNotes ?? []).map((note) => (
-                      <TicketMessage
-                        key={note.id}
-                        type="note"
-                        author={getMessageAuthor(note)}
-                        message={note.message}
-                        createdAt={note.createdAt}
-                      />
-                    ))}
+                    {(
+                      selectedTicket.internalNotes ??
+                      []
+                    ).map(
+                      (note) => (
+                        <TicketMessage
+                          key={
+                            note.id
+                          }
+                          type="note"
+                          author={getMessageAuthor(
+                            note,
+                          )}
+                          message={
+                            note.message
+                          }
+                          createdAt={
+                            note.createdAt
+                          }
+                        />
+                      ),
+                    )}
                   </div>
 
-                  {selectedTicket.status === 'resolved' ? (
-                    <div className="resolved-composer-state">
+                  {selectedTicket.status ===
+                  'resolved' ? (
+                    <div className="resolved-state">
                       <Icon name="check" />
+
                       <div>
-                        <strong>Chamado concluído</strong>
+                        <strong>
+                          Chamado
+                          finalizado
+                        </strong>
+
                         <p>
-                          Reabra o ticket para registrar uma nova interação.
+                          Reabra o ticket
+                          para registrar
+                          uma nova
+                          interação.
                         </p>
                       </div>
-                      <button type="button" onClick={handleReopen}>
-                        Reabrir chamado
+
+                      <button
+                        type="button"
+                        onClick={
+                          handleReopen
+                        }
+                      >
+                        Reabrir
                       </button>
                     </div>
                   ) : (
                     <form
                       className="reply-composer"
-                      onSubmit={handleComposerSubmit}
+                      onSubmit={
+                        handleComposerSubmit
+                      }
                     >
                       <div className="reply-composer__tabs">
                         <button
                           type="button"
                           className={
-                            composerMode === 'reply' ? 'is-active' : ''
+                            composerMode ===
+                            'reply'
+                              ? 'is-active'
+                              : ''
                           }
-                          onClick={() => setComposerMode('reply')}
+                          onClick={() =>
+                            setComposerMode(
+                              'reply',
+                            )
+                          }
                         >
-                          Resposta pública
+                          Resposta
+                          pública
                         </button>
 
                         <button
                           type="button"
                           className={
-                            composerMode === 'note' ? 'is-active' : ''
+                            composerMode ===
+                            'note'
+                              ? 'is-active'
+                              : ''
                           }
-                          onClick={() => setComposerMode('note')}
+                          onClick={() =>
+                            setComposerMode(
+                              'note',
+                            )
+                          }
                         >
                           Nota interna
                         </button>
                       </div>
 
                       <textarea
-                        value={replyText}
-                        onChange={(event) => setReplyText(event.target.value)}
-                        onKeyDown={handleComposerKeyDown}
+                        value={
+                          replyText
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          setReplyText(
+                            event.target
+                              .value,
+                          )
+                        }
+                        onKeyDown={
+                          handleComposerKeyDown
+                        }
                         placeholder={
-                          composerMode === 'note'
-                            ? 'Registre uma observação visível apenas para a equipe...'
+                          composerMode ===
+                          'note'
+                            ? 'Registre uma observação para a equipe...'
                             : 'Escreva uma resposta para o solicitante...'
                         }
                         rows="4"
                       />
 
-                      <footer className="reply-composer__footer">
+                      <footer>
                         <span>
-                          {composerMode === 'note'
+                          {composerMode ===
+                          'note'
                             ? 'Somente a equipe verá esta nota.'
-                            : 'A resposta será registrada no histórico.'}
+                            : 'A resposta ficará registrada no histórico.'}
                         </span>
 
                         <button
                           type="submit"
-                          disabled={!replyText.trim()}
+                          disabled={
+                            !replyText.trim()
+                          }
                         >
-                          <Icon name="send" size={15} />
-                          {composerMode === 'note'
+                          <Icon
+                            name="send"
+                            size={15}
+                          />
+
+                          {composerMode ===
+                          'note'
                             ? 'Registrar nota'
                             : 'Enviar resposta'}
                         </button>
@@ -1248,137 +2391,174 @@ export default function App() {
                   )}
                 </section>
               </div>
-            </section>
 
-            <div className="operations-bar">
-              <label className="operations-bar__field">
-                <span>RESPONSÁVEL</span>
-                <select
-                  value={selectedTicket.assigneeId ?? ''}
-                  onChange={handleAssigneeChange}
-                  disabled={selectedTicket.status === 'resolved'}
-                >
-                  <option value="">Não atribuído</option>
-                  {team.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <footer className="ticket-detail-actions">
+                <div className="ticket-detail-assignee">
+                  <span className="avatar">
+                    {getInitials(
+                      selectedAssignee?.name ??
+                        'LTHS',
+                    )}
+                  </span>
 
-              <label className="operations-bar__field">
-                <span>PRIORIDADE</span>
-                <select
-                  value={selectedTicket.priority}
-                  onChange={handlePriorityChange}
-                  disabled={selectedTicket.status === 'resolved'}
-                >
-                  <option value="high">Alta</option>
-                  <option value="medium">Média</option>
-                  <option value="low">Baixa</option>
-                </select>
-              </label>
+                  <div>
+                    <span>
+                      Responsável
+                    </span>
 
-              <div
-                className="operations-bar__sla"
-                data-state={slaState}
-              >
-                <span>SLA ATUAL</span>
-                <strong>{formatSlaRemaining(slaRemaining)}</strong>
-                <small>{getSlaLabel(slaState)}</small>
-              </div>
+                    <strong>
+                      {selectedAssignee?.name ??
+                        'Não atribuído'}
+                    </strong>
+                  </div>
+                </div>
 
-              <div className="operations-bar__actions">
                 <button
                   type="button"
-                  className="operation-danger"
-                  onClick={handleDeleteRequest}
+                  className="button button--danger"
+                  onClick={
+                    handleDeleteRequest
+                  }
                 >
-                  <Icon name="trash" size={15} />
+                  <Icon
+                    name="trash"
+                    size={15}
+                  />
+
                   Excluir
                 </button>
 
-                {selectedTicket.status === 'resolved' ? (
+                {selectedTicket.status ===
+                'resolved' ? (
                   <button
                     type="button"
-                    className="operation-primary"
-                    onClick={handleReopen}
+                    className="button button--primary"
+                    onClick={
+                      handleReopen
+                    }
                   >
-                    Reabrir
+                    <Icon
+                      name="play"
+                      size={15}
+                    />
+
+                    Reabrir chamado
                   </button>
                 ) : (
-                  <>
-                    <button
-                      type="button"
-                      className="operation-secondary"
-                      onClick={handleWaiting}
-                      disabled={selectedTicket.status === 'waiting'}
-                    >
-                      <Icon name="clock" size={15} />
-                      {selectedTicket.status === 'waiting'
-                        ? 'Aguardando'
-                        : 'Aguardar'}
-                    </button>
+                  <div className="ticket-detail-actions__buttons">
+                    {selectedTicket.status ===
+                    'waiting' ? (
+                      <button
+                        type="button"
+                        className="button button--primary"
+                        onClick={
+                          handleResume
+                        }
+                      >
+                        <Icon
+                          name="play"
+                          size={15}
+                        />
+
+                        Retomar
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="button button--ghost"
+                        onClick={
+                          handleWaiting
+                        }
+                      >
+                        <Icon
+                          name="pause"
+                          size={15}
+                        />
+
+                        Pausar
+                      </button>
+                    )}
 
                     <button
                       type="button"
-                      className="operation-primary"
-                      onClick={handleResolve}
+                      className="button button--success"
+                      onClick={
+                        handleResolve
+                      }
                     >
-                      <Icon name="check" size={15} />
-                      Resolver
+                      <Icon
+                        name="check"
+                        size={15}
+                      />
+
+                      Finalizar
                     </button>
-                  </>
+                  </div>
                 )}
-              </div>
-            </div>
-          </>
-        ) : (
-          <section className="workspace-empty-state">
-            <div>
-              <Icon name="inbox" size={28} />
-              <span>SERVICE DESK</span>
-              <h2>A fila está vazia</h2>
-              <p>Crie um chamado para iniciar o atendimento.</p>
-              <button
-                type="button"
-                onClick={() => setNewTicketOpen(true)}
-              >
-                <Icon name="plus" size={16} />
-                Novo chamado
-              </button>
-            </div>
-          </section>
+              </footer>
+            </aside>
+          </div>
         )}
-      </main>
 
       <ConfirmDeleteDialog
-        open={deleteConfirmation}
-        ticket={selectedTicket}
-        onCancel={() => setDeleteConfirmation(false)}
-        onConfirm={handleDeleteConfirm}
+        open={
+          deleteConfirmation
+        }
+        ticket={
+          selectedTicket
+        }
+        onCancel={() =>
+          setDeleteConfirmation(
+            false,
+          )
+        }
+        onConfirm={
+          handleDeleteConfirm
+        }
       />
 
       <NewTicketDrawer
         open={newTicketOpen}
         form={newTicketForm}
         team={team}
-        onChange={handleNewTicketChange}
-        onClose={closeNewTicket}
-        onSubmit={handleNewTicketSubmit}
+        onChange={
+          handleNewTicketChange
+        }
+        onClose={() =>
+          setNewTicketOpen(
+            false,
+          )
+        }
+        onSubmit={
+          handleNewTicketSubmit
+        }
       />
 
       {toast && (
-        <div className="app-toast" role="status">
-          <Icon name="check" size={16} />
-          <span>{toast}</span>
+        <div
+          className="app-toast"
+          role="status"
+        >
+          <Icon
+            name="check"
+            size={16}
+          />
+
+          <span>
+            {toast}
+          </span>
+
           <button
             type="button"
-            onClick={() => setToast('')}
+            onClick={() =>
+              setToast('')
+            }
             aria-label="Fechar aviso"
           >
-            <Icon name="close" size={14} />
+            <Icon
+              name="close"
+              size={14}
+            />
           </button>
         </div>
       )}

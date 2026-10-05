@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useContext,
@@ -11,6 +12,7 @@ import {
   calculateSlaDeadline,
   changeAssignee,
   changePriority,
+  changeStatus,
   markWaiting,
   reopenTicket,
   resolveTicket,
@@ -23,43 +25,65 @@ import {
 const ServiceDeskContext = createContext(null)
 
 function createId(prefix = 'item') {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+  if (
+    typeof crypto !== 'undefined' &&
+    crypto.randomUUID
+  ) {
     return `${prefix}-${crypto.randomUUID()}`
   }
 
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`
+  return `${prefix}-${Date.now()}-${Math.floor(
+    Math.random() * 100000,
+  )}`
 }
 
 function getNextTicketCode(tickets) {
-  const highest = tickets.reduce((current, ticket) => {
-    const numeric = Number(
-      String(ticket?.code ?? '')
-        .replace(/\D/g, ''),
-    )
+  const highest = tickets.reduce(
+    (current, ticket) => {
+      const numeric = Number(
+        String(ticket?.code ?? '').replace(
+          /\D/g,
+          '',
+        ),
+      )
 
-    return Number.isFinite(numeric)
-      ? Math.max(current, numeric)
-      : current
-  }, 1000)
+      return Number.isFinite(numeric)
+        ? Math.max(current, numeric)
+        : current
+    },
+    1000,
+  )
 
   return `TK-${highest + 1}`
 }
 
-export function ServiceDeskProvider({ children }) {
-  const [initialWorkspace] = useState(() => loadWorkspace())
-
-  const [tickets, setTickets] = useState(initialWorkspace.tickets)
-  const [team, setTeam] = useState(initialWorkspace.team)
-  const [preferences, setPreferences] = useState(
-    initialWorkspace.preferences,
+export function ServiceDeskProvider({
+  children,
+}) {
+  const [initialWorkspace] = useState(() =>
+    loadWorkspace(),
   )
+
+  const [tickets, setTickets] = useState(
+    initialWorkspace.tickets,
+  )
+
+  const [team, setTeam] = useState(
+    initialWorkspace.team,
+  )
+
+  const [preferences, setPreferences] =
+    useState(
+      initialWorkspace.preferences,
+    )
 
   useEffect(() => {
     saveWorkspace(window.localStorage, {
       tickets,
       team,
       preferences,
-      version: initialWorkspace.version ?? 1,
+      version:
+        initialWorkspace.version ?? 1,
     })
   }, [
     initialWorkspace.version,
@@ -68,10 +92,15 @@ export function ServiceDeskProvider({ children }) {
     tickets,
   ])
 
-  function updateTicket(ticketId, updater) {
+  function updateTicket(
+    ticketId,
+    updater,
+  ) {
     setTickets((currentTickets) =>
       currentTickets.map((ticket) =>
-        ticket.id === ticketId ? updater(ticket) : ticket,
+        ticket.id === ticketId
+          ? updater(ticket)
+          : ticket,
       ),
     )
   }
@@ -79,28 +108,52 @@ export function ServiceDeskProvider({ children }) {
   function createTicket(input) {
     const now = new Date()
     const createdAt = now.toISOString()
-    const priority = input.priority || 'medium'
+    const priority =
+      input.priority || 'medium'
 
     const ticket = {
       id: createId('ticket'),
-      code: getNextTicketCode(tickets),
+      code: getNextTicketCode(
+        tickets,
+      ),
       subject: input.subject,
       description: input.description,
+
       requester: {
         name: input.requesterName,
-        email: input.requesterEmail,
-        department: input.department || 'Não informado',
+        email:
+          input.requesterEmail,
+        department:
+          input.department ||
+          'Não informado',
       },
-      category: input.category || 'general',
+
+      category:
+        input.category || 'general',
+
       priority,
+
       status: 'new',
-      assigneeId: input.assigneeId || null,
+
+      assigneeId:
+        input.assigneeId || null,
+
       createdAt,
+
       updatedAt: createdAt,
+
       resolvedAt: null,
-      slaDeadline: calculateSlaDeadline(createdAt, priority),
+
+      slaDeadline:
+        calculateSlaDeadline(
+          createdAt,
+          priority,
+        ),
+
       replies: [],
+
       internalNotes: [],
+
       activity: [
         {
           id: createId('activity'),
@@ -112,87 +165,140 @@ export function ServiceDeskProvider({ children }) {
       ],
     }
 
-    setTickets((currentTickets) => [ticket, ...currentTickets])
+    setTickets(
+      (currentTickets) => [
+        ticket,
+        ...currentTickets,
+      ],
+    )
+
     return ticket
   }
 
-  function replyToTicket(ticketId, message) {
-    updateTicket(ticketId, (ticket) =>
-      addReply(
-        ticket,
-        message,
-        'Equipe LTHS',
-        new Date(),
-      ),
+  function replyToTicket(
+    ticketId,
+    message,
+  ) {
+    updateTicket(
+      ticketId,
+      (ticket) =>
+        addReply(
+          ticket,
+          message,
+          'Equipe LTHS',
+          new Date(),
+        ),
     )
   }
 
-  function addNoteToTicket(ticketId, message) {
-    updateTicket(ticketId, (ticket) =>
-      addInternalNote(
-        ticket,
-        message,
-        'Equipe LTHS',
-        new Date(),
-      ),
+  function addNoteToTicket(
+    ticketId,
+    message,
+  ) {
+    updateTicket(
+      ticketId,
+      (ticket) =>
+        addInternalNote(
+          ticket,
+          message,
+          'Equipe LTHS',
+          new Date(),
+        ),
     )
   }
 
-  function setTicketWaiting(ticketId) {
-    updateTicket(ticketId, (ticket) =>
-      markWaiting(
-        ticket,
-        'Equipe LTHS',
-        new Date(),
-      ),
+  function setTicketWaiting(
+    ticketId,
+  ) {
+    updateTicket(
+      ticketId,
+      (ticket) =>
+        markWaiting(
+          ticket,
+          'Equipe LTHS',
+          new Date(),
+        ),
+    )
+  }
+
+  function resumeTicket(ticketId) {
+    updateTicket(
+      ticketId,
+      (ticket) =>
+        changeStatus(
+          ticket,
+          'in_progress',
+          'Equipe LTHS',
+          new Date(),
+        ),
     )
   }
 
   function closeTicket(ticketId) {
-    updateTicket(ticketId, (ticket) =>
-      resolveTicket(
-        ticket,
-        'Equipe LTHS',
-        new Date(),
-      ),
+    updateTicket(
+      ticketId,
+      (ticket) =>
+        resolveTicket(
+          ticket,
+          'Equipe LTHS',
+          new Date(),
+        ),
     )
   }
 
-  function reopenResolvedTicket(ticketId) {
-    updateTicket(ticketId, (ticket) =>
-      reopenTicket(
-        ticket,
-        'Equipe LTHS',
-        new Date(),
-      ),
+  function reopenResolvedTicket(
+    ticketId,
+  ) {
+    updateTicket(
+      ticketId,
+      (ticket) =>
+        reopenTicket(
+          ticket,
+          'Equipe LTHS',
+          new Date(),
+        ),
     )
   }
 
-  function setTicketPriority(ticketId, priority) {
-    updateTicket(ticketId, (ticket) =>
-      changePriority(
-        ticket,
-        priority,
-        'Equipe LTHS',
-        new Date(),
-      ),
+  function setTicketPriority(
+    ticketId,
+    priority,
+  ) {
+    updateTicket(
+      ticketId,
+      (ticket) =>
+        changePriority(
+          ticket,
+          priority,
+          'Equipe LTHS',
+          new Date(),
+        ),
     )
   }
 
-  function setTicketAssignee(ticketId, assigneeId) {
-    updateTicket(ticketId, (ticket) =>
-      changeAssignee(
-        ticket,
-        assigneeId,
-        'Equipe LTHS',
-        new Date(),
-      ),
+  function setTicketAssignee(
+    ticketId,
+    assigneeId,
+  ) {
+    updateTicket(
+      ticketId,
+      (ticket) =>
+        changeAssignee(
+          ticket,
+          assigneeId,
+          'Equipe LTHS',
+          new Date(),
+        ),
     )
   }
 
   function deleteTicket(ticketId) {
-    setTickets((currentTickets) =>
-      currentTickets.filter((ticket) => ticket.id !== ticketId),
+    setTickets(
+      (currentTickets) =>
+        currentTickets.filter(
+          (ticket) =>
+            ticket.id !== ticketId,
+        ),
     )
   }
 
@@ -204,12 +310,20 @@ export function ServiceDeskProvider({ children }) {
   }
 
   const openTickets = useMemo(
-    () => tickets.filter((ticket) => ticket.status !== 'resolved'),
+    () =>
+      tickets.filter(
+        (ticket) =>
+          ticket.status !== 'resolved',
+      ),
     [tickets],
   )
 
   const resolvedTickets = useMemo(
-    () => tickets.filter((ticket) => ticket.status === 'resolved'),
+    () =>
+      tickets.filter(
+        (ticket) =>
+          ticket.status === 'resolved',
+      ),
     [tickets],
   )
 
@@ -224,6 +338,7 @@ export function ServiceDeskProvider({ children }) {
       replyToTicket,
       addNoteToTicket,
       setTicketWaiting,
+      resumeTicket,
       closeTicket,
       reopenResolvedTicket,
       setTicketPriority,
@@ -241,14 +356,18 @@ export function ServiceDeskProvider({ children }) {
   )
 
   return (
-    <ServiceDeskContext.Provider value={value}>
+    <ServiceDeskContext.Provider
+      value={value}
+    >
       {children}
     </ServiceDeskContext.Provider>
   )
 }
 
 export function useServiceDesk() {
-  const context = useContext(ServiceDeskContext)
+  const context = useContext(
+    ServiceDeskContext,
+  )
 
   if (!context) {
     throw new Error(

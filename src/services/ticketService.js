@@ -18,6 +18,13 @@ const VALID_STATUSES = [
 ]
 
 function generateId(prefix = 'item') {
+  if (
+    typeof crypto !== 'undefined' &&
+    crypto.randomUUID
+  ) {
+    return `${prefix}-${crypto.randomUUID()}`
+  }
+
   const randomPart = Math.random()
     .toString(36)
     .slice(2, 10)
@@ -25,7 +32,9 @@ function generateId(prefix = 'item') {
   return `${prefix}-${Date.now()}-${randomPart}`
 }
 
-function normalizeDate(value = new Date()) {
+function normalizeDate(
+  value = new Date(),
+) {
   const date =
     value instanceof Date
       ? value
@@ -36,6 +45,64 @@ function normalizeDate(value = new Date()) {
   }
 
   return date
+}
+
+function normalizeOptions(
+  authorOrOptions,
+  createdAt,
+) {
+  if (
+    authorOrOptions &&
+    typeof authorOrOptions === 'object' &&
+    !(authorOrOptions instanceof Date)
+  ) {
+    return {
+      author:
+        authorOrOptions.author ||
+        'Equipe LTHS',
+      createdAt:
+        authorOrOptions.createdAt ||
+        new Date(),
+    }
+  }
+
+  return {
+    author:
+      authorOrOptions ||
+      'Equipe LTHS',
+    createdAt:
+      createdAt || new Date(),
+  }
+}
+
+function normalizeMessageOptions(
+  messageOrOptions,
+  author,
+  createdAt,
+) {
+  if (
+    messageOrOptions &&
+    typeof messageOrOptions === 'object'
+  ) {
+    return {
+      message:
+        messageOrOptions.message,
+      author:
+        messageOrOptions.author ||
+        'Equipe LTHS',
+      createdAt:
+        messageOrOptions.createdAt ||
+        new Date(),
+    }
+  }
+
+  return {
+    message: messageOrOptions,
+    author:
+      author || 'Equipe LTHS',
+    createdAt:
+      createdAt || new Date(),
+  }
 }
 
 function createActivity({
@@ -51,14 +118,14 @@ function createActivity({
     author,
     message,
     createdAt: normalizeDate(
-      createdAt
+      createdAt,
     ).toISOString(),
     meta,
   }
 }
 
 export function getSlaHours(
-  priority
+  priority,
 ) {
   return (
     SLA_HOURS[priority] ??
@@ -68,7 +135,7 @@ export function getSlaHours(
 
 export function calculateSlaDeadline(
   createdAt,
-  priority
+  priority,
 ) {
   const created =
     normalizeDate(createdAt)
@@ -78,112 +145,100 @@ export function calculateSlaDeadline(
 
   return new Date(
     created.getTime() +
-      hours * 60 * 60 * 1000
+      hours * 60 * 60 * 1000,
   ).toISOString()
+}
+
+export function getRemainingMs(
+  ticket,
+  referenceDate = new Date(),
+) {
+  if (!ticket?.slaDeadline) {
+    return 0
+  }
+
+  const deadline =
+    normalizeDate(
+      ticket.slaDeadline,
+    ).getTime()
+
+  const reference =
+    ticket.status === 'resolved' &&
+    ticket.resolvedAt
+      ? normalizeDate(
+          ticket.resolvedAt,
+        ).getTime()
+      : normalizeDate(
+          referenceDate,
+        ).getTime()
+
+  return deadline - reference
 }
 
 export function getSlaState(
   ticket,
-  referenceDate = new Date()
+  referenceDate = new Date(),
 ) {
   if (!ticket) {
-    return {
-      state: 'unknown',
-      remainingMs: 0,
-      percentage: 0,
-    }
+    return 'unknown'
   }
+
+  const remainingMs =
+    getRemainingMs(
+      ticket,
+      referenceDate,
+    )
 
   if (
     ticket.status === 'resolved'
   ) {
-    return {
-      state: 'resolved',
-      remainingMs: 0,
-      percentage: 100,
-    }
+    return remainingMs < 0
+      ? 'overdue'
+      : 'healthy'
   }
 
-  const now =
-    normalizeDate(referenceDate)
-
-  const created =
-    normalizeDate(
-      ticket.createdAt
-    )
-
-  const deadline =
-    normalizeDate(
-      ticket.slaDeadline
-    )
+  if (remainingMs < 0) {
+    return 'overdue'
+  }
 
   const totalDuration =
-    deadline.getTime() -
-    created.getTime()
+    getSlaHours(
+      ticket.priority,
+    ) *
+    60 *
+    60 *
+    1000
 
-  const remainingMs =
-    deadline.getTime() -
-    now.getTime()
-
-  if (remainingMs <= 0) {
-    return {
-      state: 'breached',
-      remainingMs,
-      percentage: 100,
-    }
+  if (totalDuration <= 0) {
+    return 'healthy'
   }
 
-  const elapsed =
-    now.getTime() -
-    created.getTime()
+  const ratio =
+    remainingMs / totalDuration
 
-  const percentage =
-    totalDuration > 0
-      ? Math.min(
-          100,
-          Math.max(
-            0,
-            (elapsed /
-              totalDuration) *
-              100
-          )
-        )
-      : 0
-
-  if (percentage >= 80) {
-    return {
-      state: 'critical',
-      remainingMs,
-      percentage,
-    }
+  if (ratio <= 0.25) {
+    return 'critical'
   }
 
-  if (percentage >= 50) {
-    return {
-      state: 'attention',
-      remainingMs,
-      percentage,
-    }
+  if (ratio <= 0.5) {
+    return 'warning'
   }
 
-  return {
-    state: 'healthy',
-    remainingMs,
-    percentage,
-  }
+  return 'healthy'
 }
 
 export function formatSlaRemaining(
-  remainingMs
+  remainingMs,
 ) {
   if (
     typeof remainingMs !==
-    'number'
+      'number' ||
+    !Number.isFinite(remainingMs)
   ) {
     return 'Indisponível'
   }
 
-  const breached =
+  const overdue =
     remainingMs < 0
 
   const absoluteMs =
@@ -191,12 +246,12 @@ export function formatSlaRemaining(
 
   const totalMinutes =
     Math.floor(
-      absoluteMs / 60_000
+      absoluteMs / 60_000,
     )
 
   const hours =
     Math.floor(
-      totalMinutes / 60
+      totalMinutes / 60,
     )
 
   const minutes =
@@ -219,31 +274,38 @@ export function formatSlaRemaining(
     formatted += `${minutes}min`
   }
 
-  return breached
+  return overdue
     ? `${formatted} excedido`
     : `${formatted} restantes`
 }
 
 export function addReply(
   ticket,
-  {
-    message,
-    author = 'Equipe LTHS',
-    createdAt = new Date(),
-  }
+  messageOrOptions,
+  author,
+  createdAt,
 ) {
   if (!ticket) {
     throw new Error(
-      'Ticket não informado.'
+      'Ticket não informado.',
     )
   }
 
+  const options =
+    normalizeMessageOptions(
+      messageOrOptions,
+      author,
+      createdAt,
+    )
+
   const normalizedMessage =
-    String(message ?? '').trim()
+    String(
+      options.message ?? '',
+    ).trim()
 
   if (!normalizedMessage) {
     throw new Error(
-      'A resposta não pode estar vazia.'
+      'A resposta não pode estar vazia.',
     )
   }
 
@@ -251,19 +313,14 @@ export function addReply(
     ticket.status === 'resolved'
   ) {
     throw new Error(
-      'Não é possível responder um ticket resolvido. Reabra o ticket primeiro.'
+      'Não é possível responder um ticket resolvido. Reabra o ticket primeiro.',
     )
   }
 
   const now =
-    normalizeDate(createdAt)
-
-  const reply = {
-    id: generateId('reply'),
-    author,
-    message: normalizedMessage,
-    createdAt: now.toISOString(),
-  }
+    normalizeDate(
+      options.createdAt,
+    )
 
   const previousStatus =
     ticket.status
@@ -273,16 +330,15 @@ export function addReply(
       ? 'in_progress'
       : previousStatus
 
+  const reply = {
+    id: generateId('reply'),
+    author: options.author,
+    message: normalizedMessage,
+    createdAt: now.toISOString(),
+  }
+
   const activity = [
     ...(ticket.activity ?? []),
-
-    createActivity({
-      type: 'reply_added',
-      author,
-      message:
-        'Resposta adicionada ao chamado',
-      createdAt: now,
-    }),
   ]
 
   if (
@@ -291,7 +347,7 @@ export function addReply(
     activity.push(
       createActivity({
         type: 'status_changed',
-        author,
+        author: options.author,
         message:
           'Status alterado de Novo para Em atendimento',
         createdAt: now,
@@ -299,78 +355,96 @@ export function addReply(
           from: 'new',
           to: 'in_progress',
         },
-      })
+      }),
     )
   }
 
+  activity.push(
+    createActivity({
+      type: 'reply_added',
+      author: options.author,
+      message:
+        'Resposta adicionada ao chamado',
+      createdAt: now,
+    }),
+  )
+
   return {
     ...ticket,
-
     status: nextStatus,
-
     replies: [
       ...(ticket.replies ?? []),
       reply,
     ],
-
-    updatedAt:
-      now.toISOString(),
-
+    updatedAt: now.toISOString(),
     activity,
   }
 }
 
 export function addInternalNote(
   ticket,
-  {
-    message,
-    author = 'Equipe LTHS',
-    createdAt = new Date(),
-  }
+  messageOrOptions,
+  author,
+  createdAt,
 ) {
   if (!ticket) {
     throw new Error(
-      'Ticket não informado.'
+      'Ticket não informado.',
     )
   }
 
+  const options =
+    normalizeMessageOptions(
+      messageOrOptions,
+      author,
+      createdAt,
+    )
+
   const normalizedMessage =
-    String(message ?? '').trim()
+    String(
+      options.message ?? '',
+    ).trim()
 
   if (!normalizedMessage) {
     throw new Error(
-      'A nota interna não pode estar vazia.'
+      'A nota interna não pode estar vazia.',
+    )
+  }
+
+  if (
+    ticket.status === 'resolved'
+  ) {
+    throw new Error(
+      'Não é possível adicionar nota em um ticket resolvido. Reabra o ticket primeiro.',
     )
   }
 
   const now =
-    normalizeDate(createdAt)
+    normalizeDate(
+      options.createdAt,
+    )
 
   const note = {
     id: generateId('note'),
-    author,
+    author: options.author,
     message: normalizedMessage,
     createdAt: now.toISOString(),
   }
 
   return {
     ...ticket,
-
     internalNotes: [
-      ...(ticket.internalNotes ?? []),
+      ...(ticket.internalNotes ??
+        []),
       note,
     ],
-
-    updatedAt:
-      now.toISOString(),
-
+    updatedAt: now.toISOString(),
     activity: [
       ...(ticket.activity ?? []),
-
       createActivity({
         type:
           'internal_note_added',
-        author,
+        author: options.author,
         message:
           'Nota interna adicionada',
         createdAt: now,
@@ -382,24 +456,22 @@ export function addInternalNote(
 export function changeStatus(
   ticket,
   status,
-  {
-    author = 'Equipe LTHS',
-    createdAt = new Date(),
-  } = {}
+  authorOrOptions,
+  createdAt,
 ) {
   if (!ticket) {
     throw new Error(
-      'Ticket não informado.'
+      'Ticket não informado.',
     )
   }
 
   if (
     !VALID_STATUSES.includes(
-      status
+      status,
     )
   ) {
     throw new Error(
-      'Status inválido.'
+      'Status inválido.',
     )
   }
 
@@ -409,33 +481,50 @@ export function changeStatus(
     return ticket
   }
 
+  const options =
+    normalizeOptions(
+      authorOrOptions,
+      createdAt,
+    )
+
   const now =
-    normalizeDate(createdAt)
+    normalizeDate(
+      options.createdAt,
+    )
 
   const previousStatus =
     ticket.status
 
+  let type = 'status_changed'
+  let message =
+    'Status do chamado alterado'
+
+  if (status === 'resolved') {
+    type = 'ticket_resolved'
+    message = 'Chamado finalizado'
+  } else if (
+    previousStatus ===
+      'resolved' &&
+    status === 'in_progress'
+  ) {
+    type = 'ticket_reopened'
+    message = 'Chamado reaberto'
+  }
+
   return {
     ...ticket,
-
     status,
-
     resolvedAt:
       status === 'resolved'
         ? now.toISOString()
         : null,
-
-    updatedAt:
-      now.toISOString(),
-
+    updatedAt: now.toISOString(),
     activity: [
       ...(ticket.activity ?? []),
-
       createActivity({
-        type: 'status_changed',
-        author,
-        message:
-          'Status do chamado alterado',
+        type,
+        author: options.author,
+        message,
         createdAt: now,
         meta: {
           from: previousStatus,
@@ -448,36 +537,48 @@ export function changeStatus(
 
 export function markWaiting(
   ticket,
-  options = {}
+  authorOrOptions,
+  createdAt,
 ) {
+  const options =
+    normalizeOptions(
+      authorOrOptions,
+      createdAt,
+    )
+
   return changeStatus(
     ticket,
     'waiting',
-    options
+    options,
   )
 }
 
 export function resolveTicket(
   ticket,
-  options = {}
+  authorOrOptions,
+  createdAt,
 ) {
+  const options =
+    normalizeOptions(
+      authorOrOptions,
+      createdAt,
+    )
+
   return changeStatus(
     ticket,
     'resolved',
-    options
+    options,
   )
 }
 
 export function reopenTicket(
   ticket,
-  {
-    author = 'Equipe LTHS',
-    createdAt = new Date(),
-  } = {}
+  authorOrOptions,
+  createdAt,
 ) {
   if (!ticket) {
     throw new Error(
-      'Ticket não informado.'
+      'Ticket não informado.',
     )
   }
 
@@ -485,62 +586,42 @@ export function reopenTicket(
     ticket.status !== 'resolved'
   ) {
     throw new Error(
-      'Somente tickets resolvidos podem ser reabertos.'
+      'Somente tickets resolvidos podem ser reabertos.',
     )
   }
 
-  const now =
-    normalizeDate(createdAt)
+  const options =
+    normalizeOptions(
+      authorOrOptions,
+      createdAt,
+    )
 
-  return {
-    ...ticket,
-
-    status: 'in_progress',
-
-    resolvedAt: null,
-
-    updatedAt:
-      now.toISOString(),
-
-    activity: [
-      ...(ticket.activity ?? []),
-
-      createActivity({
-        type: 'ticket_reopened',
-        author,
-        message:
-          'Chamado reaberto',
-        createdAt: now,
-        meta: {
-          from: 'resolved',
-          to: 'in_progress',
-        },
-      }),
-    ],
-  }
+  return changeStatus(
+    ticket,
+    'in_progress',
+    options,
+  )
 }
 
 export function changePriority(
   ticket,
   priority,
-  {
-    author = 'Equipe LTHS',
-    createdAt = new Date(),
-  } = {}
+  authorOrOptions,
+  createdAt,
 ) {
   if (!ticket) {
     throw new Error(
-      'Ticket não informado.'
+      'Ticket não informado.',
     )
   }
 
   if (
     !VALID_PRIORITIES.includes(
-      priority
+      priority,
     )
   ) {
     throw new Error(
-      'Prioridade inválida.'
+      'Prioridade inválida.',
     )
   }
 
@@ -550,8 +631,16 @@ export function changePriority(
     return ticket
   }
 
+  const options =
+    normalizeOptions(
+      authorOrOptions,
+      createdAt,
+    )
+
   const now =
-    normalizeDate(createdAt)
+    normalizeDate(
+      options.createdAt,
+    )
 
   const previousPriority =
     ticket.priority
@@ -559,31 +648,24 @@ export function changePriority(
   const slaDeadline =
     calculateSlaDeadline(
       ticket.createdAt,
-      priority
+      priority,
     )
 
   return {
     ...ticket,
-
     priority,
-
     slaDeadline,
-
-    updatedAt:
-      now.toISOString(),
-
+    updatedAt: now.toISOString(),
     activity: [
       ...(ticket.activity ?? []),
-
       createActivity({
         type: 'priority_changed',
-        author,
+        author: options.author,
         message:
           'Prioridade do chamado alterada',
         createdAt: now,
         meta: {
-          from:
-            previousPriority,
+          from: previousPriority,
           to: priority,
           slaDeadline,
         },
@@ -595,14 +677,12 @@ export function changePriority(
 export function changeAssignee(
   ticket,
   assigneeId,
-  {
-    author = 'Equipe LTHS',
-    createdAt = new Date(),
-  } = {}
+  authorOrOptions,
+  createdAt,
 ) {
   if (!ticket) {
     throw new Error(
-      'Ticket não informado.'
+      'Ticket não informado.',
     )
   }
 
@@ -616,40 +696,38 @@ export function changeAssignee(
     return ticket
   }
 
+  const options =
+    normalizeOptions(
+      authorOrOptions,
+      createdAt,
+    )
+
   const now =
-    normalizeDate(createdAt)
+    normalizeDate(
+      options.createdAt,
+    )
 
   const previousAssignee =
     ticket.assigneeId ?? null
 
   return {
     ...ticket,
-
     assigneeId:
       normalizedAssignee,
-
-    updatedAt:
-      now.toISOString(),
-
+    updatedAt: now.toISOString(),
     activity: [
       ...(ticket.activity ?? []),
-
       createActivity({
         type: 'assignee_changed',
-        author,
-
+        author: options.author,
         message:
           normalizedAssignee
             ? 'Responsável pelo chamado alterado'
             : 'Responsável pelo chamado removido',
-
         createdAt: now,
-
         meta: {
-          from:
-            previousAssignee,
-          to:
-            normalizedAssignee,
+          from: previousAssignee,
+          to: normalizedAssignee,
         },
       }),
     ],

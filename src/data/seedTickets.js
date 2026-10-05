@@ -1,4 +1,6 @@
-import { calculateSlaDeadline } from '../services/ticketService.js'
+import {
+  calculateSlaDeadline,
+} from '../services/ticketService.js'
 
 function createActivity(
   id,
@@ -6,7 +8,7 @@ function createActivity(
   author,
   message,
   createdAt,
-  meta = {}
+  meta = {},
 ) {
   return {
     id,
@@ -47,10 +49,11 @@ function createTicket({
     assigneeId,
     createdAt,
     updatedAt,
-    slaDeadline: calculateSlaDeadline(
-      createdAt,
-      priority
-    ),
+    slaDeadline:
+      calculateSlaDeadline(
+        createdAt,
+        priority,
+      ),
     resolvedAt,
     replies,
     internalNotes,
@@ -59,6 +62,15 @@ function createTicket({
 }
 
 export function createSeedTickets() {
+  const now = Date.now()
+
+  const minutesAgo = (
+    minutes,
+  ) =>
+    new Date(
+      now - minutes * 60_000,
+    ).toISOString()
+
   return [
     createTicket({
       id: 'ticket-1048',
@@ -69,16 +81,20 @@ export function createSeedTickets() {
         'Usuária não consegue concluir a autenticação no sistema financeiro desde o início do expediente.',
       requester: {
         name: 'Mariana Souza',
-        email: 'mariana.souza@empresa.demo',
-        department: 'Financeiro',
+        email:
+          'mariana.souza@empresa.demo',
+        department:
+          'Financeiro',
       },
       category: 'access',
       priority: 'high',
       status: 'waiting',
-      assigneeId: 'thiago-tadeu',
-      createdAt: '2026-08-30T09:29:00-03:00',
-      updatedAt: '2026-08-30T10:20:00-03:00',
-
+      assigneeId:
+        'thiago-tadeu',
+      createdAt:
+        minutesAgo(80),
+      updatedAt:
+        minutesAgo(25),
       replies: [
         {
           id: 'reply-1048-1',
@@ -86,44 +102,41 @@ export function createSeedTickets() {
           message:
             'Solicitação recebida. A equipe está realizando a análise.',
           createdAt:
-            '2026-08-30T09:47:00-03:00',
+            minutesAgo(60),
         },
       ],
-
       internalNotes: [
         {
           id: 'note-1048-1',
-          author: 'Thiago Tadeu',
+          author:
+            'Thiago Tadeu',
           message:
             'Validar grupo de acesso e sessão SSO antes de solicitar nova autenticação.',
           createdAt:
-            '2026-08-30T10:20:00-03:00',
+            minutesAgo(25),
         },
       ],
-
       activity: [
         createActivity(
           'activity-1048-1',
           'ticket_created',
           'Sistema',
           'Chamado criado',
-          '2026-08-30T09:29:00-03:00'
+          minutesAgo(80),
         ),
-
         createActivity(
           'activity-1048-2',
           'reply_added',
           'Equipe LTHS',
           'Resposta adicionada ao chamado',
-          '2026-08-30T09:47:00-03:00'
+          minutesAgo(60),
         ),
-
         createActivity(
           'activity-1048-3',
           'internal_note_added',
           'Thiago Tadeu',
           'Nota interna adicionada',
-          '2026-08-30T10:20:00-03:00'
+          minutesAgo(25),
         ),
       ],
     }),
@@ -131,47 +144,51 @@ export function createSeedTickets() {
     createTicket({
       id: 'ticket-1047',
       code: 'TK-1047',
-      subject: 'Notebook sem acesso à VPN',
+      subject:
+        'Notebook sem acesso à VPN',
       description:
         'Usuário relata que o notebook corporativo não consegue estabelecer conexão com a VPN.',
       requester: {
         name: 'Lucas Martins',
-        email: 'lucas.martins@empresa.demo',
-        department: 'Comercial',
+        email:
+          'lucas.martins@empresa.demo',
+        department:
+          'Comercial',
       },
       category: 'network',
       priority: 'medium',
       status: 'in_progress',
-      assigneeId: 'mateus-ichiro',
-      createdAt: '2026-08-30T07:55:00-03:00',
-      updatedAt: '2026-08-30T09:12:00-03:00',
-
+      assigneeId:
+        'mateus-ichiro',
+      createdAt:
+        minutesAgo(180),
+      updatedAt:
+        minutesAgo(35),
       replies: [
         {
           id: 'reply-1047-1',
-          author: 'Mateus Ichiro',
+          author:
+            'Mateus Ichiro',
           message:
             'Estamos validando a configuração de rede e o perfil de acesso à VPN.',
           createdAt:
-            '2026-08-30T09:12:00-03:00',
+            minutesAgo(35),
         },
       ],
-
       activity: [
         createActivity(
           'activity-1047-1',
           'ticket_created',
           'Sistema',
           'Chamado criado',
-          '2026-08-30T07:55:00-03:00'
+          minutesAgo(180),
         ),
-
         createActivity(
           'activity-1047-2',
           'reply_added',
           'Mateus Ichiro',
           'Resposta adicionada ao chamado',
-          '2026-08-30T09:12:00-03:00'
+          minutesAgo(35),
         ),
       ],
     }),
@@ -179,39 +196,51 @@ export function createSeedTickets() {
     createTicket({
       id: 'ticket-1046',
       code: 'TK-1046',
-      subject: 'Solicitação de acesso ao ERP',
+      subject:
+        'Solicitação de acesso ao ERP',
       description:
         'Solicitante precisa de acesso ao módulo de pedidos do ERP para iniciar as atividades.',
       requester: {
         name: 'Patrícia Alves',
-        email: 'patricia.alves@empresa.demo',
-        department: 'Operações',
+        email:
+          'patricia.alves@empresa.demo',
+        department:
+          'Operações',
       },
       category: 'access',
       priority: 'low',
       status: 'waiting',
-      assigneeId: 'thiago-tadeu',
-      createdAt: '2026-08-30T06:10:00-03:00',
-      updatedAt: '2026-08-30T08:35:00-03:00',
-
+      assigneeId:
+        'thiago-tadeu',
+      createdAt:
+        minutesAgo(600),
+      updatedAt:
+        minutesAgo(70),
       replies: [
         {
           id: 'reply-1046-1',
-          author: 'Thiago Tadeu',
+          author:
+            'Thiago Tadeu',
           message:
             'A solicitação está em validação com o responsável pelo perfil de acesso.',
           createdAt:
-            '2026-08-30T08:35:00-03:00',
+            minutesAgo(70),
         },
       ],
-
       activity: [
         createActivity(
           'activity-1046-1',
           'ticket_created',
           'Sistema',
           'Chamado criado',
-          '2026-08-30T06:10:00-03:00'
+          minutesAgo(600),
+        ),
+        createActivity(
+          'activity-1046-2',
+          'reply_added',
+          'Thiago Tadeu',
+          'Resposta adicionada ao chamado',
+          minutesAgo(70),
         ),
       ],
     }),
@@ -225,23 +254,27 @@ export function createSeedTickets() {
         'Conexão remota apresenta quedas frequentes durante o expediente.',
       requester: {
         name: 'André Costa',
-        email: 'andre.costa@empresa.demo',
-        department: 'Engenharia',
+        email:
+          'andre.costa@empresa.demo',
+        department:
+          'Engenharia',
       },
       category: 'network',
       priority: 'high',
       status: 'new',
-      assigneeId: 'mateus-ichiro',
-      createdAt: '2026-08-30T09:58:00-03:00',
-      updatedAt: '2026-08-30T09:58:00-03:00',
-
+      assigneeId:
+        'mateus-ichiro',
+      createdAt:
+        minutesAgo(25),
+      updatedAt:
+        minutesAgo(25),
       activity: [
         createActivity(
           'activity-1045-1',
           'ticket_created',
           'Sistema',
           'Chamado criado',
-          '2026-08-30T09:58:00-03:00'
+          minutesAgo(25),
         ),
       ],
     }),
@@ -255,34 +288,45 @@ export function createSeedTickets() {
         'Dados cadastrados no sistema principal não estão sendo sincronizados com o módulo interno.',
       requester: {
         name: 'Fernanda Melo',
-        email: 'fernanda.melo@empresa.demo',
-        department: 'Administrativo',
+        email:
+          'fernanda.melo@empresa.demo',
+        department:
+          'Administrativo',
       },
       category: 'systems',
       priority: 'medium',
       status: 'in_progress',
-      assigneeId: 'thiago-tadeu',
-      createdAt: '2026-08-30T04:35:00-03:00',
-      updatedAt: '2026-08-30T08:50:00-03:00',
-
+      assigneeId:
+        'thiago-tadeu',
+      createdAt:
+        minutesAgo(390),
+      updatedAt:
+        minutesAgo(45),
       replies: [
         {
           id: 'reply-1044-1',
-          author: 'Thiago Tadeu',
+          author:
+            'Thiago Tadeu',
           message:
             'Estamos verificando os registros de integração e o processamento da fila.',
           createdAt:
-            '2026-08-30T08:50:00-03:00',
+            minutesAgo(45),
         },
       ],
-
       activity: [
         createActivity(
           'activity-1044-1',
           'ticket_created',
           'Sistema',
           'Chamado criado',
-          '2026-08-30T04:35:00-03:00'
+          minutesAgo(390),
+        ),
+        createActivity(
+          'activity-1044-2',
+          'reply_added',
+          'Thiago Tadeu',
+          'Resposta adicionada ao chamado',
+          minutesAgo(45),
         ),
       ],
     }),
@@ -296,34 +340,45 @@ export function createSeedTickets() {
         'Impressora compartilhada do setor não aparece disponível para os usuários.',
       requester: {
         name: 'Bruno Lima',
-        email: 'bruno.lima@empresa.demo',
-        department: 'Logística',
+        email:
+          'bruno.lima@empresa.demo',
+        department:
+          'Logística',
       },
       category: 'devices',
       priority: 'low',
       status: 'waiting',
-      assigneeId: 'mateus-ichiro',
-      createdAt: '2026-08-29T15:20:00-03:00',
-      updatedAt: '2026-08-30T08:10:00-03:00',
-
+      assigneeId:
+        'mateus-ichiro',
+      createdAt:
+        minutesAgo(1080),
+      updatedAt:
+        minutesAgo(90),
       replies: [
         {
           id: 'reply-1043-1',
-          author: 'Mateus Ichiro',
+          author:
+            'Mateus Ichiro',
           message:
             'A conectividade do equipamento está sendo validada.',
           createdAt:
-            '2026-08-30T08:10:00-03:00',
+            minutesAgo(90),
         },
       ],
-
       activity: [
         createActivity(
           'activity-1043-1',
           'ticket_created',
           'Sistema',
           'Chamado criado',
-          '2026-08-29T15:20:00-03:00'
+          minutesAgo(1080),
+        ),
+        createActivity(
+          'activity-1043-2',
+          'reply_added',
+          'Mateus Ichiro',
+          'Resposta adicionada ao chamado',
+          minutesAgo(90),
         ),
       ],
     }),
@@ -336,49 +391,54 @@ export function createSeedTickets() {
       description:
         'Aplicativo corporativo foi atualizado e o chamado foi concluído após validação do usuário.',
       requester: {
-        name: 'Juliana Ribeiro',
-        email: 'juliana.ribeiro@empresa.demo',
-        department: 'Recursos Humanos',
+        name:
+          'Juliana Ribeiro',
+        email:
+          'juliana.ribeiro@empresa.demo',
+        department:
+          'Recursos Humanos',
       },
       category: 'systems',
       priority: 'medium',
       status: 'resolved',
-      assigneeId: 'thiago-tadeu',
-      createdAt: '2026-08-29T08:15:00-03:00',
-      updatedAt: '2026-08-29T13:40:00-03:00',
+      assigneeId:
+        'thiago-tadeu',
+      createdAt:
+        minutesAgo(300),
+      updatedAt:
+        minutesAgo(120),
       resolvedAt:
-        '2026-08-29T13:40:00-03:00',
-
+        minutesAgo(120),
       replies: [
         {
           id: 'reply-1042-1',
-          author: 'Thiago Tadeu',
+          author:
+            'Thiago Tadeu',
           message:
             'Atualização realizada e funcionamento validado.',
           createdAt:
-            '2026-08-29T13:35:00-03:00',
+            minutesAgo(130),
         },
       ],
-
       activity: [
         createActivity(
           'activity-1042-1',
           'ticket_created',
           'Sistema',
           'Chamado criado',
-          '2026-08-29T08:15:00-03:00'
+          minutesAgo(300),
         ),
-
         createActivity(
           'activity-1042-2',
-          'status_changed',
+          'ticket_resolved',
           'Thiago Tadeu',
-          'Chamado resolvido',
-          '2026-08-29T13:40:00-03:00',
+          'Chamado finalizado',
+          minutesAgo(120),
           {
-            from: 'in_progress',
+            from:
+              'in_progress',
             to: 'resolved',
-          }
+          },
         ),
       ],
     }),
@@ -391,49 +451,54 @@ export function createSeedTickets() {
       description:
         'Novo notebook foi preparado, configurado e entregue ao colaborador.',
       requester: {
-        name: 'Ricardo Gomes',
-        email: 'ricardo.gomes@empresa.demo',
-        department: 'Projetos',
+        name:
+          'Ricardo Gomes',
+        email:
+          'ricardo.gomes@empresa.demo',
+        department:
+          'Projetos',
       },
       category: 'devices',
       priority: 'low',
       status: 'resolved',
-      assigneeId: 'mateus-ichiro',
-      createdAt: '2026-08-28T10:00:00-03:00',
-      updatedAt: '2026-08-28T16:15:00-03:00',
+      assigneeId:
+        'mateus-ichiro',
+      createdAt:
+        minutesAgo(720),
+      updatedAt:
+        minutesAgo(360),
       resolvedAt:
-        '2026-08-28T16:15:00-03:00',
-
+        minutesAgo(360),
       replies: [
         {
           id: 'reply-1041-1',
-          author: 'Mateus Ichiro',
+          author:
+            'Mateus Ichiro',
           message:
             'Equipamento configurado e liberado para utilização.',
           createdAt:
-            '2026-08-28T16:10:00-03:00',
+            minutesAgo(370),
         },
       ],
-
       activity: [
         createActivity(
           'activity-1041-1',
           'ticket_created',
           'Sistema',
           'Chamado criado',
-          '2026-08-28T10:00:00-03:00'
+          minutesAgo(720),
         ),
-
         createActivity(
           'activity-1041-2',
-          'status_changed',
+          'ticket_resolved',
           'Mateus Ichiro',
-          'Chamado resolvido',
-          '2026-08-28T16:15:00-03:00',
+          'Chamado finalizado',
+          minutesAgo(360),
           {
-            from: 'in_progress',
+            from:
+              'in_progress',
             to: 'resolved',
-          }
+          },
         ),
       ],
     }),

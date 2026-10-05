@@ -42,7 +42,10 @@ const SLA_HOURS = {
   low: 24,
 }
 
-function safeParse(value, fallback = null) {
+function safeParse(
+  value,
+  fallback = null,
+) {
   try {
     if (value == null) {
       return fallback
@@ -64,23 +67,29 @@ function validDate(value) {
   return date.toISOString()
 }
 
-function calculateDeadline(createdAt, priority) {
+function calculateDeadline(
+  createdAt,
+  priority,
+) {
   const hours =
     SLA_HOURS[priority] ??
     SLA_HOURS.medium
 
   return new Date(
     new Date(createdAt).getTime() +
-      hours * 3_600_000
+      hours * 3_600_000,
   ).toISOString()
 }
 
 function normalizeReply(
   reply,
   index,
-  fallbackDate
+  fallbackDate,
 ) {
-  if (!reply || typeof reply !== 'object') {
+  if (
+    !reply ||
+    typeof reply !== 'object'
+  ) {
     return null
   }
 
@@ -88,7 +97,7 @@ function normalizeReply(
     reply.message ??
       reply.text ??
       reply.mensagem ??
-      ''
+      '',
   ).trim()
 
   if (!message) {
@@ -100,13 +109,13 @@ function normalizeReply(
 
     id: String(
       reply.id ??
-        `legacy-reply-${index}`
+        `legacy-reply-${index}`,
     ),
 
     author: String(
       reply.author ??
         reply.autor ??
-        'Equipe LTHS'
+        'Equipe LTHS',
     ),
 
     message,
@@ -119,7 +128,7 @@ function normalizeReply(
 
 export function migrateLegacyTicket(
   ticket,
-  index = 0
+  index = 0,
 ) {
   if (
     !ticket ||
@@ -135,7 +144,7 @@ export function migrateLegacyTicket(
   const rawPriority = String(
     ticket.urgencia ??
       ticket.priority ??
-      'medium'
+      'medium',
   ).toLowerCase()
 
   const priority =
@@ -144,7 +153,7 @@ export function migrateLegacyTicket(
 
   const rawStatus = String(
     ticket.status ??
-      'aberto'
+      'aberto',
   ).toLowerCase()
 
   let status =
@@ -159,22 +168,26 @@ export function migrateLegacyTicket(
     ]
 
     status = validStatuses.includes(
-      rawStatus
+      rawStatus,
     )
       ? rawStatus
       : 'in_progress'
   }
 
   const replies = Array.isArray(
-    ticket.replies
+    ticket.replies,
   )
     ? ticket.replies
-        .map((reply, replyIndex) =>
-          normalizeReply(
+        .map(
+          (
             reply,
             replyIndex,
-            createdAt
-          )
+          ) =>
+            normalizeReply(
+              reply,
+              replyIndex,
+              createdAt,
+            ),
         )
         .filter(Boolean)
     : []
@@ -189,20 +202,21 @@ export function migrateLegacyTicket(
 
   const originalId = String(
     ticket.id ??
-      `legacy-${index + 1}`
+      `legacy-${index + 1}`,
   )
 
-  const id = originalId.startsWith(
-    'ticket-'
-  )
-    ? originalId
-    : `ticket-${originalId}`
+  const id =
+    originalId.startsWith(
+      'ticket-',
+    )
+      ? originalId
+      : `ticket-${originalId}`
 
   const code = String(
     ticket.code ??
       `TK-${String(originalId)
         .slice(-5)
-        .padStart(5, '0')}`
+        .padStart(5, '0')}`,
   )
 
   const subject = String(
@@ -210,7 +224,7 @@ export function migrateLegacyTicket(
       ticket.subject ??
       ticket.descricao ??
       ticket.description ??
-      'Solicitação de atendimento'
+      'Solicitação de atendimento',
   )
     .trim()
     .slice(0, 120)
@@ -218,31 +232,33 @@ export function migrateLegacyTicket(
   const description = String(
     ticket.descricao ??
       ticket.description ??
-      subject
+      subject,
   ).trim()
 
   const requesterName = String(
     ticket.nome ??
       ticket.requester?.name ??
-      'Solicitante'
+      'Solicitante',
   ).trim()
 
   const requesterEmail = String(
     ticket.email ??
       ticket.requester?.email ??
-      ''
+      '',
   ).trim()
 
-  const requesterDepartment = String(
-    ticket.departamento ??
-      ticket.requester?.department ??
-      'Não informado'
-  ).trim()
+  const requesterDepartment =
+    String(
+      ticket.departamento ??
+        ticket.requester
+          ?.department ??
+        'Não informado',
+    ).trim()
 
   const resolvedAt =
     status === 'resolved'
       ? validDate(
-          ticket.resolvedAt
+          ticket.resolvedAt,
         ) ?? updatedAt
       : null
 
@@ -265,7 +281,7 @@ export function migrateLegacyTicket(
     category: String(
       ticket.categoria ??
         ticket.category ??
-        'general'
+        'general',
     ),
 
     priority,
@@ -281,22 +297,22 @@ export function migrateLegacyTicket(
     slaDeadline:
       ticket.slaDeadline
         ? validDate(
-            ticket.slaDeadline
+            ticket.slaDeadline,
           ) ??
           calculateDeadline(
             createdAt,
-            priority
+            priority,
           )
         : calculateDeadline(
             createdAt,
-            priority
+            priority,
           ),
 
     replies,
 
     internalNotes:
       Array.isArray(
-        ticket.internalNotes
+        ticket.internalNotes,
       )
         ? ticket.internalNotes
         : [],
@@ -366,52 +382,53 @@ function isNewTicket(ticket) {
 
 export function saveWorkspace(
   storage,
-  workspace
+  workspace,
 ) {
   storage.setItem(
     STORAGE_KEYS.tickets,
     JSON.stringify(
-      workspace.tickets ?? []
-    )
+      workspace.tickets ?? [],
+    ),
   )
 
   storage.setItem(
     STORAGE_KEYS.team,
     JSON.stringify(
-      workspace.team ?? TEAM
-    )
+      workspace.team ?? TEAM,
+    ),
   )
 
   storage.setItem(
     STORAGE_KEYS.preferences,
     JSON.stringify(
       workspace.preferences ?? {
-        theme: 'dark',
-      }
-    )
+        theme: 'light',
+      },
+    ),
   )
 
   storage.setItem(
     STORAGE_KEYS.version,
     String(
       workspace.version ??
-        CURRENT_VERSION
-    )
+        CURRENT_VERSION,
+    ),
   )
 
   return workspace
 }
 
 export function resetWorkspace(
-  storage = window.localStorage
+  storage = window.localStorage,
 ) {
   const workspace = {
-    tickets: createSeedTickets(),
+    tickets:
+      createSeedTickets(),
 
     team: TEAM,
 
     preferences: {
-      theme: 'dark',
+      theme: 'light',
     },
 
     version: CURRENT_VERSION,
@@ -419,18 +436,18 @@ export function resetWorkspace(
 
   saveWorkspace(
     storage,
-    workspace
+    workspace,
   )
 
   return workspace
 }
 
 export function loadWorkspace(
-  storage = window.localStorage
+  storage = window.localStorage,
 ) {
   const currentTickets =
     storage.getItem(
-      STORAGE_KEYS.tickets
+      STORAGE_KEYS.tickets,
     )
 
   let tickets = []
@@ -438,31 +455,33 @@ export function loadWorkspace(
   if (currentTickets !== null) {
     const parsed = safeParse(
       currentTickets,
-      []
+      [],
     )
 
     if (Array.isArray(parsed)) {
       tickets =
-        parsed.filter(isNewTicket)
+        parsed.filter(
+          isNewTicket,
+        )
     }
   } else {
     const legacyTickets =
       safeParse(
         storage.getItem(
-          'tickets'
+          'tickets',
         ),
-        []
+        [],
       )
 
     if (
       Array.isArray(
-        legacyTickets
+        legacyTickets,
       )
     ) {
       tickets =
         legacyTickets
           .map(
-            migrateLegacyTicket
+            migrateLegacyTicket,
           )
           .filter(Boolean)
     }
@@ -476,9 +495,9 @@ export function loadWorkspace(
   const savedTeam =
     safeParse(
       storage.getItem(
-        STORAGE_KEYS.team
+        STORAGE_KEYS.team,
       ),
-      null
+      null,
     )
 
   const team =
@@ -490,14 +509,14 @@ export function loadWorkspace(
   const savedPreferences =
     safeParse(
       storage.getItem(
-        STORAGE_KEYS.preferences
+        STORAGE_KEYS.preferences,
       ),
-      null
+      null,
     )
 
   const legacyTheme =
     storage.getItem(
-      'support-theme'
+      'support-theme',
     )
 
   const preferences =
@@ -509,23 +528,22 @@ export function loadWorkspace(
 
           theme:
             savedPreferences.theme ===
-            'light'
-              ? 'light'
-              : 'dark',
+            'dark'
+              ? 'dark'
+              : 'light',
         }
       : {
           theme:
-            legacyTheme ===
-            'light'
-              ? 'light'
-              : 'dark',
+            legacyTheme === 'dark'
+              ? 'dark'
+              : 'light',
         }
 
   const savedVersion =
     Number(
       storage.getItem(
-        STORAGE_KEYS.version
-      )
+        STORAGE_KEYS.version,
+      ),
     )
 
   const workspace = {
@@ -540,7 +558,7 @@ export function loadWorkspace(
 
   saveWorkspace(
     storage,
-    workspace
+    workspace,
   )
 
   return workspace
