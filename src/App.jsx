@@ -278,7 +278,10 @@ function getInitials(name = '') {
   )
 }
 
-function getSlaProgress(ticket) {
+function getSlaProgress(
+  ticket,
+  now,
+) {
   if (
     ticket?.status ===
     'resolved'
@@ -302,7 +305,10 @@ function getSlaProgress(ticket) {
   }
 
   const remaining =
-    getRemainingMs(ticket)
+    getRemainingMs(
+      ticket,
+      now,
+    )
 
   if (remaining <= 0) {
     return 100
@@ -913,6 +919,13 @@ export default function App() {
     setDragTargetStatus,
   ] = useState(null)
 
+  const [
+    slaNow,
+    setSlaNow,
+  ] = useState(
+    () => new Date(),
+  )
+
   const searchRef =
     useRef(null)
 
@@ -950,6 +963,23 @@ export default function App() {
       )
     }
   }, [setTheme])
+
+  useEffect(() => {
+    const timer =
+      window.setInterval(
+        () => {
+          setSlaNow(
+            new Date(),
+          )
+        },
+        60000,
+      )
+
+    return () =>
+      window.clearInterval(
+        timer,
+      )
+  }, [])
 
   useEffect(() => {
     if (!tickets.length) {
@@ -1181,6 +1211,7 @@ export default function App() {
     selectedTicket
       ? getSlaState(
           selectedTicket,
+          slaNow,
         )
       : 'healthy'
 
@@ -1188,6 +1219,7 @@ export default function App() {
     selectedTicket
       ? getRemainingMs(
           selectedTicket,
+          slaNow,
         )
       : 0
 
@@ -2058,16 +2090,19 @@ export default function App() {
                             const slaState =
                               getSlaState(
                                 ticket,
+                                slaNow,
                               )
 
                             const remaining =
                               getRemainingMs(
                                 ticket,
+                                slaNow,
                               )
 
                             const progress =
                               getSlaProgress(
                                 ticket,
+                                slaNow,
                               )
 
                             const isDragging =
