@@ -17,6 +17,27 @@ const VALID_STATUSES = [
   'resolved',
 ]
 
+const STATUS_TRANSITIONS = {
+  new: [
+    'in_progress',
+    'resolved',
+  ],
+
+  in_progress: [
+    'waiting',
+    'resolved',
+  ],
+
+  waiting: [
+    'in_progress',
+    'resolved',
+  ],
+
+  resolved: [
+    'in_progress',
+  ],
+}
+
 function generateId(prefix = 'item') {
   if (
     typeof crypto !== 'undefined' &&
@@ -213,6 +234,31 @@ function getPausedDuration(
   return Math.max(
     0,
     end - pausedTime,
+  )
+}
+
+function isValidStatusTransition(
+  currentStatus,
+  nextStatus,
+) {
+  if (
+    currentStatus ===
+    nextStatus
+  ) {
+    return true
+  }
+
+  const allowed =
+    STATUS_TRANSITIONS[
+      currentStatus
+    ]
+
+  if (!allowed) {
+    return false
+  }
+
+  return allowed.includes(
+    nextStatus,
   )
 }
 
@@ -579,21 +625,30 @@ export function changeStatus(
     return ticket
   }
 
-  const options =
-    normalizeOptions(
-      authorOrOptions,
-      createdAt,
-    )
-
   const previousStatus =
     ticket.status
 
   if (
     previousStatus ===
-      status
+    status
   ) {
     return ticket
   }
+
+  if (
+    !isValidStatusTransition(
+      previousStatus,
+      status,
+    )
+  ) {
+    return ticket
+  }
+
+  const options =
+    normalizeOptions(
+      authorOrOptions,
+      createdAt,
+    )
 
   let nextDeadline =
     ticket.slaDeadline
@@ -698,6 +753,16 @@ export function changeStatus(
   ) {
     message =
       'Chamado retomado'
+  }
+
+  if (
+    previousStatus ===
+      'new' &&
+    status ===
+      'in_progress'
+  ) {
+    message =
+      'Atendimento iniciado'
   }
 
   const activity =

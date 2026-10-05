@@ -343,3 +343,125 @@ test('deve identificar SLA vencido', () => {
     'overdue'
   )
 })
+
+test('deve permitir mover A fazer para Atendendo', () => {
+  const ticket = createTicket({
+    status: 'new',
+  })
+
+  const updated = changeStatus(
+    ticket,
+    'in_progress',
+    {
+      author: 'Equipe LTHS',
+      createdAt: '2026-08-29T13:00:00.000Z',
+    }
+  )
+
+  assert.equal(
+    updated.status,
+    'in_progress'
+  )
+})
+
+test('não deve permitir mover A fazer diretamente para Pausado', () => {
+  const ticket = createTicket({
+    status: 'new',
+  })
+
+  const updated = changeStatus(
+    ticket,
+    'waiting',
+    {
+      author: 'Equipe LTHS',
+      createdAt: '2026-08-29T13:00:00.000Z',
+    }
+  )
+
+  assert.equal(
+    updated.status,
+    'new'
+  )
+
+  assert.equal(
+    updated.pausedAt,
+    null
+  )
+})
+
+test('não deve permitir mover Finalizado para Pausado', () => {
+  const ticket = createTicket({
+    status: 'resolved',
+    resolvedAt: '2026-08-29T14:00:00.000Z',
+  })
+
+  const updated = changeStatus(
+    ticket,
+    'waiting',
+    {
+      author: 'Equipe LTHS',
+      createdAt: '2026-08-29T15:00:00.000Z',
+    }
+  )
+
+  assert.equal(
+    updated.status,
+    'resolved'
+  )
+
+  assert.equal(
+    updated.resolvedAt,
+    '2026-08-29T14:00:00.000Z'
+  )
+})
+
+test('deve permitir finalizar diretamente um ticket em A fazer', () => {
+  const ticket = createTicket({
+    status: 'new',
+  })
+
+  const updated = changeStatus(
+    ticket,
+    'resolved',
+    {
+      author: 'Equipe LTHS',
+      createdAt: '2026-08-29T13:00:00.000Z',
+    }
+  )
+
+  assert.equal(
+    updated.status,
+    'resolved'
+  )
+
+  assert.equal(
+    updated.resolvedAt,
+    '2026-08-29T13:00:00.000Z'
+  )
+})
+
+test('deve permitir reabrir Finalizado somente para Atendendo', () => {
+  const ticket = createTicket({
+    status: 'resolved',
+    resolvedAt: '2026-08-29T14:00:00.000Z',
+  })
+
+  const updated = changeStatus(
+    ticket,
+    'in_progress',
+    {
+      author: 'Equipe LTHS',
+      createdAt: '2026-08-29T15:00:00.000Z',
+    }
+  )
+
+  assert.equal(
+    updated.status,
+    'in_progress'
+  )
+
+  assert.equal(
+    updated.resolvedAt,
+    null
+  )
+})

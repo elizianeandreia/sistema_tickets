@@ -61,6 +61,13 @@ const BOARD_COLUMNS = [
   },
 ]
 
+const DRAG_TRANSITIONS = {
+  new: ['in_progress', 'resolved'],
+  in_progress: ['waiting', 'resolved'],
+  waiting: ['in_progress', 'resolved'],
+  resolved: ['in_progress'],
+}
+
 const EMPTY_FORM = {
   requesterName: '',
   requesterEmail: '',
@@ -86,11 +93,7 @@ function Icon({
 
     search: (
       <>
-        <circle
-          cx="10.8"
-          cy="10.8"
-          r="6.3"
-        />
+        <circle cx="10.8" cy="10.8" r="6.3" />
         <path d="m16 16 4 4" />
       </>
     ),
@@ -105,33 +108,21 @@ function Icon({
 
     clock: (
       <>
-        <circle
-          cx="12"
-          cy="12"
-          r="8.5"
-        />
+        <circle cx="12" cy="12" r="8.5" />
         <path d="M12 7v5l3.5 2" />
       </>
     ),
 
     user: (
       <>
-        <circle
-          cx="12"
-          cy="8"
-          r="3.2"
-        />
+        <circle cx="12" cy="8" r="3.2" />
         <path d="M5.5 20c.7-4.1 3-6.2 6.5-6.2s5.8 2.1 6.5 6.2" />
       </>
     ),
 
     users: (
       <>
-        <circle
-          cx="9"
-          cy="8.5"
-          r="3"
-        />
+        <circle cx="9" cy="8.5" r="3" />
         <path d="M3.5 19c.6-3.6 2.5-5.4 5.5-5.4s4.9 1.8 5.5 5.4" />
         <path d="M15.5 6.5a2.6 2.6 0 0 1 0 5.1M17 14c2 .5 3.2 2.1 3.5 4.7" />
       </>
@@ -146,22 +137,14 @@ function Icon({
 
     settings: (
       <>
-        <circle
-          cx="12"
-          cy="12"
-          r="3"
-        />
+        <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9A1.7 1.7 0 0 0 21 10h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" />
       </>
     ),
 
     sun: (
       <>
-        <circle
-          cx="12"
-          cy="12"
-          r="3.5"
-        />
+        <circle cx="12" cy="12" r="3.5" />
         <path d="M12 2v2.2M12 19.8V22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2 12h2.2M19.8 12H22M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6" />
       </>
     ),
@@ -347,6 +330,27 @@ function getMessageAuthor(
     item?.author ||
     item?.authorName ||
     fallback
+  )
+}
+
+function canMoveTicket(
+  ticket,
+  nextStatus,
+) {
+  if (
+    !ticket ||
+    ticket.status ===
+      nextStatus
+  ) {
+    return false
+  }
+
+  return (
+    DRAG_TRANSITIONS[
+      ticket.status
+    ]?.includes(
+      nextStatus,
+    ) ?? false
   )
 }
 
@@ -899,8 +903,21 @@ export default function App() {
     setToast,
   ] = useState('')
 
+  const [
+    draggedTicketId,
+    setDraggedTicketId,
+  ] = useState(null)
+
+  const [
+    dragTargetStatus,
+    setDragTargetStatus,
+  ] = useState(null)
+
   const searchRef =
     useRef(null)
+
+  const suppressCardClickRef =
+    useRef(false)
 
   const logoPath =
     `${import.meta.env.BASE_URL}imagem/logo2026.png`
@@ -1177,6 +1194,12 @@ export default function App() {
   function handleSelectTicket(
     ticketId,
   ) {
+    if (
+      suppressCardClickRef.current
+    ) {
+      return
+    }
+
     setSelectedTicketId(
       ticketId,
     )
@@ -1504,6 +1527,214 @@ export default function App() {
     )
   }
 
+  function handleDragStart(
+    event,
+    ticket,
+  ) {
+    suppressCardClickRef.current =
+      true
+
+    setDraggedTicketId(
+      ticket.id,
+    )
+
+    setDragTargetStatus(
+      null,
+    )
+
+    event.dataTransfer.effectAllowed =
+      'move'
+
+    event.dataTransfer.setData(
+      'text/plain',
+      ticket.id,
+    )
+  }
+
+  function handleDragEnd() {
+    setDraggedTicketId(
+      null,
+    )
+
+    setDragTargetStatus(
+      null,
+    )
+
+    window.setTimeout(
+      () => {
+        suppressCardClickRef.current =
+          false
+      },
+      0,
+    )
+  }
+
+  function handleDragOver(
+    event,
+    status,
+  ) {
+    const ticket =
+      tickets.find(
+        (item) =>
+          item.id ===
+          draggedTicketId,
+      )
+
+    if (
+      !canMoveTicket(
+        ticket,
+        status,
+      )
+    ) {
+      event.dataTransfer.dropEffect =
+        'none'
+
+      if (
+        dragTargetStatus ===
+        status
+      ) {
+        setDragTargetStatus(
+          null,
+        )
+      }
+
+      return
+    }
+
+    event.preventDefault()
+
+    event.dataTransfer.dropEffect =
+      'move'
+
+    if (
+      dragTargetStatus !==
+      status
+    ) {
+      setDragTargetStatus(
+        status,
+      )
+    }
+  }
+
+  function handleDrop(
+    event,
+    status,
+  ) {
+    event.preventDefault()
+
+    const ticketId =
+      draggedTicketId ||
+      event.dataTransfer.getData(
+        'text/plain',
+      )
+
+    const ticket =
+      tickets.find(
+        (item) =>
+          item.id ===
+          ticketId,
+      )
+
+    setDraggedTicketId(
+      null,
+    )
+
+    setDragTargetStatus(
+      null,
+    )
+
+    if (!ticket) {
+      return
+    }
+
+    if (
+      !canMoveTicket(
+        ticket,
+        status,
+      )
+    ) {
+      if (
+        ticket.status !==
+        status
+      ) {
+        setToast(
+          `Não é possível mover de ${STATUS_LABELS[ticket.status]} para ${STATUS_LABELS[status]}.`,
+        )
+      }
+
+      return
+    }
+
+    if (
+      status ===
+      'in_progress'
+    ) {
+      if (
+        ticket.status ===
+        'resolved'
+      ) {
+        reopenResolvedTicket(
+          ticket.id,
+        )
+
+        setToast(
+          `${formatTicketCode(
+            ticket.code,
+          )} reaberto e movido para Atendendo.`,
+        )
+      } else {
+        resumeTicket(
+          ticket.id,
+        )
+
+        setToast(
+          ticket.status ===
+            'waiting'
+            ? `${formatTicketCode(
+                ticket.code,
+              )} retomado.`
+            : `${formatTicketCode(
+                ticket.code,
+              )} movido para Atendendo.`,
+        )
+      }
+
+      return
+    }
+
+    if (
+      status ===
+      'waiting'
+    ) {
+      setTicketWaiting(
+        ticket.id,
+      )
+
+      setToast(
+        `${formatTicketCode(
+          ticket.code,
+        )} pausado.`,
+      )
+
+      return
+    }
+
+    if (
+      status ===
+      'resolved'
+    ) {
+      closeTicket(
+        ticket.id,
+      )
+
+      setToast(
+        `${formatTicketCode(
+          ticket.code,
+        )} finalizado.`,
+      )
+    }
+  }
+
   return (
     <div className="support-app">
       <aside
@@ -1730,14 +1961,53 @@ export default function App() {
                       column.id,
                   )
 
+                const isDropTarget =
+                  dragTargetStatus ===
+                  column.id
+
                 return (
                   <section
                     key={
                       column.id
                     }
-                    className="kanban-column"
+                    className={`kanban-column ${
+                      isDropTarget
+                        ? 'is-drop-target'
+                        : ''
+                    }`}
                     data-tone={
                       column.tone
+                    }
+                    data-drop-active={
+                      isDropTarget
+                        ? 'true'
+                        : 'false'
+                    }
+                    onDragOver={(
+                      event,
+                    ) =>
+                      handleDragOver(
+                        event,
+                        column.id,
+                      )
+                    }
+                    onDrop={(
+                      event,
+                    ) =>
+                      handleDrop(
+                        event,
+                        column.id,
+                      )
+                    }
+                    style={
+                      isDropTarget
+                        ? {
+                            outline:
+                              '2px dashed currentColor',
+                            outlineOffset:
+                              '-2px',
+                          }
+                        : undefined
                     }
                   >
                     <header className="kanban-column__header">
@@ -1800,23 +2070,56 @@ export default function App() {
                                 ticket,
                               )
 
+                            const isDragging =
+                              draggedTicketId ===
+                              ticket.id
+
                             return (
                               <button
                                 key={
                                   ticket.id
                                 }
                                 type="button"
-                                className="ticket-card"
+                                className={`ticket-card ${
+                                  isDragging
+                                    ? 'is-dragging'
+                                    : ''
+                                }`}
                                 data-priority={
                                   ticket.priority
                                 }
                                 data-sla={
                                   slaState
                                 }
+                                draggable
+                                onDragStart={(
+                                  event,
+                                ) =>
+                                  handleDragStart(
+                                    event,
+                                    ticket,
+                                  )
+                                }
+                                onDragEnd={
+                                  handleDragEnd
+                                }
                                 onClick={() =>
                                   handleSelectTicket(
                                     ticket.id,
                                   )
+                                }
+                                style={
+                                  isDragging
+                                    ? {
+                                        opacity:
+                                          0.45,
+                                        cursor:
+                                          'grabbing',
+                                      }
+                                    : {
+                                        cursor:
+                                          'grab',
+                                      }
                                 }
                               >
                                 <div className="ticket-card__top">
