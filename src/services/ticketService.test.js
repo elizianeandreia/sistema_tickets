@@ -7,6 +7,8 @@ import {
   calculateSlaDeadline,
   changeAssignee,
   changePriority,
+  changeStatus,
+  getRemainingMs,
   getSlaHours,
   getSlaState,
   markWaiting,
@@ -39,6 +41,7 @@ function createTicket(overrides = {}) {
     updatedAt: '2026-08-29T12:00:00.000Z',
 
     resolvedAt: null,
+    pausedAt: null,
 
     slaDeadline: '2026-08-29T20:00:00.000Z',
 
@@ -128,6 +131,120 @@ test('deve colocar chamado aguardando solicitante', () => {
   assert.equal(
     updated.status,
     'waiting'
+  )
+})
+
+test('ao pausar deve registrar o momento em que o SLA foi congelado', () => {
+  const ticket = createTicket({
+    status: 'in_progress',
+  })
+
+  const updated = markWaiting(ticket, {
+    author: 'Equipe LTHS',
+    createdAt: '2026-08-29T13:00:00.000Z',
+  })
+
+  assert.equal(
+    updated.pausedAt,
+    '2026-08-29T13:00:00.000Z'
+  )
+})
+
+test('SLA deve permanecer congelado enquanto o chamado estiver pausado', () => {
+  const ticket = createTicket({
+    status: 'waiting',
+    pausedAt: '2026-08-29T13:00:00.000Z',
+  })
+
+  const remainingAtPause = getRemainingMs(
+    ticket,
+    '2026-08-29T13:00:00.000Z'
+  )
+
+  const remainingHoursLater = getRemainingMs(
+    ticket,
+    '2026-08-29T18:00:00.000Z'
+  )
+
+  assert.equal(
+    remainingAtPause,
+    7 * 60 * 60 * 1000
+  )
+
+  assert.equal(
+    remainingHoursLater,
+    remainingAtPause
+  )
+})
+
+test('ao retomar deve acrescentar o período pausado ao prazo do SLA', () => {
+  const ticket = createTicket({
+    status: 'waiting',
+    pausedAt: '2026-08-29T13:00:00.000Z',
+  })
+
+  const updated = changeStatus(
+    ticket,
+    'in_progress',
+    {
+      author: 'Equipe LTHS',
+      createdAt: '2026-08-29T15:00:00.000Z',
+    }
+  )
+
+  assert.equal(
+    updated.status,
+    'in_progress'
+  )
+
+  assert.equal(
+    updated.pausedAt,
+    null
+  )
+
+  assert.equal(
+    updated.slaDeadline,
+    '2026-08-29T22:00:00.000Z'
+  )
+})
+
+test('ao finalizar um chamado pausado o tempo pausado não deve consumir SLA', () => {
+  const ticket = createTicket({
+    status: 'waiting',
+    pausedAt: '2026-08-29T13:00:00.000Z',
+  })
+
+  const updated = resolveTicket(ticket, {
+    author: 'Equipe LTHS',
+    createdAt: '2026-08-29T15:00:00.000Z',
+  })
+
+  assert.equal(
+    updated.status,
+    'resolved'
+  )
+
+  assert.equal(
+    updated.resolvedAt,
+    '2026-08-29T15:00:00.000Z'
+  )
+
+  assert.equal(
+    updated.pausedAt,
+    null
+  )
+
+  assert.equal(
+    updated.slaDeadline,
+    '2026-08-29T22:00:00.000Z'
+  )
+
+  assert.equal(
+    getSlaState(
+      updated,
+      '2026-08-29T15:00:00.000Z'
+    ),
+    'healthy'
   )
 })
 
@@ -222,11 +339,7 @@ test('deve identificar SLA vencido', () => {
   )
 
   assert.equal(
-    sla.state,
-    'breached'
-  )
-
-  assert.ok(
-    sla.remainingMs < 0
+    sla,
+    'overdue'
   )
 })

@@ -8,6 +8,8 @@ import {
 } from './utils/formatters.js'
 import {
   formatSlaRemaining,
+  getRemainingMs,
+  getSlaHours,
   getSlaState,
 } from './services/ticketService.js'
 
@@ -264,35 +266,6 @@ function getTicketDescription(ticket) {
   )
 }
 
-function getRemainingMs(ticket) {
-  if (!ticket?.slaDeadline) {
-    return 0
-  }
-
-  const deadline =
-    new Date(
-      ticket.slaDeadline,
-    ).getTime()
-
-  const reference =
-    ticket.status ===
-      'resolved' &&
-    ticket.resolvedAt
-      ? new Date(
-          ticket.resolvedAt,
-        ).getTime()
-      : Date.now()
-
-  if (
-    !Number.isFinite(deadline) ||
-    !Number.isFinite(reference)
-  ) {
-    return 0
-  }
-
-  return deadline - reference
-}
-
 function getSlaLabel(state) {
   const labels = {
     healthy: 'Dentro do prazo',
@@ -330,29 +303,30 @@ function getSlaProgress(ticket) {
     return 100
   }
 
-  const created =
-    new Date(
-      ticket?.createdAt,
-    ).getTime()
-
-  const deadline =
-    new Date(
-      ticket?.slaDeadline,
-    ).getTime()
+  const total =
+    getSlaHours(
+      ticket?.priority,
+    ) *
+    60 *
+    60 *
+    1000
 
   if (
-    !Number.isFinite(created) ||
-    !Number.isFinite(deadline) ||
-    deadline <= created
+    !Number.isFinite(total) ||
+    total <= 0
   ) {
     return 0
   }
 
-  const total =
-    deadline - created
+  const remaining =
+    getRemainingMs(ticket)
+
+  if (remaining <= 0) {
+    return 100
+  }
 
   const elapsed =
-    Date.now() - created
+    total - remaining
 
   return Math.max(
     3,
