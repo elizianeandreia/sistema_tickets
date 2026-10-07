@@ -12,6 +12,9 @@ import {
   getSlaHours,
   getSlaState,
 } from './services/ticketService.js'
+import {
+  getTeamMetrics,
+} from './utils/teamMetrics.js'
 
 const STATUS_LABELS = {
   new: 'A fazer',
@@ -403,6 +406,1104 @@ function TicketMessage({
         <p>{message}</p>
       </div>
     </article>
+  )
+}
+
+function Dashboard({
+  tickets,
+  team,
+  now,
+  onOpenTicket,
+}) {
+  const metrics =
+    useMemo(() => {
+      const open =
+        tickets.filter(
+          (ticket) =>
+            ticket.status !==
+            'resolved',
+        )
+
+      const overdue =
+        open.filter(
+          (ticket) =>
+            getSlaState(
+              ticket,
+              now,
+            ) ===
+            'overdue',
+        )
+
+      return {
+        total: tickets.length,
+
+        open: open.length,
+
+        inProgress:
+          tickets.filter(
+            (ticket) =>
+              ticket.status ===
+              'in_progress',
+          ).length,
+
+        waiting:
+          tickets.filter(
+            (ticket) =>
+              ticket.status ===
+              'waiting',
+          ).length,
+
+        resolved:
+          tickets.filter(
+            (ticket) =>
+              ticket.status ===
+              'resolved',
+          ).length,
+
+        overdue:
+          overdue.length,
+      }
+    }, [
+      now,
+      tickets,
+    ])
+
+  const priorityData =
+    useMemo(() => {
+      const total =
+        tickets.length || 1
+
+      return [
+        {
+          id: 'high',
+          label: 'Alta',
+          count:
+            tickets.filter(
+              (ticket) =>
+                ticket.priority ===
+                'high',
+            ).length,
+        },
+        {
+          id: 'medium',
+          label: 'Média',
+          count:
+            tickets.filter(
+              (ticket) =>
+                ticket.priority ===
+                'medium',
+            ).length,
+        },
+        {
+          id: 'low',
+          label: 'Baixa',
+          count:
+            tickets.filter(
+              (ticket) =>
+                ticket.priority ===
+                'low',
+            ).length,
+        },
+      ].map(
+        (item) => ({
+          ...item,
+
+          percentage:
+            Math.round(
+              (
+                item.count /
+                total
+              ) *
+                100,
+            ),
+        }),
+      )
+    }, [tickets])
+
+  const statusData =
+    useMemo(
+      () =>
+        BOARD_COLUMNS.map(
+          (column) => ({
+            id: column.id,
+
+            label:
+              STATUS_LABELS[
+                column.id
+              ],
+
+            count:
+              tickets.filter(
+                (ticket) =>
+                  ticket.status ===
+                  column.id,
+              ).length,
+          }),
+        ),
+      [tickets],
+    )
+
+  const attentionTickets =
+    useMemo(() => {
+      const score = (
+        ticket,
+      ) => {
+        const slaState =
+          getSlaState(
+            ticket,
+            now,
+          )
+
+        if (
+          slaState ===
+          'overdue'
+        ) {
+          return 100
+        }
+
+        if (
+          slaState ===
+          'critical'
+        ) {
+          return 80
+        }
+
+        if (
+          ticket.priority ===
+          'high'
+        ) {
+          return 60
+        }
+
+        if (
+          slaState ===
+          'warning'
+        ) {
+          return 40
+        }
+
+        return 0
+      }
+
+      return tickets
+        .filter(
+          (ticket) =>
+            ticket.status !==
+              'resolved' &&
+            score(ticket) >
+              0,
+        )
+        .sort(
+          (a, b) =>
+            score(b) -
+              score(a) ||
+            new Date(
+              a.slaDeadline,
+            ).getTime() -
+              new Date(
+                b.slaDeadline,
+              ).getTime(),
+        )
+        .slice(0, 5)
+    }, [
+      now,
+      tickets,
+    ])
+
+  const teamData =
+    useMemo(
+      () =>
+        getTeamMetrics(
+          team,
+          tickets,
+          now,
+        ),
+      [
+        now,
+        team,
+        tickets,
+      ],
+    )
+
+  return (
+    <main className="dashboard-page">
+      <div className="dashboard-heading">
+        <div>
+          <span>
+            CENTRAL DE
+            ATENDIMENTO
+          </span>
+
+          <h1>
+            Visão geral
+          </h1>
+
+          <p>
+            Acompanhe os
+            principais indicadores
+            da operação de suporte.
+          </p>
+        </div>
+
+        <div className="dashboard-heading__status">
+          <span className="dashboard-live-dot" />
+
+          Dados atualizados
+          automaticamente
+        </div>
+      </div>
+
+      <section className="dashboard-stats">
+        <article className="dashboard-stat">
+          <div className="dashboard-stat__icon">
+            <Icon name="inbox" />
+          </div>
+
+          <div>
+            <span>
+              Total de tickets
+            </span>
+
+            <strong>
+              {metrics.total}
+            </strong>
+
+            <small>
+              Todos os chamados
+            </small>
+          </div>
+        </article>
+
+        <article className="dashboard-stat">
+          <div className="dashboard-stat__icon">
+            <Icon name="flag" />
+          </div>
+
+          <div>
+            <span>
+              Em aberto
+            </span>
+
+            <strong>
+              {metrics.open}
+            </strong>
+
+            <small>
+              Aguardando conclusão
+            </small>
+          </div>
+        </article>
+
+        <article className="dashboard-stat">
+          <div className="dashboard-stat__icon">
+            <Icon name="play" />
+          </div>
+
+          <div>
+            <span>
+              Em atendimento
+            </span>
+
+            <strong>
+              {metrics.inProgress}
+            </strong>
+
+            <small>
+              Em andamento
+            </small>
+          </div>
+        </article>
+
+        <article className="dashboard-stat">
+          <div className="dashboard-stat__icon">
+            <Icon name="pause" />
+          </div>
+
+          <div>
+            <span>
+              Pausados
+            </span>
+
+            <strong>
+              {metrics.waiting}
+            </strong>
+
+            <small>
+              SLA congelado
+            </small>
+          </div>
+        </article>
+
+        <article className="dashboard-stat">
+          <div className="dashboard-stat__icon">
+            <Icon name="check" />
+          </div>
+
+          <div>
+            <span>
+              Finalizados
+            </span>
+
+            <strong>
+              {metrics.resolved}
+            </strong>
+
+            <small>
+              Chamados concluídos
+            </small>
+          </div>
+        </article>
+
+        <article
+          className={`dashboard-stat ${
+            metrics.overdue >
+            0
+              ? 'dashboard-stat--danger'
+              : ''
+          }`}
+        >
+          <div className="dashboard-stat__icon">
+            <Icon name="clock" />
+          </div>
+
+          <div>
+            <span>
+              SLA vencido
+            </span>
+
+            <strong>
+              {metrics.overdue}
+            </strong>
+
+            <small>
+              Exigem atenção
+            </small>
+          </div>
+        </article>
+      </section>
+
+      <section className="dashboard-grid">
+        <article className="dashboard-card">
+          <header className="dashboard-card__header">
+            <div>
+              <span>
+                PRIORIDADES
+              </span>
+
+              <h2>
+                Distribuição
+              </h2>
+            </div>
+
+            <strong>
+              {tickets.length}
+            </strong>
+          </header>
+
+          <div className="dashboard-priority-list">
+            {priorityData.map(
+              (item) => (
+                <div
+                  key={
+                    item.id
+                  }
+                  className="dashboard-priority"
+                >
+                  <div className="dashboard-priority__top">
+                    <span>
+                      {
+                        item.label
+                      }
+                    </span>
+
+                    <strong>
+                      {
+                        item.count
+                      }
+                    </strong>
+                  </div>
+
+                  <div className="dashboard-priority__track">
+                    <span
+                      data-priority={
+                        item.id
+                      }
+                      style={{
+                        width:
+                          `${item.percentage}%`,
+                      }}
+                    />
+                  </div>
+
+                  <small>
+                    {
+                      item.percentage
+                    }
+                    % do total
+                  </small>
+                </div>
+              ),
+            )}
+          </div>
+        </article>
+
+        <article className="dashboard-card">
+          <header className="dashboard-card__header">
+            <div>
+              <span>
+                FLUXO
+              </span>
+
+              <h2>
+                Tickets por status
+              </h2>
+            </div>
+          </header>
+
+          <div className="dashboard-status-list">
+            {statusData.map(
+              (item) => (
+                <div
+                  key={
+                    item.id
+                  }
+                  className="dashboard-status"
+                  data-status={
+                    item.id
+                  }
+                >
+                  <span className="dashboard-status__dot" />
+
+                  <div>
+                    <span>
+                      {
+                        item.label
+                      }
+                    </span>
+
+                    <small>
+                      Chamados nesta
+                      etapa
+                    </small>
+                  </div>
+
+                  <strong>
+                    {
+                      item.count
+                    }
+                  </strong>
+                </div>
+              ),
+            )}
+          </div>
+        </article>
+      </section>
+
+      <section className="dashboard-grid dashboard-grid--wide">
+        <article className="dashboard-card dashboard-card--attention">
+          <header className="dashboard-card__header">
+            <div>
+              <span>
+                MONITORAMENTO
+              </span>
+
+              <h2>
+                Tickets que exigem
+                atenção
+              </h2>
+            </div>
+
+            <span className="dashboard-card__badge">
+              {
+                attentionTickets.length
+              }
+            </span>
+          </header>
+
+          {attentionTickets.length ? (
+            <div className="attention-list">
+              {attentionTickets.map(
+                (ticket) => {
+                  const requester =
+                    getRequester(
+                      ticket,
+                    )
+
+                  const state =
+                    getSlaState(
+                      ticket,
+                      now,
+                    )
+
+                  const remaining =
+                    getRemainingMs(
+                      ticket,
+                      now,
+                    )
+
+                  return (
+                    <button
+                      key={
+                        ticket.id
+                      }
+                      type="button"
+                      className="attention-ticket"
+                      data-sla={
+                        state
+                      }
+                      onClick={() =>
+                        onOpenTicket(
+                          ticket.id,
+                        )
+                      }
+                    >
+                      <div className="attention-ticket__main">
+                        <span>
+                          {formatTicketCode(
+                            ticket.code,
+                          )}
+                        </span>
+
+                        <strong>
+                          {
+                            ticket.subject
+                          }
+                        </strong>
+
+                        <small>
+                          {
+                            requester.name
+                          }{' '}
+                          ·{' '}
+                          {
+                            requester.department
+                          }
+                        </small>
+                      </div>
+
+                      <div className="attention-ticket__meta">
+                        <span
+                          className={`priority-pill priority-pill--${ticket.priority}`}
+                        >
+                          {
+                            PRIORITY_LABELS[
+                              ticket
+                                .priority
+                            ]
+                          }
+                        </span>
+
+                        <strong>
+                          {getSlaLabel(
+                            state,
+                          )}
+                        </strong>
+
+                        <small>
+                          {formatSlaRemaining(
+                            remaining,
+                          )}
+                        </small>
+                      </div>
+                    </button>
+                  )
+                },
+              )}
+            </div>
+          ) : (
+            <div className="dashboard-empty">
+              <Icon name="check" />
+
+              <strong>
+                Nenhum ticket
+                crítico
+              </strong>
+
+              <span>
+                Não há chamados que
+                exijam atenção
+                imediata.
+              </span>
+            </div>
+          )}
+        </article>
+
+        <article className="dashboard-card">
+          <header className="dashboard-card__header">
+            <div>
+              <span>
+                EQUIPE
+              </span>
+
+              <h2>
+                Carga atual
+              </h2>
+            </div>
+          </header>
+
+          <div className="team-summary">
+            {teamData.map(
+              (member) => (
+                <div
+                  key={
+                    member.id
+                  }
+                  className="team-summary__item"
+                >
+                  <span className="avatar">
+                    {member.initials ||
+                      getInitials(
+                        member.name,
+                      )}
+                  </span>
+
+                  <div className="team-summary__identity">
+                    <strong>
+                      {
+                        member.name
+                      }
+                    </strong>
+
+                    <small>
+                      {
+                        member.role
+                      }
+                    </small>
+                  </div>
+
+                  <div className="team-summary__count">
+                    <strong>
+                      {
+                        member.openTickets
+                      }
+                    </strong>
+
+                    <span>
+                      abertos
+                    </span>
+                  </div>
+
+                  {member.overdueTickets >
+                    0 && (
+                    <span className="team-summary__alert">
+                      {
+                        member.overdueTickets
+                      }{' '}
+                      vencido
+                    </span>
+                  )}
+                </div>
+              ),
+            )}
+          </div>
+        </article>
+      </section>
+    </main>
+  )
+}
+
+function TeamPage({
+  team,
+  tickets,
+  now,
+  onOpenTicket,
+}) {
+  const members =
+    useMemo(
+      () =>
+        getTeamMetrics(
+          team,
+          tickets,
+          now,
+        ),
+      [
+        now,
+        team,
+        tickets,
+      ],
+    )
+
+  const totalOpen =
+    members.reduce(
+      (
+        total,
+        member,
+      ) =>
+        total +
+        member.openTickets,
+      0,
+    )
+
+  const totalOverdue =
+    members.reduce(
+      (
+        total,
+        member,
+      ) =>
+        total +
+        member.overdueTickets,
+      0,
+    )
+
+  const totalHigh =
+    members.reduce(
+      (
+        total,
+        member,
+      ) =>
+        total +
+        member.highPriorityTickets,
+      0,
+    )
+
+  return (
+    <main className="team-page">
+      <div className="team-page__heading">
+        <div>
+          <span>
+            CENTRAL DE
+            ATENDIMENTO
+          </span>
+
+          <h1>
+            Equipe
+          </h1>
+
+          <p>
+            Acompanhe a distribuição
+            dos chamados entre os
+            responsáveis.
+          </p>
+        </div>
+
+        <div className="team-page__summary">
+          <span>
+            <strong>
+              {members.length}
+            </strong>{' '}
+            integrantes
+          </span>
+
+          <span>
+            <strong>
+              {totalOpen}
+            </strong>{' '}
+            tickets abertos
+          </span>
+
+          <span>
+            <strong>
+              {totalOverdue}
+            </strong>{' '}
+            vencidos
+          </span>
+        </div>
+      </div>
+
+      <section className="team-metrics">
+        <article className="team-metric">
+          <span>
+            Integrantes
+          </span>
+
+          <strong>
+            {members.length}
+          </strong>
+
+          <small>
+            Equipe cadastrada
+          </small>
+        </article>
+
+        <article className="team-metric">
+          <span>
+            Chamados abertos
+          </span>
+
+          <strong>
+            {totalOpen}
+          </strong>
+
+          <small>
+            Distribuídos na equipe
+          </small>
+        </article>
+
+        <article className="team-metric">
+          <span>
+            Alta prioridade
+          </span>
+
+          <strong>
+            {totalHigh}
+          </strong>
+
+          <small>
+            Em acompanhamento
+          </small>
+        </article>
+
+        <article
+          className={`team-metric ${
+            totalOverdue >
+            0
+              ? 'team-metric--danger'
+              : ''
+          }`}
+        >
+          <span>
+            SLA vencido
+          </span>
+
+          <strong>
+            {totalOverdue}
+          </strong>
+
+          <small>
+            Exigem atenção
+          </small>
+        </article>
+      </section>
+
+      <section className="team-members-grid">
+        {members.map(
+          (member) => (
+            <article
+              key={
+                member.id
+              }
+              className="team-member-card"
+            >
+              <header className="team-member-card__header">
+                <div className="team-member-card__avatar">
+                  {member.initials ||
+                    getInitials(
+                      member.name,
+                    )}
+                </div>
+
+                <div className="team-member-card__identity">
+                  <div className="team-member-card__name">
+                    <h2>
+                      {
+                        member.name
+                      }
+                    </h2>
+
+                    <span
+                      className={`team-member-status team-member-status--${member.status}`}
+                    >
+                      {
+                        member.status ===
+                        'online'
+                          ? 'Online'
+                          : 'Offline'
+                      }
+                    </span>
+                  </div>
+
+                  <p>
+                    {
+                      member.role
+                    }
+                  </p>
+
+                  <small>
+                    {
+                      member.specialty
+                    }
+                  </small>
+                </div>
+              </header>
+
+              <div className="team-member-card__stats">
+                <div>
+                  <strong>
+                    {
+                      member.openTickets
+                    }
+                  </strong>
+
+                  <span>
+                    Abertos
+                  </span>
+                </div>
+
+                <div>
+                  <strong>
+                    {
+                      member.inProgressTickets
+                    }
+                  </strong>
+
+                  <span>
+                    Atendendo
+                  </span>
+                </div>
+
+                <div>
+                  <strong>
+                    {
+                      member.pausedTickets
+                    }
+                  </strong>
+
+                  <span>
+                    Pausados
+                  </span>
+                </div>
+
+                <div
+                  className={
+                    member.overdueTickets >
+                    0
+                      ? 'is-danger'
+                      : ''
+                  }
+                >
+                  <strong>
+                    {
+                      member.overdueTickets
+                    }
+                  </strong>
+
+                  <span>
+                    Vencidos
+                  </span>
+                </div>
+              </div>
+
+              <section className="team-member-tickets">
+                <header>
+                  <div>
+                    <span>
+                      CHAMADOS
+                    </span>
+
+                    <strong>
+                      Tickets atribuídos
+                    </strong>
+                  </div>
+
+                  <span>
+                    {
+                      member.openTickets
+                    }
+                  </span>
+                </header>
+
+                {member.tickets.length ? (
+                  <div className="team-member-ticket-list">
+                    {member.tickets.map(
+                      (ticket) => {
+                        const requester =
+                          getRequester(
+                            ticket,
+                          )
+
+                        const slaState =
+                          getSlaState(
+                            ticket,
+                            now,
+                          )
+
+                        const remaining =
+                          getRemainingMs(
+                            ticket,
+                            now,
+                          )
+
+                        return (
+                          <button
+                            key={
+                              ticket.id
+                            }
+                            type="button"
+                            className="team-member-ticket"
+                            data-sla={
+                              slaState
+                            }
+                            onClick={() =>
+                              onOpenTicket(
+                                ticket.id,
+                              )
+                            }
+                          >
+                            <div className="team-member-ticket__main">
+                              <span>
+                                {formatTicketCode(
+                                  ticket.code,
+                                )}
+                              </span>
+
+                              <strong>
+                                {
+                                  ticket.subject
+                                }
+                              </strong>
+
+                              <small>
+                                {
+                                  requester.name
+                                }{' '}
+                                ·{' '}
+                                {
+                                  requester.department
+                                }
+                              </small>
+                            </div>
+
+                            <div className="team-member-ticket__meta">
+                              <span
+                                className={`priority-pill priority-pill--${ticket.priority}`}
+                              >
+                                {
+                                  PRIORITY_LABELS[
+                                    ticket
+                                      .priority
+                                  ]
+                                }
+                              </span>
+
+                              <strong>
+                                {
+                                  STATUS_LABELS[
+                                    ticket
+                                      .status
+                                  ]
+                                }
+                              </strong>
+
+                              <small>
+                                {formatSlaRemaining(
+                                  remaining,
+                                )}
+                              </small>
+                            </div>
+                          </button>
+                        )
+                      },
+                    )}
+                  </div>
+                ) : (
+                  <div className="team-member-empty">
+                    <Icon
+                      name="check"
+                      size={17}
+                    />
+
+                    <span>
+                      Nenhum chamado
+                      aberto atribuído.
+                    </span>
+                  </div>
+                )}
+              </section>
+            </article>
+          ),
+        )}
+      </section>
+    </main>
   )
 }
 
@@ -859,6 +1960,13 @@ export default function App() {
   } = useServiceDesk()
 
   const [
+    activeView,
+    setActiveView,
+  ] = useState(
+    'tickets',
+  )
+
+  const [
     selectedTicketId,
     setSelectedTicketId,
   ] = useState(
@@ -1037,7 +2145,15 @@ export default function App() {
       ) {
         event.preventDefault()
 
-        searchRef.current?.focus()
+        setActiveView(
+          'tickets',
+        )
+
+        window.setTimeout(
+          () =>
+            searchRef.current?.focus(),
+          0,
+        )
       }
 
       if (
@@ -1231,6 +2347,32 @@ export default function App() {
     ) {
       return
     }
+
+    setSelectedTicketId(
+      ticketId,
+    )
+
+    setReplyText('')
+
+    setComposerMode(
+      'reply',
+    )
+
+    setDeleteConfirmation(
+      false,
+    )
+
+    setTicketPanelOpen(
+      true,
+    )
+  }
+
+  function handleExternalTicketOpen(
+    ticketId,
+  ) {
+    setActiveView(
+      'tickets',
+    )
 
     setSelectedTicketId(
       ticketId,
@@ -1548,6 +2690,10 @@ export default function App() {
       false,
     )
 
+    setActiveView(
+      'tickets',
+    )
+
     setTicketPanelOpen(
       true,
     )
@@ -1767,6 +2913,24 @@ export default function App() {
     }
   }
 
+  const breadcrumbTitle =
+    activeView ===
+    'dashboard'
+      ? 'Visão geral'
+      : activeView ===
+          'team'
+        ? 'Equipe'
+        : 'Tickets'
+
+  const breadcrumbSubtitle =
+    activeView ===
+    'dashboard'
+      ? 'Painel de atendimento'
+      : activeView ===
+          'team'
+        ? 'Gestão da equipe'
+        : 'Listagem de Tickets'
+
   return (
     <div className="support-app">
       <aside
@@ -1783,15 +2947,44 @@ export default function App() {
         <nav className="nav-rail__nav">
           <button
             type="button"
+            className={
+              activeView ===
+              'dashboard'
+                ? 'is-active'
+                : ''
+            }
             aria-label="Visão geral"
+            onClick={() => {
+              setActiveView(
+                'dashboard',
+              )
+
+              setTicketPanelOpen(
+                false,
+              )
+            }}
           >
             <Icon name="chart" />
           </button>
 
           <button
             type="button"
-            className="is-active"
+            className={
+              activeView ===
+              'tickets'
+                ? 'is-active'
+                : ''
+            }
             aria-label="Tickets"
+            onClick={() => {
+              setActiveView(
+                'tickets',
+              )
+
+              setTicketPanelOpen(
+                false,
+              )
+            }}
           >
             <Icon name="inbox" />
           </button>
@@ -1810,7 +3003,22 @@ export default function App() {
 
           <button
             type="button"
+            className={
+              activeView ===
+              'team'
+                ? 'is-active'
+                : ''
+            }
             aria-label="Equipe"
+            onClick={() => {
+              setActiveView(
+                'team',
+              )
+
+              setTicketPanelOpen(
+                false,
+              )
+            }}
           >
             <Icon name="users" />
           </button>
@@ -1851,43 +3059,50 @@ export default function App() {
         <header className="topbar">
           <div className="topbar__breadcrumb">
             <strong>
-              Tickets
+              {
+                breadcrumbTitle
+              }
             </strong>
 
             <span>•</span>
 
             <span>
-              Listagem de Tickets
+              {
+                breadcrumbSubtitle
+              }
             </span>
           </div>
 
           <div className="topbar__actions">
-            <label className="global-search">
-              <Icon
-                name="search"
-                size={16}
-              />
+            {activeView ===
+              'tickets' && (
+              <label className="global-search">
+                <Icon
+                  name="search"
+                  size={16}
+                />
 
-              <input
-                ref={searchRef}
-                type="search"
-                value={search}
-                onChange={(
-                  event,
-                ) =>
-                  setSearch(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="Buscar"
-                aria-label="Buscar tickets"
-              />
+                <input
+                  ref={searchRef}
+                  type="search"
+                  value={search}
+                  onChange={(
+                    event,
+                  ) =>
+                    setSearch(
+                      event.target
+                        .value,
+                    )
+                  }
+                  placeholder="Buscar"
+                  aria-label="Buscar tickets"
+                />
 
-              <kbd>
-                Ctrl K
-              </kbd>
-            </label>
+                <kbd>
+                  Ctrl K
+                </kbd>
+              </label>
+            )}
 
             <button
               type="button"
@@ -1938,138 +3153,161 @@ export default function App() {
           </div>
         </header>
 
-        <main className="kanban-page">
-          <div className="kanban-page__heading">
-            <div>
-              <span>
-                CENTRAL DE
-                ATENDIMENTO
-              </span>
+        {activeView ===
+        'dashboard' ? (
+          <Dashboard
+            tickets={
+              tickets
+            }
+            team={team}
+            now={slaNow}
+            onOpenTicket={
+              handleExternalTicketOpen
+            }
+          />
+        ) : activeView ===
+          'team' ? (
+          <TeamPage
+            team={team}
+            tickets={
+              tickets
+            }
+            now={slaNow}
+            onOpenTicket={
+              handleExternalTicketOpen
+            }
+          />
+        ) : (
+          <main className="kanban-page">
+            <div className="kanban-page__heading">
+              <div>
+                <span>
+                  CENTRAL DE
+                  ATENDIMENTO
+                </span>
 
-              <h1>
-                Tickets
-              </h1>
+                <h1>
+                  Tickets
+                </h1>
 
-              <p>
-                Acompanhe os
-                chamados por etapa
-                de atendimento.
-              </p>
+                <p>
+                  Acompanhe os
+                  chamados por etapa
+                  de atendimento.
+                </p>
+              </div>
+
+              <div className="kanban-summary">
+                <span>
+                  <strong>
+                    {
+                      tickets.length
+                    }
+                  </strong>{' '}
+                  total
+                </span>
+
+                <span>
+                  <strong>
+                    {
+                      tickets.filter(
+                        (ticket) =>
+                          ticket.status !==
+                          'resolved',
+                      ).length
+                    }
+                  </strong>{' '}
+                  em aberto
+                </span>
+              </div>
             </div>
 
-            <div className="kanban-summary">
-              <span>
-                <strong>
-                  {tickets.length}
-                </strong>{' '}
-                total
-              </span>
-
-              <span>
-                <strong>
-                  {
-                    tickets.filter(
+            <div
+              className="kanban-board"
+              aria-label="Quadro de tickets por status"
+            >
+              {BOARD_COLUMNS.map(
+                (column) => {
+                  const columnTickets =
+                    boardTickets.filter(
                       (ticket) =>
-                        ticket.status !==
-                        'resolved',
-                    ).length
-                  }
-                </strong>{' '}
-                em aberto
-              </span>
-            </div>
-          </div>
-
-          <div
-            className="kanban-board"
-            aria-label="Quadro de tickets por status"
-          >
-            {BOARD_COLUMNS.map(
-              (column) => {
-                const columnTickets =
-                  boardTickets.filter(
-                    (ticket) =>
-                      ticket.status ===
-                      column.id,
-                  )
-
-                const isDropTarget =
-                  dragTargetStatus ===
-                  column.id
-
-                return (
-                  <section
-                    key={
-                      column.id
-                    }
-                    className={`kanban-column ${
-                      isDropTarget
-                        ? 'is-drop-target'
-                        : ''
-                    }`}
-                    data-tone={
-                      column.tone
-                    }
-                    data-drop-active={
-                      isDropTarget
-                        ? 'true'
-                        : 'false'
-                    }
-                    onDragOver={(
-                      event,
-                    ) =>
-                      handleDragOver(
-                        event,
+                        ticket.status ===
                         column.id,
-                      )
-                    }
-                    onDrop={(
-                      event,
-                    ) =>
-                      handleDrop(
+                    )
+
+                  const isDropTarget =
+                    dragTargetStatus ===
+                    column.id
+
+                  return (
+                    <section
+                      key={
+                        column.id
+                      }
+                      className={`kanban-column ${
+                        isDropTarget
+                          ? 'is-drop-target'
+                          : ''
+                      }`}
+                      data-tone={
+                        column.tone
+                      }
+                      onDragOver={(
                         event,
-                        column.id,
-                      )
-                    }
-                    style={
-                      isDropTarget
-                        ? {
-                            outline:
-                              '2px dashed currentColor',
-                            outlineOffset:
-                              '-2px',
-                          }
-                        : undefined
-                    }
-                  >
-                    <header className="kanban-column__header">
-                      <div>
-                        <span className="kanban-column__icon">
-                          <Icon
-                            name={
-                              column.icon
+                      ) =>
+                        handleDragOver(
+                          event,
+                          column.id,
+                        )
+                      }
+                      onDrop={(
+                        event,
+                      ) =>
+                        handleDrop(
+                          event,
+                          column.id,
+                        )
+                      }
+                      style={
+                        isDropTarget
+                          ? {
+                              outline:
+                                '2px dashed currentColor',
+                              outlineOffset:
+                                '-2px',
                             }
-                            size={15}
-                          />
-                        </span>
+                          : undefined
+                      }
+                    >
+                      <header className="kanban-column__header">
+                        <div>
+                          <span className="kanban-column__icon">
+                            <Icon
+                              name={
+                                column.icon
+                              }
+                              size={
+                                15
+                              }
+                            />
+                          </span>
 
-                        <strong>
+                          <strong>
+                            {
+                              column.title
+                            }
+                          </strong>
+                        </div>
+
+                        <span className="kanban-column__count">
                           {
-                            column.title
+                            columnTickets.length
                           }
-                        </strong>
-                      </div>
+                        </span>
+                      </header>
 
-                      <span className="kanban-column__count">
-                        {
-                          columnTickets.length
-                        }
-                      </span>
-                    </header>
-
-                    <div className="kanban-column__body">
-                      {columnTickets.length ? (
-                        columnTickets.map(
+                      <div className="kanban-column__body">
+                        {columnTickets.map(
                           (
                             ticket,
                           ) => {
@@ -2143,19 +3381,6 @@ export default function App() {
                                     ticket.id,
                                   )
                                 }
-                                style={
-                                  isDragging
-                                    ? {
-                                        opacity:
-                                          0.45,
-                                        cursor:
-                                          'grabbing',
-                                      }
-                                    : {
-                                        cursor:
-                                          'grab',
-                                      }
-                                }
                               >
                                 <div className="ticket-card__top">
                                   <span className="ticket-code">
@@ -2163,11 +3388,6 @@ export default function App() {
                                       ticket.code,
                                     )}
                                   </span>
-
-                                  <span
-                                    className="ticket-card__open"
-                                    aria-hidden="true"
-                                  />
                                 </div>
 
                                 <span className="ticket-category">
@@ -2263,22 +3483,24 @@ export default function App() {
                               </button>
                             )
                           },
-                        )
-                      ) : (
-                        <div className="column-empty">
-                          <span>
-                            Nenhum ticket
-                            nesta etapa
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-                )
-              },
-            )}
-          </div>
-        </main>
+                        )}
+
+                        {!columnTickets.length && (
+                          <div className="column-empty">
+                            <span>
+                              Nenhum ticket
+                              nesta etapa
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  )
+                },
+              )}
+            </div>
+          </main>
+        )}
       </div>
 
       {ticketPanelOpen &&
