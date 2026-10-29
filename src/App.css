@@ -119,7 +119,6 @@ body,
 
 body {
   min-height: 100vh;
-  overflow: hidden;
   color: var(--text);
   background: var(--bg);
 }
