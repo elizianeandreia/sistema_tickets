@@ -3134,6 +3134,13 @@ export default function App() {
               />
             </button>
 
+            <div
+              className="topbar-user"
+              aria-label="Conta LTHS"
+            >
+              LT
+            </div>
+
             <button
               type="button"
               className="new-ticket-button"
@@ -3281,16 +3288,7 @@ export default function App() {
                     >
                       <header className="kanban-column__header">
                         <div>
-                          <span className="kanban-column__icon">
-                            <Icon
-                              name={
-                                column.icon
-                              }
-                              size={
-                                15
-                              }
-                            />
-                          </span>
+                          <span className="kanban-column__dot" />
 
                           <strong>
                             {
