@@ -1,6 +1,6 @@
 :root {
-  --font-sans: "Courier Prime", "Courier New", Courier, monospace;
-  --font-mono: "Courier Prime", "Courier New", Courier, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   --fs-xs: 12px;
   --fs-sm: 14px;
