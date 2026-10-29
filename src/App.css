@@ -1,5 +1,5 @@
 :root {
---font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
 
   --fs-xs: 12px;
@@ -10,43 +10,56 @@
   --fs-2xl: 28px;
   --fs-3xl: 36px;
 
-  --bg: #fbf7f4;
+  --bg: #f8fafc;
   --surface: #ffffff;
-  --surface-2: #f5ede7;
-  --surface-3: #ede2da;
-  --surface-hover: #f2e9e2;
+  --surface-2: #f1f5f9;
+  --surface-3: #e2e8f0;
+  --surface-hover: #f1f5f9;
 
-  --border: #ecdfd6;
-  --border-strong: #dcc9bd;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
 
-  --text: #2a2320;
-  --text-secondary: #5c5049;
-  --text-muted: #8a7d75;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
 
-  --accent: #d97757;
-  --accent-hover: #c46445;
-  --accent-soft: #fbe8e0;
-  --accent-ring: rgba(217, 119, 87, 0.24);
-  --accent-gradient: linear-gradient(135deg, #d97757, #e89b7f);
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-soft: #eef2ff;
+  --accent-ring: rgba(99, 102, 241, 0.2);
+  --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
 
-  --danger: #c94646;
-  --danger-soft: #fbe9e9;
+  --brand: #6366f1;
+  --brand-hover: #4f46e5;
+  --brand-soft: #eef2ff;
+  --brand-ring: rgba(99, 102, 241, 0.2);
+  --brand-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
 
-  --success: #2f8f6b;
-  --success-soft: #e6f4ed;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
 
-  --warning: #b8841e;
-  --warning-soft: #fbf1dc;
+  --success: #10b981;
+  --success-soft: #ecfdf5;
 
-  --todo: #e35d5d;
-  --progress: #3da97b;
-  --waiting: #e5a73a;
-  --done: #9c8e86;
+  --warning: #f59e0b;
+  --warning-soft: #fffbeb;
 
-  --shadow-sm: 0 1px 2px rgba(42, 35, 32, 0.05);
-  --shadow-md: 0 1px 3px rgba(42, 35, 32, 0.06), 0 4px 12px rgba(42, 35, 32, 0.05);
-  --shadow-lg: 0 4px 12px rgba(42, 35, 32, 0.08), 0 20px 40px rgba(42, 35, 32, 0.1);
-  --shadow-drawer: 0 0 0 1px rgba(42, 35, 32, 0.04), -16px 0 48px rgba(42, 35, 32, 0.14);
+  --todo: #475569;
+  --todo-soft: #e2e8f0;
+
+  --progress: #6366f1;
+  --progress-soft: #eef2ff;
+
+  --waiting: #f59e0b;
+  --waiting-soft: #fffbeb;
+
+  --done: #059669;
+  --done-soft: #d1fae5;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 4px 12px rgba(15, 23, 42, 0.08), 0 20px 40px rgba(15, 23, 42, 0.06);
+  --shadow-drawer: 0 0 0 1px rgba(15, 23, 42, 0.04), -16px 0 48px rgba(15, 23, 42, 0.12);
 
   --radius-sm: 8px;
   --radius-md: 10px;
@@ -65,43 +78,56 @@
 }
 
 html[data-theme="dark"] {
-  --bg: #17110d;
-  --surface: #221a14;
-  --surface-2: #2b211a;
-  --surface-3: #352920;
-  --surface-hover: #2f241c;
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-2: #334155;
+  --surface-3: #475569;
+  --surface-hover: #334155;
 
-  --border: #352920;
-  --border-strong: #4a3a2e;
+  --border: #334155;
+  --border-strong: #475569;
 
-  --text: #f3ebe4;
-  --text-secondary: #c7b6a9;
-  --text-muted: #8f8078;
+  --text: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
 
-  --accent: #e8926f;
-  --accent-hover: #f0a284;
-  --accent-soft: rgba(232, 146, 111, 0.14);
-  --accent-ring: rgba(232, 146, 111, 0.28);
-  --accent-gradient: linear-gradient(135deg, #e8926f, #f0a284);
+  --accent: #818cf8;
+  --accent-hover: #a5b4fc;
+  --accent-soft: rgba(129, 140, 248, 0.15);
+  --accent-ring: rgba(129, 140, 248, 0.3);
+  --accent-gradient: linear-gradient(135deg, #818cf8, #a78bfa);
 
-  --danger: #e87070;
-  --danger-soft: rgba(232, 112, 112, 0.14);
+  --brand: #818cf8;
+  --brand-hover: #a5b4fc;
+  --brand-soft: rgba(129, 140, 248, 0.15);
+  --brand-ring: rgba(129, 140, 248, 0.3);
+  --brand-gradient: linear-gradient(135deg, #818cf8, #a78bfa);
 
-  --success: #5dbb92;
-  --success-soft: rgba(93, 187, 146, 0.14);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.15);
 
-  --warning: #d8b364;
-  --warning-soft: rgba(216, 179, 100, 0.14);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.15);
 
-  --todo: #e56d6d;
-  --progress: #4ebd8f;
-  --waiting: #e6b855;
-  --done: #a69b94;
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.15);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4), 0 20px 40px rgba(0, 0, 0, 0.35);
-  --shadow-drawer: 0 0 0 1px rgba(255, 255, 255, 0.05), -16px 0 48px rgba(0, 0, 0, 0.6);
+  --todo: #94a3b8;
+  --todo-soft: rgba(148, 163, 184, 0.2);
+
+  --progress: #818cf8;
+  --progress-soft: rgba(129, 140, 248, 0.15);
+
+  --waiting: #fbbf24;
+  --waiting-soft: rgba(251, 191, 36, 0.15);
+
+  --done: #34d399;
+  --done-soft: rgba(52, 211, 153, 0.2);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3), 0 20px 40px rgba(0, 0, 0, 0.25);
+  --shadow-drawer: 0 0 0 1px rgba(255, 255, 255, 0.05), -16px 0 48px rgba(0, 0, 0, 0.5);
 
   color-scheme: dark;
 }
@@ -226,8 +252,8 @@ select:focus-visible {
 }
 
 .nav-rail__nav button.is-active {
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--brand);
+  background: var(--brand-soft);
 }
 
 .nav-rail__theme {
@@ -292,8 +318,8 @@ select:focus-visible {
 }
 
 .global-search:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-ring);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-ring);
 }
 
 .global-search input {
@@ -352,7 +378,7 @@ select:focus-visible {
   place-items: center;
   border-radius: 50%;
   color: #ffffff;
-  background: var(--accent-gradient);
+  background: var(--brand-gradient);
   font-size: var(--fs-xs);
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -368,14 +394,16 @@ select:focus-visible {
   padding: 0 16px;
   border-radius: var(--radius-pill);
   color: #ffffff;
-  background: var(--accent);
+  background: var(--brand);
   font-size: var(--fs-sm);
   font-weight: 600;
-  transition: background-color 160ms ease;
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
 }
 
 .new-ticket-button:hover {
-  background: var(--accent-hover);
+  background: var(--brand-hover);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
 
 .kanban-page {
@@ -408,7 +436,7 @@ select:focus-visible {
 
 .kanban-page__heading h1 {
   margin: 0;
-  color: var(--text);
+  color: var(--brand);
   font-size: var(--fs-3xl);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -482,23 +510,23 @@ select:focus-visible {
 }
 
 .kanban-column[data-tone="todo"] .kanban-column__header {
-  background: rgba(227, 93, 93, 0.2);
-  border-bottom-color: rgba(227, 93, 93, 0.35);
+  background: var(--todo-soft);
+  border-bottom-color: rgba(71, 85, 105, 0.3);
 }
 
 .kanban-column[data-tone="progress"] .kanban-column__header {
-  background: rgba(61, 169, 123, 0.2);
-  border-bottom-color: rgba(61, 169, 123, 0.35);
+  background: var(--progress-soft);
+  border-bottom-color: rgba(99, 102, 241, 0.3);
 }
 
 .kanban-column[data-tone="waiting"] .kanban-column__header {
-  background: rgba(229, 167, 58, 0.2);
-  border-bottom-color: rgba(229, 167, 58, 0.35);
+  background: var(--waiting-soft);
+  border-bottom-color: rgba(245, 158, 11, 0.3);
 }
 
 .kanban-column[data-tone="done"] .kanban-column__header {
-  background: rgba(156, 142, 134, 0.2);
-  border-bottom-color: rgba(156, 142, 134, 0.35);
+  background: var(--done-soft);
+  border-bottom-color: rgba(5, 150, 105, 0.3);
 }
 
 .kanban-column__header > div {
@@ -745,7 +773,7 @@ select:focus-visible {
   inset: 0;
   width: 100%;
   height: 100%;
-  background: rgba(30, 20, 14, 0.4);
+  background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(4px);
 }
 
@@ -793,7 +821,7 @@ select:focus-visible {
 
 .drawer-header h2 {
   margin: 6px 0 0;
-  color: var(--text);
+  color: var(--brand);
   font-size: var(--fs-2xl);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -887,9 +915,9 @@ select:focus-visible {
 .new-ticket-form textarea:focus,
 .new-ticket-form select:focus,
 .detail-controls select:focus {
-  border-color: var(--accent);
+  border-color: var(--brand);
   background: var(--surface);
-  box-shadow: 0 0 0 3px var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--brand-ring);
 }
 
 .new-ticket-form textarea {
@@ -1004,11 +1032,11 @@ select:focus-visible {
 
 .button--primary {
   color: #ffffff;
-  background: var(--accent);
+  background: var(--brand);
 }
 
 .button--primary:hover {
-  background: var(--accent-hover);
+  background: var(--brand-hover);
 }
 
 .button--success {
@@ -1246,7 +1274,7 @@ select:focus-visible {
 }
 
 .reply-composer__tabs button.is-active {
-  color: var(--accent);
+  color: var(--brand);
 }
 
 .reply-composer__tabs button.is-active::after {
@@ -1255,7 +1283,7 @@ select:focus-visible {
   bottom: -1px;
   left: 8px;
   height: 2px;
-  background: var(--accent);
+  background: var(--brand);
   content: "";
 }
 
@@ -1297,14 +1325,14 @@ select:focus-visible {
   padding: 0 14px;
   border-radius: var(--radius-pill);
   color: #ffffff;
-  background: var(--accent);
+  background: var(--brand);
   font-size: var(--fs-xs);
   font-weight: 700;
   transition: background-color 160ms ease;
 }
 
 .reply-composer footer button:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--brand-hover);
 }
 
 .reply-composer footer button:disabled {
@@ -1423,7 +1451,7 @@ select:focus-visible {
   inset: 0;
   width: 100%;
   height: 100%;
-  background: rgba(30, 20, 14, 0.5);
+  background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(4px);
 }
 
@@ -1519,7 +1547,7 @@ select:focus-visible {
 }
 
 .confirm-dialog__danger:hover {
-  background: #b53a3a;
+  background: #dc2626;
 }
 
 .app-toast {
@@ -1567,8 +1595,8 @@ select:focus-visible {
 }
 
 html[data-theme="dark"] select option {
-  color: #f3ebe4;
-  background: #2b211a;
+  color: #f8fafc;
+  background: #334155;
 }
 
 .dashboard-page {
@@ -1598,7 +1626,7 @@ html[data-theme="dark"] select option {
 
 .dashboard-heading h1 {
   margin: 0;
-  color: var(--text);
+  color: var(--brand);
   font-size: var(--fs-3xl);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -2101,7 +2129,7 @@ html[data-theme="dark"] select option {
 
 .team-page__heading h1 {
   margin: 0;
-  color: var(--text);
+  color: var(--brand);
   font-size: var(--fs-3xl);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -2216,7 +2244,7 @@ html[data-theme="dark"] select option {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--accent-gradient);
+  background: var(--brand-gradient);
   color: #ffffff;
   font-size: var(--fs-sm);
   font-weight: 700;
